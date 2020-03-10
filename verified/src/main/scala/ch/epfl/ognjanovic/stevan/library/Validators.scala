@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.library
 import stainless.lang._
 import stainless.collection._
 
-import ch.epfl.ognjanovic.stevan.library.types.VotingPower._
+import ch.epfl.ognjanovic.stevan.library.types.VotingPowers._
 import ch.epfl.ognjanovic.stevan.library.Nodes.Node
 
 case class Validators(validators: Map[Node, PositiveVotingPower]) {
@@ -12,6 +12,16 @@ case class Validators(validators: Map[Node, PositiveVotingPower]) {
         require(nodes subsetOf validators.keys.toSet)
         nodePower(nodes.toList)
     }
+
+    // def obtainedByzantineQuorum(nodes: Set[Node]): Boolean = {
+    //     // require(nodes subsetOf validators.keys.toSet)
+    //     // val totalPower = ZeroVotingPower
+    //     // validators.values
+    //         // .foldLeft(ZeroVotingPower.asInstanceOf[VotingPower])((first, second) => first + second)
+    //     // val votedPower = setPower(nodes)
+    //     // (votedPower.*(3)) > (totalPower.*(2))
+    //     true
+    // }
 
     def nodePower(nodes: List[Node]): VotingPower = {
         nodes match {
