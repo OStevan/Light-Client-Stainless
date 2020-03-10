@@ -11,7 +11,7 @@ object VotingPowers {
 
     //   def *(multiplier: Int): VotingPower
 
-    //   def >(other: VotingPower): Boolean
+      def >(other: VotingPower): Boolean
 
       @law
       def positive_power(): Boolean = {
@@ -23,7 +23,7 @@ object VotingPowers {
       def power(): BigInt = BigInt(0)
       def +(other: VotingPower): VotingPower = other
     //   def *(multiplier: Int): VotingPower = this
-    //   def >(other: VotingPower): Boolean = false
+      def >(other: VotingPower): Boolean = false
   }
 
   case class PositiveVotingPower(value: BigInt) extends VotingPower {
@@ -38,10 +38,10 @@ object VotingPowers {
 
     //   def *(multiplier: Int): VotingPower = PositiveVotingPower(value * BigInt(multiplier))
 
-    //   def >(other: VotingPower): Boolean = other match {
-    //       case PositiveVotingPower(value) => power() > value
-    //       case ZeroVotingPower => true
-    //   }
+      def >(other: VotingPower): Boolean = other match {
+          case PositiveVotingPower(value) => power() > value
+          case ZeroVotingPower => true
+      }
   }
 
   @library
