@@ -2,3 +2,4 @@ target/
 .stainless-cache/
 .bloop/
 .metals/
+/.idea/
