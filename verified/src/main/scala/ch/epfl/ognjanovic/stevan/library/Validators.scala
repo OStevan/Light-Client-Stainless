@@ -13,9 +13,10 @@ case class Validators(validators: Map[Node, PositiveVotingPower]) {
 
     def obtainedByzantineQuorum(nodes: List[Node]): Boolean = {
         require((nodes.content.toList.size == nodes.size) && (nodes.content subsetOf validators.keys.content))
-        nodesPower(nodes) * 3 > totalPower * 2
+        nodesPower(nodes) * VotingPowers.positive(3) > totalPower * VotingPowers.positive(2)
     }
 
+    @induct
     def nodesPower(nodes: List[Node]): VotingPower = {
         require(nodes.content subsetOf validators.keys.content)
         nodes match {

@@ -15,24 +15,39 @@ object VotingPowers {
 
     def +(other: VotingPower): VotingPower
 
-    def *(multiplier: BigInt): VotingPower = {
-      require(multiplier >= BigInt(0))
-      multiplier match {
-        case a if a == BigInt(0) => ZeroVotingPower
-        case _ => this match {
-          case PositiveVotingPower(value) => PositiveVotingPower(multiplier * value)
-          case ZeroVotingPower => ZeroVotingPower
-        }
-      }
-    }
+    def *(multiplier: VotingPower): VotingPower
 
     def >(other: VotingPower): Boolean
 
     def >=(other: VotingPower): Boolean
 
     @law
-    def positive_power(): Boolean = {
+    private def positive_power(): Boolean = {
       power() >= BigInt(0)
+    }
+
+    @law
+    private def multiplier_law(other: VotingPower, temp: VotingPower): Boolean = {
+      (this * other).power == (other * this).power &&
+      (this.power * other.power) == (this * other).power &&
+      (this * (other * temp)) == ((this * other) * temp)
+    }
+
+    @law
+    private def addition_law(other: VotingPower, temp: VotingPower): Boolean = {
+      (this + other).power == (other + this).power &&
+      (this.power + other.power) == (this + other).power &&
+      (this + (other + temp)) == ((this + other) + temp)
+    }
+
+    @law
+    private def greater_law(other: VotingPower): Boolean = {
+      this > other == this.power() > other.power()
+    }
+
+    @law
+    private def greater_equal_law(other: VotingPower): Boolean = {
+      this >= other == this.power() >= other.power()
     }
   }
 
@@ -40,6 +55,8 @@ object VotingPowers {
     def power(): BigInt = BigInt(0)
 
     override def +(other: VotingPower): VotingPower = other
+
+    override def *(multiplier: VotingPower): VotingPower = ZeroVotingPower
 
     override def >(other: VotingPower): Boolean = false
 
@@ -54,6 +71,11 @@ object VotingPowers {
     override def +(other: VotingPower): VotingPower = other match {
       case PositiveVotingPower(power) => PositiveVotingPower(power + value)
       case ZeroVotingPower => this
+    }
+
+    override def *(multiplier: VotingPower): VotingPower = multiplier match {
+      case PositiveVotingPower(value) => PositiveVotingPower(value * power)
+      case ZeroVotingPower => ZeroVotingPower
     }
 
     override def >(other: VotingPower): Boolean = other match {
