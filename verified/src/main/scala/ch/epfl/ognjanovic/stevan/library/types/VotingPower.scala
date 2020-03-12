@@ -88,9 +88,9 @@ object VotingPowers {
 
   @library
   implicit class VotingPowerOptional(val votingPower: Option[PositiveVotingPower]) extends AnyVal {
-    def power(): VotingPower = votingPower match {
+    def power(): VotingPower = (votingPower match {
       case Some(value) => value
       case None() => ZeroVotingPower
-    }
+    }) ensuring { res => res.power() >= 0 }
   }
 }
