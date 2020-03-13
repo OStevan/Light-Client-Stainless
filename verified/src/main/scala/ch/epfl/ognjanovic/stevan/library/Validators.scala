@@ -16,5 +16,5 @@ case class Validators(validators: NodePowers) {
     def nodesPower(nodes: Set[Node]): VotingPower = {
         require(nodes subsetOf validators.keys)
         nodes.toList.foldLeft(VotingPower(0))((acc, value) => acc + validators(value))
-    } ensuring(res => validators.totalPower >= res)
+    }
 }
