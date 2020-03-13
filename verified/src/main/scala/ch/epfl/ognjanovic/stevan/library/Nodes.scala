@@ -5,5 +5,7 @@ package ch.epfl.ognjanovic.stevan.library
   */
 object Nodes {
     sealed abstract class Node
-    case class SimpleNode() extends Node
+    case class SimpleNode(id: Int) extends Node {
+      require(id > 0)
+    }
 }
