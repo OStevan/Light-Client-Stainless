@@ -26,7 +26,10 @@ object BlockchainStates {
                 val validators = Validators(nodePowers)
                 val genesisBlock = BlockHeader(Height(0), Set.empty, validators, nextValidatorSet)
                 val staringBlockChain = Blockchain(false, Height(0), Height(0), List(genesisBlock), Set.empty)
-                Running(nodePowers.keys, Set.empty, maxHeight, maxPower, staringBlockChain)
+                if (maxHeight.value == BigInt(0))
+                    Finished(staringBlockChain)
+                else
+                    Running(nodePowers.keys, Set.empty, maxHeight, maxPower, staringBlockChain)
             case _ => this
         } 
     }

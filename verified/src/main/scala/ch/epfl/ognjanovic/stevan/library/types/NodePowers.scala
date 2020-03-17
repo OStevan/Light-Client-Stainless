@@ -6,7 +6,9 @@ import stainless.lang._
 import stainless.collection._
 
 case class NodePowers(totalPower: VotingPower, powerAssigments: Map[Node, VotingPower]) {
-    require(powerAssigments.values.forall(value => value.isPositive) && totalPower == powerAssigments.values.foldLeft(VotingPower(0))((acc, value) => acc + value))
+    require(powerAssigments.values.forall(value => value.isPositive) && 
+        totalPower == powerAssigments.values.foldLeft(VotingPower(0))((acc, value) => acc + value) &&
+        powerAssigments.keys.nonEmpty)
     
     def nodePower(node: Node): VotingPower = {
         powerAssigments.getOrElse(node, VotingPower(0))
