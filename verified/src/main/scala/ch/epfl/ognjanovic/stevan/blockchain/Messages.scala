@@ -8,8 +8,13 @@ import stainless.collection._
 
 object Messages {
     sealed abstract class SystemStep
-    case class Initialize(allNodes: Set[Node], maxHeight: Height, maxPower: VotingPower, validators: Validators) extends SystemStep {
-        require(allNodes.nonEmpty && maxPower.isPositive && validators.validators.keys.nonEmpty && (validators.validators.keys subsetOf allNodes))
+    case class Initialize(nodePowers: NodePowers, maxHeight: Height, maxPower: VotingPower, validators: Validators) extends SystemStep {
+        require(
+            nodePowers.keys.nonEmpty &&
+            nodePowers.values.forall(value => value.power == 1) && 
+            maxPower.isPositive &&
+            validators.validators.keys.nonEmpty &&
+            (validators.validators.keys subsetOf nodePowers.keys))
     }
 
     /**

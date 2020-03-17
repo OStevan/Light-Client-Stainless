@@ -22,17 +22,11 @@ object BlockchainStates {
 
     case object Uninitialized extends BlockchainSystem {
         def step(systemStep: SystemStep): BlockchainSystem = systemStep match {
-            case Initialize(allNodes, maxHeight, maxPower, nextValidatorSet) =>
-                val initialPowerAssigments: Map[Node, VotingPower] = allNodes.toList
-                    .foldLeft(Map[Node, VotingPower]())((acc, value) => acc + (value, VotingPower(1)))
-                val validators = Validators(
-                                    NodePowers(VotingPower(allNodes.size), initialPowerAssigments))
+            case Initialize(nodePowers, maxHeight, maxPower, nextValidatorSet) =>
+                val validators = Validators(nodePowers)
                 val genesisBlock = BlockHeader(Height(0), Set.empty, validators, nextValidatorSet)
                 val staringBlockChain = Blockchain(false, Height(0), Height(0), List(genesisBlock), Set.empty)
-                if (faultAssumption(Set.empty, Height(0), staringBlockChain))
-                    Faulty
-                else
-                    Running(allNodes, Set.empty, maxHeight, maxPower, staringBlockChain)
+                Running(nodePowers.keys, Set.empty, maxHeight, maxPower, staringBlockChain)
             case _ => this
         } 
     }
@@ -48,18 +42,19 @@ object BlockchainStates {
 
         def step(systemStep: SystemStep): BlockchainSystem = systemStep match {
             case _: Initialize => this
+            case _: Fault => this
             case TimeStep(step) => 
                 val newMinTrustedHeight = Height(min(min(maxHeight.value, blockchain.height.value + 1), blockchain.minTrustedHeight.value + step))
                 val newBlockchain = Blockchain(blockchain.tooManyFaults, blockchain.height, newMinTrustedHeight, blockchain.chain, blockchain.faulty)
                 if (newBlockchain.chainFault())
-                    Faulty()
+                    Faulty
                 else
                     Running(allNodes, faulty, maxHeight, maxPower, newBlockchain)
         }
     }
 
-    case object Faulty() extends BlockchainSystem {
-        def step(systemStep: Any): BlockchainSystem = this
+    case object Faulty extends BlockchainSystem {
+        def step(systemStep: SystemStep): BlockchainSystem = this
     }
 }
 
