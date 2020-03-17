@@ -14,9 +14,14 @@ case class Blockchain(tooManyFaults: Boolean, height: Height, minTrustedHeight: 
         chain.slice(min(minTrustedHeight.value, chain.length), chain.length).forall(header => header.nextValidatorSet.isCorrect(faulty))
     }
 
-    def appendBlock(header: BlockHeader): Blockchain = {
+    def appendBlock(lastCommit: Set[Node], validatorSet: Validators, nextVS: Validators): Blockchain = {
+        val header = BlockHeader(Height(chain.size), lastCommit, validatorSet, nextVS)
         Blockchain(tooManyFaults, Height(height.value + BigInt(1)), minTrustedHeight, header :: chain, faulty)
     }
 
+    def oneMore(maxHeight: Height): Boolean = height.value + 1 == maxHeight.value
+
     def size(): BigInt = chain.size
+
+    def setFaulty(newFaulty: Set[Node]): Blockchain = Blockchain(tooManyFaults, height, minTrustedHeight, chain, newFaulty)
 }

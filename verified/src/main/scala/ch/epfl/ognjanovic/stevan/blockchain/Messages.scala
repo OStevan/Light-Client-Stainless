@@ -27,4 +27,11 @@ object Messages {
         require(step > BigInt(0))
     }
     case class Fault(node: Node) extends SystemStep
+
+    case class AppendBlock(lastCommit: Set[Node], nodePowers: NodePowers) extends SystemStep {
+        require(
+            nodePowers.keys.nonEmpty &&
+            nodePowers.values.forall(value => value.power == 1) && 
+            !lastCommit.isEmpty)
+    }
 }
