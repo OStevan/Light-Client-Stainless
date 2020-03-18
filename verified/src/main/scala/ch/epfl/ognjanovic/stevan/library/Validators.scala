@@ -1,11 +1,6 @@
 package ch.epfl.ognjanovic.stevan.library
 
-import stainless.lang._
-import stainless.collection._
-import stainless.annotation._
 import ch.epfl.ognjanovic.stevan.library.Nodes.Node
-import ch.epfl.ognjanovic.stevan.library.types.VotingPower
-import ch.epfl.ognjanovic.stevan.library.types.NodePowers
 
 case class Validators(validators: NodePowers) {
 
