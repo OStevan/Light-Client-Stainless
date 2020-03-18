@@ -1,19 +1,21 @@
 package ch.epfl.ognjanovic.stevan.types
 
 import ch.epfl.ognjanovic.stevan.types.Nodes.Node
+import stainless.lang._
+import stainless.collection._
 
-case class NodePowers(totalPower: VotingPower, powerAssigments: Map[Node, VotingPower]) {
-    require(powerAssigments.values.forall(value => value.isPositive) &&
-      totalPower == powerAssigments.values.foldLeft(VotingPower(0))((acc, value) => acc + value) &&
-      powerAssigments.keys.nonEmpty)
+case class NodePowers(totalPower: VotingPower, powerAssignments: Map[Node, VotingPower]) {
+    require(powerAssignments.values.forall(value => value.isPositive) &&
+      totalPower == powerAssignments.values.foldLeft(VotingPower(0))((acc, value) => acc + value) &&
+      powerAssignments.keys.nonEmpty)
 
     def nodePower(node: Node): VotingPower = {
-        powerAssigments.getOrElse(node, VotingPower(0))
+        powerAssignments.getOrElse(node, VotingPower(0))
     } ensuring (res => (contains(node) ==> res.isPositive) || ((!contains(node)) ==> (!res.isPositive)))
 
-    def keys: Set[Node] = powerAssigments.keys.content
+    def keys: Set[Node] = powerAssignments.keys.content
 
-    def values: List[VotingPower] = powerAssigments.values
+    def values: List[VotingPower] = powerAssignments.values
 
     def contains(node: Node): Boolean = keys.contains(node)
 

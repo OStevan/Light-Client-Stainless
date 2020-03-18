@@ -2,6 +2,7 @@ package ch.epfl.ognjanovic.stevan.blockchain
 
 import ch.epfl.ognjanovic.stevan.types.Nodes._
 import ch.epfl.ognjanovic.stevan.types._
+import stainless.lang._
 
 object Messages {
 

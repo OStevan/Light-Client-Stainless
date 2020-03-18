@@ -2,6 +2,9 @@ package ch.epfl.ognjanovic.stevan.blockchain
 
 import ch.epfl.ognjanovic.stevan.types.Nodes._
 import ch.epfl.ognjanovic.stevan.types.{Height, _}
+import stainless.lang._
+import stainless.collection._
+import stainless.math._
 
 case class Blockchain(
                        height: Height,
