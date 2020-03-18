@@ -4,7 +4,6 @@ import ch.epfl.ognjanovic.stevan.types.Nodes._
 import ch.epfl.ognjanovic.stevan.types.{Height, _}
 
 case class Blockchain(
-                       tooManyFaults: Boolean,
                        height: Height,
                        minTrustedHeight: Height,
                        chain: List[BlockHeader],
@@ -18,7 +17,7 @@ case class Blockchain(
 
   def appendBlock(lastCommit: Set[Node], validatorSet: Validators, nextVS: Validators): Blockchain = {
     val header = BlockHeader(Height(chain.size), lastCommit, validatorSet, nextVS)
-    Blockchain(tooManyFaults, Height(height.value + BigInt(1)), minTrustedHeight, header :: chain, faulty)
+    Blockchain(Height(height.value + BigInt(1)), minTrustedHeight, header :: chain, faulty)
   }
 
   def oneMore(maxHeight: Height): Boolean = height.value + 1 == maxHeight.value
@@ -26,5 +25,5 @@ case class Blockchain(
   def size(): BigInt = chain.size
 
   def setFaulty(newFaulty: Set[Node]): Blockchain =
-    Blockchain(tooManyFaults, height, minTrustedHeight, chain, newFaulty)
+    Blockchain(height, minTrustedHeight, chain, newFaulty)
 }

@@ -21,12 +21,12 @@ object BlockchainStates {
             case Initialize(nodePowers, maxHeight, maxPower, nextValidatorSet) =>
                 val validators = Validators(nodePowers)
                 val genesisBlock = BlockHeader(Height(0), Set.empty, validators, nextValidatorSet)
-                val staringBlockChain =
-                    Blockchain(tooManyFaults = false, Height(0), Height(0), List(genesisBlock), Set.empty)
-                if (maxHeight.value == BigInt(0))
-                    Finished(staringBlockChain)
+                val startingBlockchain =
+                    Blockchain(Height(0), Height(0), List(genesisBlock), Set.empty)
+                if (maxHeight.value == BigInt(1))
+                    Finished(startingBlockchain)
                 else
-                    Running(nodePowers.keys, Set.empty, maxHeight, maxPower, staringBlockChain)
+                    Running(nodePowers.keys, Set.empty, maxHeight, maxPower, startingBlockchain)
             case _ => this
         }
     }
@@ -79,7 +79,6 @@ object BlockchainStates {
                             blockchain.minTrustedHeight.value + step))
                 val newBlockchain =
                     Blockchain(
-                        blockchain.tooManyFaults,
                         blockchain.height,
                         newMinTrustedHeight,
                         blockchain.chain,
@@ -105,6 +104,4 @@ object BlockchainStates {
     case class Finished(blockchain: Blockchain) extends BlockchainSystem {
         def step(systemStep: SystemStep): BlockchainSystem = this
     }
-
 }
-

@@ -17,7 +17,8 @@ object Messages {
               nodePowers.values.forall(value => value.power == 1) &&
               maxPower.isPositive &&
               validators.validators.keys.nonEmpty &&
-              (validators.validators.keys subsetOf nodePowers.keys))
+              (validators.validators.keys subsetOf nodePowers.keys) &&
+              maxHeight.value > BigInt(1))
     }
 
     /**
