@@ -74,7 +74,7 @@ object BlockchainStates {
                 else if (faultAssumption(newFaulty, blockchain.minTrustedHeight, blockchain))
                     Running(allNodes, newFaulty, maxHeight, maxPower, blockchain.setFaulty(newFaulty))
                 else
-                    Faulty
+                    Faulty(allNodes, newFaulty, maxHeight, maxPower, blockchain)
             case TimeStep(step) =>
                 val newMinTrustedHeight =
                     Height(
@@ -87,7 +87,7 @@ object BlockchainStates {
                         blockchain.chain,
                         blockchain.faulty)
                 if (newBlockchain.chainFault())
-                    Faulty
+                    Faulty(allNodes, faulty, maxHeight, maxPower, blockchain)
                 else
                     Running(allNodes, faulty, maxHeight, maxPower, newBlockchain)
             case AppendBlock(lastCommit, nodePowers) =>
@@ -100,11 +100,50 @@ object BlockchainStates {
         }
     }
 
-    case object Faulty extends BlockchainSystem {
-        def step(systemStep: SystemStep): BlockchainSystem = this
+    case class Faulty(
+                       allNodes: Set[Node],
+                       faulty: Set[Node],
+                       maxHeight: Height,
+                       maxPower: VotingPower,
+                       blockchain: Blockchain) extends BlockchainSystem {
+        require(
+            allNodes.nonEmpty && // makes no sense to have no nodes
+              (blockchain.height.value < maxHeight.value) && // chain height must be less than the system height
+              (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
+              (maxPower.isPositive) && // makes no sense to have 0 maximum voting power
+              (blockchain.minTrustedHeight.value <= maxHeight.value) // the system needs to stop at some point
+        )
+        def step(systemStep: SystemStep): BlockchainSystem = systemStep match {
+            case TimeStep(step) =>
+                // propagation of time allows us to move away from the chain where too many fault happened
+                val newMinTrustedHeight =
+                    Height(
+                        min(min(maxHeight.value, blockchain.height.value + 1),
+                            blockchain.minTrustedHeight.value + step))
+                val newBlockchain =
+                    Blockchain(
+                        blockchain.height,
+                        newMinTrustedHeight,
+                        blockchain.chain,
+                        blockchain.faulty)
+                if (newBlockchain.chainFault())
+                    Faulty(allNodes, faulty, maxHeight, maxPower, blockchain)
+                else
+                    Running(allNodes, faulty, maxHeight, maxPower, newBlockchain)
+            case Fault(faultyNode) =>
+                val newFaulty = faulty + faultyNode
+                if (!allNodes.contains(faultyNode))
+                    this // ignore cases when a random node is supplied
+                else if (newFaulty == allNodes)
+                    this // maintain at least one correct node, as per TLA spec
+                else // another fault can not improve the state of the chain
+                    Faulty(allNodes, newFaulty, maxHeight, maxPower, blockchain)
+            case _ => this
+        }
     }
 
     case class Finished(blockchain: Blockchain) extends BlockchainSystem {
         def step(systemStep: SystemStep): BlockchainSystem = this
     }
+
 }
