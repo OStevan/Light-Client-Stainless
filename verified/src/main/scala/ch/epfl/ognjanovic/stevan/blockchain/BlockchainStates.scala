@@ -89,7 +89,7 @@ object BlockchainStates {
                 else
                     Running(allNodes, faulty, maxHeight, maxPower, newBlockchain)
             case AppendBlock(lastCommit, nextValidatorSet: Validators) =>
-                // ignores append messages which do not preverve guarantees of the system
+                // ignores append messages which do not preserve guarantees of the system
                 if ((lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
                   (nextValidatorSet.keys subsetOf allNodes))
                     appendBlock(lastCommit, nextValidatorSet)
