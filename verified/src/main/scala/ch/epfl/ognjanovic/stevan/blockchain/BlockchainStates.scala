@@ -21,15 +21,14 @@ object BlockchainStates {
 
     case object Uninitialized extends BlockchainSystem {
         def step(systemStep: SystemStep): BlockchainSystem = systemStep match {
-            case Initialize(nodePowers, maxHeight, maxPower, nextValidatorSet) =>
-                val validators = Validators(nodePowers)
+            case Initialize(validators, maxHeight, maxPower, nextValidatorSet) =>
                 val genesisBlock = BlockHeader(Height(0), Set.empty, validators, nextValidatorSet)
                 val startingBlockchain =
                     Blockchain(Height(0), Height(0), List(genesisBlock), Set.empty)
                 if (maxHeight.value == BigInt(1))
                     Finished(startingBlockchain)
                 else
-                    Running(nodePowers.keys, Set.empty, maxHeight, maxPower, startingBlockchain)
+                    Running(validators.keys, Set.empty, maxHeight, maxPower, startingBlockchain)
             case _ => this
         }
     }
@@ -44,17 +43,16 @@ object BlockchainStates {
             allNodes.nonEmpty && // makes no sense to have no nodes
               (blockchain.height.value < maxHeight.value) && // chain height must be less than the system height
               (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
-              (maxPower.isPositive) && // makes no sense to have 0 maximum voting power
+              maxPower.isPositive && // makes no sense to have 0 maximum voting power
               (blockchain.minTrustedHeight.value <= maxHeight.value) // the system needs to stop at some point
         )
 
-        private def appendBlock(lastCommit: Set[Node], nodePowers: NodePowers) = {
-            require((lastCommit subsetOf blockchain.chain.head.validatorSet.validators.keys) &&
-              (nodePowers.keys subsetOf allNodes))
+        private def appendBlock(lastCommit: Set[Node], nextValidatorSet: Validators) = {
+            require((lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
+              (nextValidatorSet.keys subsetOf allNodes))
             val lastBlock = blockchain.chain.head
-            val nextVP = Validators(nodePowers)
-            if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit) && nextVP.isCorrect(faulty)) {
-                val newBlockchain = blockchain.appendBlock(lastCommit, lastBlock.nextValidatorSet, nextVP)
+            if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit) && nextValidatorSet.isCorrect(faulty)) {
+                val newBlockchain = blockchain.appendBlock(lastCommit, lastBlock.nextValidatorSet, nextValidatorSet)
                 if (blockchain.oneMore(maxHeight))
                     Finished(newBlockchain)
                 else
@@ -90,11 +88,11 @@ object BlockchainStates {
                     Faulty(allNodes, faulty, maxHeight, maxPower, blockchain)
                 else
                     Running(allNodes, faulty, maxHeight, maxPower, newBlockchain)
-            case AppendBlock(lastCommit, nodePowers) =>
+            case AppendBlock(lastCommit, nextValidatorSet: Validators) =>
                 // ignores append messages which do not preverve guarantees of the system
-                if ((lastCommit subsetOf blockchain.chain.head.validatorSet.validators.keys) &&
-                  (nodePowers.keys subsetOf allNodes))
-                    appendBlock(lastCommit, nodePowers)
+                if ((lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
+                  (nextValidatorSet.keys subsetOf allNodes))
+                    appendBlock(lastCommit, nextValidatorSet)
                 else
                     this
         }
@@ -110,7 +108,7 @@ object BlockchainStates {
             allNodes.nonEmpty && // makes no sense to have no nodes
               (blockchain.height.value < maxHeight.value) && // chain height must be less than the system height
               (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
-              (maxPower.isPositive) && // makes no sense to have 0 maximum voting power
+              maxPower.isPositive && // makes no sense to have 0 maximum voting power
               (blockchain.minTrustedHeight.value <= maxHeight.value) // the system needs to stop at some point
         )
         def step(systemStep: SystemStep): BlockchainSystem = systemStep match {

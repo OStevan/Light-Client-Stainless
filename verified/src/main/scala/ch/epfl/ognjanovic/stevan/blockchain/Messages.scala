@@ -9,16 +9,16 @@ object Messages {
     sealed abstract class SystemStep
 
     case class Initialize(
-                           nodePowers: NodePowers,
+                           validatorSet: Validators,
                            maxHeight: Height,
                            maxPower: VotingPower,
-                           validators: Validators) extends SystemStep {
+                           nextValidatorSet: Validators) extends SystemStep {
         require(
-            nodePowers.keys.nonEmpty &&
-              nodePowers.values.forall(value => value.power == 1) &&
+            validatorSet.keys.nonEmpty &&
+              validatorSet.values.forall(value => value.power == 1) &&
               maxPower.isPositive &&
-              validators.validators.keys.nonEmpty &&
-              (validators.validators.keys subsetOf nodePowers.keys) &&
+              nextValidatorSet.keys.nonEmpty &&
+              (nextValidatorSet.keys subsetOf validatorSet.keys) &&
               maxHeight.value > BigInt(1))
     }
 
@@ -34,10 +34,10 @@ object Messages {
     }
     case class Fault(node: Node) extends SystemStep
 
-    case class AppendBlock(lastCommit: Set[Node], nodePowers: NodePowers) extends SystemStep {
+    case class AppendBlock(lastCommit: Set[Node], nextValidatorSet: Validators) extends SystemStep {
         require(
-            nodePowers.keys.nonEmpty &&
-              nodePowers.values.forall(value => value.power == 1) &&
+            nextValidatorSet.keys.nonEmpty &&
+              nextValidatorSet.values.forall(value => value.power == 1) &&
               lastCommit.nonEmpty)
     }
 }
