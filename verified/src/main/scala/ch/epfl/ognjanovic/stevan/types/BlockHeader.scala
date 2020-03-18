@@ -1,5 +1,5 @@
-package ch.epfl.ognjanovic.stevan.library
+package ch.epfl.ognjanovic.stevan.types
 
-import ch.epfl.ognjanovic.stevan.library.Nodes._
+import ch.epfl.ognjanovic.stevan.types.Nodes._
 
 case class BlockHeader(height: Height, lastCommit: Set[Node], validatorSet: Validators, nextValidatorSet: Validators)

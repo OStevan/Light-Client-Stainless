@@ -1,8 +1,8 @@
 package ch.epfl.ognjanovic.stevan.blockchain
 
 import ch.epfl.ognjanovic.stevan.blockchain.Messages._
-import ch.epfl.ognjanovic.stevan.library.Nodes._
-import ch.epfl.ognjanovic.stevan.library._
+import ch.epfl.ognjanovic.stevan.types.Nodes._
+import ch.epfl.ognjanovic.stevan.types._
 
 object BlockchainStates {
 

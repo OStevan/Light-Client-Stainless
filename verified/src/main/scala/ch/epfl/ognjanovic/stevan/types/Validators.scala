@@ -1,6 +1,6 @@
-package ch.epfl.ognjanovic.stevan.library
+package ch.epfl.ognjanovic.stevan.types
 
-import ch.epfl.ognjanovic.stevan.library.Nodes.Node
+import ch.epfl.ognjanovic.stevan.types.Nodes.Node
 
 case class Validators(validators: NodePowers) {
 
