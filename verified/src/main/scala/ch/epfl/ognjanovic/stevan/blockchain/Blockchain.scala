@@ -13,6 +13,14 @@ case class Blockchain(
                        faulty: Set[Node]) {
   require(chain.nonEmpty && chain.size == height.value + BigInt(1))
 
+  def increaseMinTrustedHeight(step: BigInt, maxHeight: Height): Blockchain = {
+    require(step > BigInt(0))
+    val newMinTrustedHeight =
+      Height(
+        min(min(maxHeight.value, height.value + 1), minTrustedHeight.value + step))
+    Blockchain(height, newMinTrustedHeight, chain, faulty)
+  }
+
   def chainFault(): Boolean = {
     chain.slice(min(minTrustedHeight.value, chain.length), chain.length)
       .forall(header => header.nextValidatorSet.isCorrect(faulty))
