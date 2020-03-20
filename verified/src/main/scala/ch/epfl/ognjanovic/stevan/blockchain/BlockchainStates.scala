@@ -23,8 +23,7 @@ object BlockchainStates {
     def step(systemStep: SystemStep): BlockchainSystem = systemStep match {
       case Initialize(validators, maxHeight, maxPower, nextValidatorSet) =>
         val genesisBlock = BlockHeader(Height(0), Set.empty, validators, nextValidatorSet)
-        val startingBlockchain =
-          Blockchain(Height(0), Height(0), List(genesisBlock), Set.empty)
+        val startingBlockchain = Blockchain(Height(0), Height(0), List(genesisBlock), Set.empty)
         if (maxHeight.value == BigInt(1))
           Finished(startingBlockchain)
         else

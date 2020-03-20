@@ -11,7 +11,14 @@ case class Blockchain(
                        minTrustedHeight: Height,
                        chain: List[BlockHeader],
                        faulty: Set[Node]) {
-  require(chain.nonEmpty && chain.size == height.value + BigInt(1))
+  require(
+    chain.nonEmpty && // there at least has to one block(genesis block)
+    chain.size == height.value + BigInt(1) && // height of the last block should be the same as the chain size
+    chain.head.height == height &&
+    chain.map(_.height.value).forall(value => chain.size > value)
+//      chain.size == chain.map(_.height).content.toList.size //&& // each block should have a unique height
+//      ListOps.isSorted(chain.map(_.height.value).reverse) // force that heights are sorted
+   )
 
   def increaseMinTrustedHeight(step: BigInt, maxHeight: Height): Blockchain = {
     require(step > BigInt(0))
@@ -27,14 +34,16 @@ case class Blockchain(
   }
 
   def appendBlock(lastCommit: Set[Node], validatorSet: Validators, nextVS: Validators): Blockchain = {
+//    require(ListOps.isSorted(chain.map(_.height.value).reverse))
     val header = BlockHeader(Height(chain.size), lastCommit, validatorSet, nextVS)
-    Blockchain(Height(height.value + BigInt(1)), minTrustedHeight, header :: chain, faulty)
+    val newChain = Cons(header, chain)
+    Blockchain(Height(chain.size), minTrustedHeight, newChain, faulty)
   }
+//  ensuring(res => ListOps.isSorted(res.chain.map(_.height.value).reverse))
 
   def oneMore(maxHeight: Height): Boolean = height.value + 1 == maxHeight.value
 
   def size(): BigInt = chain.size
 
-  def setFaulty(newFaulty: Set[Node]): Blockchain =
-    Blockchain(height, minTrustedHeight, chain, newFaulty)
+  def setFaulty(newFaulty: Set[Node]): Blockchain = Blockchain(height, minTrustedHeight, chain, newFaulty)
 }
