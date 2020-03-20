@@ -1,49 +1,52 @@
 package ch.epfl.ognjanovic.stevan.blockchain
 
+import ch.epfl.ognjanovic.stevan.types.Chain.{Chain, ChainLink}
 import ch.epfl.ognjanovic.stevan.types.Nodes._
 import ch.epfl.ognjanovic.stevan.types.{Height, _}
 import stainless.lang._
 import stainless.collection._
 import stainless.math._
+import stainless.annotation._
 
 case class Blockchain(
-                       height: Height,
+                       maxHeight: Height,
                        minTrustedHeight: Height,
-                       chain: List[BlockHeader],
+                       chain: Chain,
                        faulty: Set[Node]) {
-  require(
-    chain.nonEmpty && // there at least has to one block(genesis block)
-    chain.size == height.value + BigInt(1) && // height of the last block should be the same as the chain size
-    chain.head.height == height &&
-    chain.map(_.height.value).forall(value => chain.size > value)
-//      chain.size == chain.map(_.height).content.toList.size //&& // each block should have a unique height
-//      ListOps.isSorted(chain.map(_.height.value).reverse) // force that heights are sorted
-   )
+  require(minTrustedHeight.value <= chain.height.value + 1
+    && chain.height.value <= maxHeight.value
+    && minTrustedHeight.value <= maxHeight.value)
 
-  def increaseMinTrustedHeight(step: BigInt, maxHeight: Height): Blockchain = {
+  def increaseMinTrustedHeight(step: BigInt): Blockchain = {
     require(step > BigInt(0))
     val newMinTrustedHeight =
       Height(
-        min(min(maxHeight.value, height.value + 1), minTrustedHeight.value + step))
-    Blockchain(height, newMinTrustedHeight, chain, faulty)
+        min(min(maxHeight.value, chain.height.value + 1), (minTrustedHeight + step).value))
+    Blockchain(maxHeight, newMinTrustedHeight, chain, faulty)
   }
 
-  def chainFault(): Boolean = {
-    chain.slice(min(minTrustedHeight.value, chain.length), chain.length)
-      .forall(header => header.nextValidatorSet.isCorrect(faulty))
+  def faultAssumption(): Boolean = {
+    chain.map(_.nextValidatorSet).slice(0, (chain.size - minTrustedHeight.value + 1))
+      .forall(validatorSet => validatorSet.isCorrect(faulty))
   }
 
-  def appendBlock(lastCommit: Set[Node], validatorSet: Validators, nextVS: Validators): Blockchain = {
-//    require(ListOps.isSorted(chain.map(_.height.value).reverse))
-    val header = BlockHeader(Height(chain.size), lastCommit, validatorSet, nextVS)
-    val newChain = Cons(header, chain)
-    Blockchain(Height(chain.size), minTrustedHeight, newChain, faulty)
-  }
-//  ensuring(res => ListOps.isSorted(res.chain.map(_.height.value).reverse))
+  def appendBlock(lastCommit: Set[Node], nextVS: Validators): Blockchain = {
+    require(chain.height.value < maxHeight.value)
+    if (chain.height == maxHeight)
+      this
+    else {
+      val header = BlockHeader(chain.height + 1, lastCommit, chain.head.nextValidatorSet, nextVS)
+      val newChain = chain.appendBlock(header)
+      Blockchain(maxHeight, minTrustedHeight, newChain, faulty)
+    }
+  }.ensuring(res => res.chain.height.value <= maxHeight.value &&
+    res.minTrustedHeight == minTrustedHeight)
 
-  def oneMore(maxHeight: Height): Boolean = height.value + 1 == maxHeight.value
+  def finished(maxHeight: Height): Boolean = chain.height == maxHeight
 
-  def size(): BigInt = chain.size
+  def size: BigInt = chain.size
 
-  def setFaulty(newFaulty: Set[Node]): Blockchain = Blockchain(height, minTrustedHeight, chain, newFaulty)
+  def height: Height = chain.height
+
+  def setFaulty(newFaulty: Set[Node]): Blockchain = Blockchain(maxHeight, minTrustedHeight, chain, newFaulty)
 }
