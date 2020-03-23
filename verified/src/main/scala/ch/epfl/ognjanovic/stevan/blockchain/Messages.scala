@@ -18,8 +18,7 @@ object Messages {
         validatorSet.values.forall(value => value.power == 1) &&
         maxPower.isPositive &&
         nextValidatorSet.keys.nonEmpty &&
-        (nextValidatorSet.keys subsetOf validatorSet.keys) &&
-        maxHeight.value > BigInt(1))
+        (nextValidatorSet.keys subsetOf validatorSet.keys))
   }
 
   /**
