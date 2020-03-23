@@ -90,9 +90,9 @@ object BlockchainStates {
                      maxPower: VotingPower,
                      blockchain: Blockchain) extends BlockchainSystem {
     require(
-        allNodes.nonEmpty && // makes no sense to have no nodes
-          (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
-        maxPower.isPositive// makes no sense to have 0 maximum voting power
+      allNodes.nonEmpty && // makes no sense to have no nodes
+      (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
+      maxPower.isPositive// makes no sense to have 0 maximum voting power
     )
 
     def step(systemStep: SystemStep): BlockchainSystem = systemStep match {

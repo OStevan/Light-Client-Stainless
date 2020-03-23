@@ -13,9 +13,9 @@ case class Blockchain(
                        minTrustedHeight: Height,
                        chain: Chain,
                        faulty: Set[Node]) {
-  require(minTrustedHeight.value <= min(chain.height.value + 1, maxHeight.value)
-    && chain.height.value <= maxHeight.value)
-//    && minTrustedHeight.value <= maxHeight.value)
+  require(
+    minTrustedHeight.value <= min(chain.height.value + 1, maxHeight.value) &&
+      chain.height.value <= maxHeight.value)
 
   def increaseMinTrustedHeight(step: BigInt): Blockchain = {
     require(step > BigInt(0))

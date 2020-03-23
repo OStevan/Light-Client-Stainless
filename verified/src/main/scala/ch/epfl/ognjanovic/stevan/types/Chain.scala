@@ -45,7 +45,7 @@ object Chain {
   case class ChainLink(blockHeader: BlockHeader, tail: Chain) extends Chain {
     require(
       blockHeader.height == tail.height + 1 && // height needs to be increasing in steps of 1
-        blockHeader.validatorSet == tail.head.nextValidatorSet // the lnk needs to be trusted
+        blockHeader.validatorSet == tail.head.nextValidatorSet // the link needs to be trusted
     )
   }
 }
