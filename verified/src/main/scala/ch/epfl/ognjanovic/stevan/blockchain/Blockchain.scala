@@ -31,7 +31,6 @@ case class Blockchain(
   }
 
   def appendBlock(lastCommit: Set[Node], nextVS: Validators): Blockchain = {
-    require(chain.height.value < maxHeight.value)
     if (chain.height == maxHeight)
       this
     else {
@@ -42,7 +41,7 @@ case class Blockchain(
   }.ensuring(res => res.chain.height.value <= maxHeight.value &&
     res.minTrustedHeight == minTrustedHeight)
 
-  def finished(maxHeight: Height): Boolean = chain.height == maxHeight
+  def finished: Boolean = chain.height == maxHeight
 
   def size: BigInt = chain.size
 

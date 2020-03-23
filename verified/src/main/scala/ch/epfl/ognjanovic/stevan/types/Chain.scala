@@ -16,7 +16,7 @@ object Chain {
         case Genesis(_) => BigInt(1)
         case ChainLink(_, tail) => BigInt(1) + tail.size
       }
-    }.ensuring((res: BigInt) => res > BigInt(0))
+    }.ensuring((res: BigInt) => res > BigInt(0) && res == head.height.value)
 
     def height: Height = Height(size)
 
@@ -48,5 +48,4 @@ object Chain {
         blockHeader.validatorSet == tail.head.nextValidatorSet // the lnk needs to be trusted
     )
   }
-
 }

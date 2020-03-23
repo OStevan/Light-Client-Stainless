@@ -21,7 +21,7 @@ object BlockchainStates {
         if (maxHeight.value == BigInt(1))
           Finished(startingBlockchain)
         else
-          Running(validators.keys, Set.empty, maxHeight, maxPower, startingBlockchain)
+          Running(validators.keys, Set.empty, maxPower, startingBlockchain)
       case _ => this
     }
   }
@@ -29,14 +29,10 @@ object BlockchainStates {
   case class Running(
                       allNodes: Set[Node],
                       faulty: Set[Node],
-                      maxHeight: Height,
                       maxPower: VotingPower,
                       blockchain: Blockchain) extends BlockchainSystem {
     require(
       allNodes.nonEmpty && // makes no sense to have no nodes
-        blockchain.maxHeight == maxHeight &&
-        (blockchain.height.value < maxHeight.value) && // chain height must be less than the system height
-        blockchain.height.value < blockchain.maxHeight.value &&
         (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
         maxPower.isPositive // makes no sense to have 0 maximum voting power
     )
@@ -47,10 +43,10 @@ object BlockchainStates {
       val lastBlock = blockchain.chain.head
       if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit) && nextValidatorSet.isCorrect(faulty)) {
         val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
-        if (blockchain.finished(maxHeight))
+        if (blockchain.finished)
           Finished(newBlockchain)
         else {
-          Running(allNodes, faulty, maxHeight, maxPower, newBlockchain)
+          Running(allNodes, faulty, maxPower, newBlockchain)
         }
       } else
         this
@@ -66,16 +62,15 @@ object BlockchainStates {
         else if (newFaulty == allNodes)
           this // maintain at least one correct node, as per TLA spec
         else if (newChain.faultAssumption())
-          Running(allNodes, newFaulty, maxHeight, maxPower, blockchain.setFaulty(newFaulty))
+          Running(allNodes, newFaulty, maxPower, blockchain.setFaulty(newFaulty))
         else
-          Faulty(allNodes, newFaulty, maxHeight, maxPower, blockchain)
+          Faulty(allNodes, newFaulty, maxPower, blockchain)
       case TimeStep(step) =>
         val updated = blockchain.increaseMinTrustedHeight(step)
-        assert(updated.minTrustedHeight.value <= maxHeight.value)
         if (updated.faultAssumption())
-          Faulty(allNodes, faulty, maxHeight, maxPower, blockchain)
+          Faulty(allNodes, faulty, maxPower, blockchain)
         else
-          Running(allNodes, faulty, maxHeight, maxPower, updated)
+          Running(allNodes, faulty, maxPower, updated)
       case AppendBlock(lastCommit, nextValidatorSet: Validators) =>
         // ignores append messages which do not preserve guarantees of the system
         if ((lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
@@ -89,13 +84,11 @@ object BlockchainStates {
   case class Faulty(
                      allNodes: Set[Node],
                      faulty: Set[Node],
-                     maxHeight: Height,
                      maxPower: VotingPower,
                      blockchain: Blockchain) extends BlockchainSystem {
     require(
-      allNodes.nonEmpty && // makes no sense to have no nodes
-        (blockchain.height.value < maxHeight.value) && // chain height must be less than the system height
-        (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
+        allNodes.nonEmpty && // makes no sense to have no nodes
+          (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
         maxPower.isPositive// makes no sense to have 0 maximum voting power
     )
 
@@ -104,9 +97,9 @@ object BlockchainStates {
         // propagation of time allows us to move away from the chain where too many fault happened
         val updated = blockchain.increaseMinTrustedHeight(step)
         if (updated.faultAssumption())
-          Faulty(allNodes, faulty, maxHeight, maxPower, blockchain)
+          Faulty(allNodes, faulty, maxPower, blockchain)
         else
-          Running(allNodes, faulty, maxHeight, maxPower, updated)
+          Running(allNodes, faulty, maxPower, updated)
       case Fault(faultyNode) =>
         val newFaulty = faulty + faultyNode
         if (!allNodes.contains(faultyNode))
@@ -114,7 +107,7 @@ object BlockchainStates {
         else if (newFaulty == allNodes)
           this // maintain at least one correct node, as per TLA spec
         else // another fault can not improve the state of the chain
-        Faulty(allNodes, newFaulty, maxHeight, maxPower, blockchain)
+        Faulty(allNodes, newFaulty, maxPower, blockchain)
       case _ => this
     }
   }
