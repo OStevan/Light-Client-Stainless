@@ -9,12 +9,12 @@ import stainless.collection._
 import stainless.math._
 
 object BlockchainStates {
-  sealed abstract class BlockchainSystem {
-    def step(systemStep: SystemStep): BlockchainSystem
+  sealed abstract class BlockchainState {
+    def step(systemStep: SystemStep): BlockchainState
   }
 
-  case object Uninitialized extends BlockchainSystem {
-    def step(systemStep: SystemStep): BlockchainSystem = systemStep match {
+  case object Uninitialized extends BlockchainState {
+    def step(systemStep: SystemStep): BlockchainState = systemStep match {
       case Initialize(validators, maxHeight, maxPower, nextValidatorSet) =>
         val genesisBlock = BlockHeader(Height(1), Set.empty, validators, nextValidatorSet)
         val initialChain = Genesis(genesisBlock)
@@ -33,14 +33,14 @@ object BlockchainStates {
                       allNodes: Set[Node],
                       faulty: Set[Node],
                       maxPower: VotingPower,
-                      blockchain: Blockchain) extends BlockchainSystem {
+                      blockchain: Blockchain) extends BlockchainState {
     require(
       allNodes.nonEmpty && // makes no sense to have no nodes
         (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
         maxPower.isPositive // makes no sense to have 0 maximum voting power
     )
 
-    private def appendBlock(lastCommit: Set[Node], nextValidatorSet: Validators): BlockchainSystem = {
+    private def appendBlock(lastCommit: Set[Node], nextValidatorSet: Validators): BlockchainState = {
       require((lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
         (nextValidatorSet.keys subsetOf allNodes))
       val lastBlock = blockchain.chain.head
@@ -55,7 +55,7 @@ object BlockchainStates {
         this
     }
 
-    def step(systemStep: SystemStep): BlockchainSystem = systemStep match {
+    def step(systemStep: SystemStep): BlockchainState = systemStep match {
       case _: Initialize => this
       case Fault(faultyNode) =>
         val newFaulty = faulty + faultyNode
@@ -88,14 +88,14 @@ object BlockchainStates {
                      allNodes: Set[Node],
                      faulty: Set[Node],
                      maxPower: VotingPower,
-                     blockchain: Blockchain) extends BlockchainSystem {
+                     blockchain: Blockchain) extends BlockchainState {
     require(
       allNodes.nonEmpty && // makes no sense to have no nodes
       (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
       maxPower.isPositive// makes no sense to have 0 maximum voting power
     )
 
-    def step(systemStep: SystemStep): BlockchainSystem = systemStep match {
+    def step(systemStep: SystemStep): BlockchainState = systemStep match {
       case TimeStep(step) =>
         // propagation of time allows us to move away from the chain where too many fault happened
         val updated = blockchain.increaseMinTrustedHeight(step)
@@ -115,7 +115,7 @@ object BlockchainStates {
     }
   }
 
-  case class Finished(blockchain: Blockchain) extends BlockchainSystem {
-    def step(systemStep: SystemStep): BlockchainSystem = this
+  case class Finished(blockchain: Blockchain) extends BlockchainState {
+    def step(systemStep: SystemStep): BlockchainState = this
   }
 }
