@@ -7,14 +7,18 @@ import ch.epfl.ognjanovic.stevan.types._
 import stainless.lang._
 import stainless.collection._
 import stainless.math._
+import stainless.annotation._
 
 object BlockchainStates {
   sealed abstract class BlockchainState {
+    @pure
+    @inline
     def step(systemStep: SystemStep): BlockchainState
   }
 
   case object Uninitialized extends BlockchainState {
-    def step(systemStep: SystemStep): BlockchainState = systemStep match {
+    @pure
+    def step(systemStep: SystemStep): BlockchainState = (systemStep match {
       case Initialize(validators, maxHeight, maxPower, nextValidatorSet) =>
         val genesisBlock = BlockHeader(Height(1), Set.empty, validators, nextValidatorSet)
         val initialChain = Genesis(genesisBlock)
@@ -26,7 +30,7 @@ object BlockchainStates {
         else
           Running(validators.keys, Set.empty, maxPower, startingBlockchain)
       case _ => this
-    }
+    }).ensuring(res => res.isInstanceOf[Running] || res.isInstanceOf[Finished] || res == Uninitialized)
   }
 
   case class Running(
@@ -57,7 +61,8 @@ object BlockchainStates {
         this
     }
 
-    def step(systemStep: SystemStep): BlockchainState = systemStep match {
+    @pure
+    def step(systemStep: SystemStep): BlockchainState = (systemStep match {
       case _: Initialize => this
       case Fault(faultyNode) =>
         val newFaulty = faulty + faultyNode
@@ -83,7 +88,7 @@ object BlockchainStates {
           appendBlock(lastCommit, nextValidatorSet)
         else
           this
-    }
+    }).ensuring(res => res != Uninitialized)
   }
 
   case class Faulty(
@@ -97,7 +102,8 @@ object BlockchainStates {
       maxPower.isPositive// makes no sense to have 0 maximum voting power
     )
 
-    def step(systemStep: SystemStep): BlockchainState = systemStep match {
+    @pure
+    def step(systemStep: SystemStep): BlockchainState = (systemStep match {
       case TimeStep(step) =>
         // propagation of time allows us to move away from the chain where too many fault happened
         val updated = blockchain.increaseMinTrustedHeight(step)
@@ -114,10 +120,11 @@ object BlockchainStates {
         else // another fault can not improve the state of the chain
         Faulty(allNodes, newFaulty, maxPower, blockchain)
       case _ => this
-    }
+    }).ensuring(res => res.isInstanceOf[Faulty] || res.isInstanceOf[Running])
   }
 
   case class Finished(blockchain: Blockchain) extends BlockchainState {
-    def step(systemStep: SystemStep): BlockchainState = this
+    @pure
+    def step(systemStep: SystemStep): BlockchainState = (this).ensuring(res => res.isInstanceOf[Finished])
   }
 }

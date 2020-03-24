@@ -13,8 +13,7 @@ object BlockchainSystem {
 
   @ghost
   def systemInvariant(blockchainState: BlockchainState, message: SystemStep): Boolean = {
-    val newState = blockchainState.step(message)
-    newState == Uninitialized || neverStuckFalse1(newState)
+    neverStuckFalse1(blockchainState.step(message))
   }.holds
 
   /**
