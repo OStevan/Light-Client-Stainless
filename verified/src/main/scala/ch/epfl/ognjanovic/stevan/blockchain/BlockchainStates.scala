@@ -42,7 +42,9 @@ object BlockchainStates {
 
     private def appendBlock(lastCommit: Set[Node], nextValidatorSet: Validators): BlockchainState = {
       require((lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
-        (nextValidatorSet.keys subsetOf allNodes))
+        (nextValidatorSet.keys subsetOf allNodes) &&
+        nextValidatorSet.keys.nonEmpty &&
+        lastCommit.nonEmpty)
       val lastBlock = blockchain.chain.head
       if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit) && nextValidatorSet.isCorrect(faulty)) {
         val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)

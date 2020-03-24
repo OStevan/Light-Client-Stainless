@@ -31,6 +31,7 @@ case class Blockchain(
   }
 
   def appendBlock(lastCommit: Set[Node], nextVS: Validators): Blockchain = {
+    require(nextVS.keys.nonEmpty && lastCommit.nonEmpty)
     if (chain.height == maxHeight)
       this
     else {
