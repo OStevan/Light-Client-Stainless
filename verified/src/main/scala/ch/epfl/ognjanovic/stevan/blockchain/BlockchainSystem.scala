@@ -1,20 +1,48 @@
 package ch.epfl.ognjanovic.stevan.blockchain;
 
 import ch.epfl.ognjanovic.stevan.blockchain.BlockchainStates._
-import ch.epfl.ognjanovic.stevan.blockchain.Messages.SystemStep
-import stainless.annotation._
-import stainless.lang._
+import ch.epfl.ognjanovic.stevan.types.Chain.Genesis
+import ch.epfl.ognjanovic.stevan.types.{BlockHeader, Height, Validators, VotingPower}
 
 @ghost
 object BlockchainSystem {
 
   @ghost
-  def initialSystem(): BlockchainState = Uninitialized
+  def initialSystem(
+                     validatorSet: Validators,
+                     maxHeight: Height,
+                     maxPower: VotingPower,
+                     nextValidatorSet: Validators): BlockchainState = {
+    require(
+      validatorSet.keys.nonEmpty &&
+        validatorSet.values.forall(value => value.power == 1) &&
+        maxPower.isPositive &&
+        nextValidatorSet.keys.nonEmpty &&
+        (nextValidatorSet.keys subsetOf validatorSet.keys))
 
-  @ghost
-  def systemInvariant(blockchainState: BlockchainState, message: SystemStep): Boolean = {
-    neverStuckFalse1(blockchainState.step(message))
-  }.holds
+    val genesisBlock = BlockHeader(Height(1), Set.empty, validatorSet, nextValidatorSet)
+    val initialChain = Genesis(genesisBlock)
+    val minTrustedHeight = Height(1)
+    assert(initialChain.height.value <= maxHeight.value) // without this assertion, infinite verification
+    val startingBlockchain = Blockchain(maxHeight, minTrustedHeight, initialChain, Set.empty)
+    if (maxHeight.value == BigInt(1))
+      Finished(startingBlockchain)
+    else
+      Running(validatorSet.keys, Set.empty, maxPower, startingBlockchain)
+  }.ensuring(res => neverStuckFalse2(res))
+
+  //  @ghost
+  //  def systemInvariant(blockchainState: BlockchainState, message: SystemStep): Boolean = {
+  //    require(blockchainState.maxHeight.value < 3 &&
+  //      blockchainState.numberOfNodes == 2 &&
+  //      blockchainState.maxPower.value <= 1)
+  //    message match {
+  //      case m: Messages.Fault => neverStuckFalse2(blockchainState.step(m))
+  //      case m: Messages.AppendBlock => neverStuckFalse2(blockchainState.step(m))
+  //      case m: Messages.TimeStep => neverStuckFalse2(blockchainState.step(m))
+  //      case m: Messages.Initialize => neverStuckFalse2(blockchainState.step(m))
+  //    }
+  //  }.holds
 
   /**
    * This invariant is basically NeverStuckFalse2 from the TLA spec. Ignoring the uninitialized state.
