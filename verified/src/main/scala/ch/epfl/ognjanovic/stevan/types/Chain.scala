@@ -10,6 +10,8 @@ object Chain {
    * By design chain can not be empty.
    */
   sealed abstract class Chain {
+    def forAll(condition: BlockHeader => Boolean): Boolean = map(block => block).forall(condition)
+
     @induct
     def size: BigInt = {
       this match {

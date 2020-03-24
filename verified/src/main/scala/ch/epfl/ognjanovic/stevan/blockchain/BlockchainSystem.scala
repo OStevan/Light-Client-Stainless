@@ -1,8 +1,12 @@
 package ch.epfl.ognjanovic.stevan.blockchain;
 
 import ch.epfl.ognjanovic.stevan.blockchain.BlockchainStates._
+import ch.epfl.ognjanovic.stevan.blockchain.Messages.SystemStep
 import ch.epfl.ognjanovic.stevan.types.Chain.Genesis
 import ch.epfl.ognjanovic.stevan.types.{BlockHeader, Height, Validators, VotingPower}
+import stainless.lang._
+import stainless.annotation._
+import stainless.collection._
 
 @ghost
 object BlockchainSystem {
@@ -31,18 +35,25 @@ object BlockchainSystem {
       Running(validatorSet.keys, Set.empty, maxPower, startingBlockchain)
   }.ensuring(res => neverStuckFalse2(res))
 
-  //  @ghost
-  //  def systemInvariant(blockchainState: BlockchainState, message: SystemStep): Boolean = {
-  //    require(blockchainState.maxHeight.value < 3 &&
-  //      blockchainState.numberOfNodes == 2 &&
-  //      blockchainState.maxPower.value <= 1)
-  //    message match {
-  //      case m: Messages.Fault => neverStuckFalse2(blockchainState.step(m))
-  //      case m: Messages.AppendBlock => neverStuckFalse2(blockchainState.step(m))
-  //      case m: Messages.TimeStep => neverStuckFalse2(blockchainState.step(m))
-  //      case m: Messages.Initialize => neverStuckFalse2(blockchainState.step(m))
-  //    }
-  //  }.holds
+  @ghost
+  def systemInvariant(blockchainState: BlockchainState, message: SystemStep): Boolean = {
+    require(blockchainState.maxHeight.value <= 3 &&
+      blockchainState.numberOfNodes == 2 &&
+      blockchainState.maxPower.value <= 1 &&
+      blockchainState.blockchain.chain.forAll(headerCheck))
+    message match {
+      case m: Messages.Fault => neverFaulty(blockchainState.step(m))
+      case m: Messages.AppendBlock => neverFaulty(blockchainState.step(m))
+      case m: Messages.TimeStep => neverFaulty(blockchainState.step(m))
+    }
+  }.holds
+
+  @inline
+  private def headerCheck(header: BlockHeader): Boolean = {
+    header.height.value <= 3 && header.lastCommit.toList.size <= 2 && header.validatorSet.keys.toList.size <= 2 &&
+      header.nextValidatorSet.keys.toList.size <= 2 && header.validatorSet.values.forall(value => value.value == 1) &&
+      header.nextValidatorSet.values.forall(value => value.value == 1)
+  }
 
   /**
    * This invariant is basically NeverStuckFalse2 from the TLA spec. Ignoring the uninitialized state.
@@ -54,8 +65,8 @@ object BlockchainSystem {
   @inlineOnce
   def neverStuckFalse2(blockchainState: BlockchainState): Boolean = {
     blockchainState.isInstanceOf[Faulty] ||
-      blockchainState.isInstanceOf[Running] ||
-      blockchainState.isInstanceOf[Finished]
+      (blockchainState.isInstanceOf[Running] ||
+        blockchainState.isInstanceOf[Finished])
   }
 
   /**

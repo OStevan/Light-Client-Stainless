@@ -1,15 +1,14 @@
 package ch.epfl.ognjanovic.stevan.blockchain
 
 import ch.epfl.ognjanovic.stevan.blockchain.Messages._
-import ch.epfl.ognjanovic.stevan.types.Chain.Genesis
 import ch.epfl.ognjanovic.stevan.types.Nodes._
 import ch.epfl.ognjanovic.stevan.types._
 import stainless.lang._
 import stainless.collection._
-import stainless.math._
 import stainless.annotation._
 
 object BlockchainStates {
+
   sealed abstract class BlockchainState {
     @pure
     @inline
@@ -20,6 +19,8 @@ object BlockchainStates {
     def numberOfNodes: BigInt
 
     def maxPower: VotingPower
+
+    def blockchain: Blockchain
   }
 
   case class Running(
@@ -48,7 +49,7 @@ object BlockchainStates {
         }
       } else
         this
-    }
+    }.ensuring(res => res.isInstanceOf[Running] || res.isInstanceOf[Finished])
 
     @pure
     def step(systemStep: SystemStep): BlockchainState = systemStep match {
@@ -92,8 +93,8 @@ object BlockchainStates {
                      blockchain: Blockchain) extends BlockchainState {
     require(
       allNodes.nonEmpty && // makes no sense to have no nodes
-      (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
-      maxVotingPower.isPositive// makes no sense to have 0 maximum voting power
+        (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
+        maxVotingPower.isPositive // makes no sense to have 0 maximum voting power
     )
 
     @pure
@@ -112,7 +113,7 @@ object BlockchainStates {
         else if (newFaulty == allNodes)
           this // maintain at least one correct node, as per TLA spec
         else // another fault can not improve the state of the chain
-          Faulty(allNodes, newFaulty, maxVotingPower, blockchain)
+        Faulty(allNodes, newFaulty, maxVotingPower, blockchain)
       case _ => this
     }).ensuring(res => res.isInstanceOf[Faulty] || res.isInstanceOf[Running])
 
@@ -133,4 +134,5 @@ object BlockchainStates {
 
     override def maxPower: VotingPower = VotingPower(0)
   }
+
 }
