@@ -1,8 +1,9 @@
 package ch.epfl.ognjanovic.stevan.blockchain;
 
 import ch.epfl.ognjanovic.stevan.blockchain.BlockchainStates._
-import ch.epfl.ognjanovic.stevan.blockchain.Messages.SystemStep
-import ch.epfl.ognjanovic.stevan.types.Chain.Genesis
+import ch.epfl.ognjanovic.stevan.blockchain.Messages.{Fault, SystemStep}
+import ch.epfl.ognjanovic.stevan.types.Chain.{ChainLink, Genesis}
+import ch.epfl.ognjanovic.stevan.types.Nodes.{Node, SimpleNode}
 import ch.epfl.ognjanovic.stevan.types.{BlockHeader, Height, Validators, VotingPower}
 import stainless.lang._
 import stainless.annotation._
@@ -35,18 +36,33 @@ object BlockchainSystem {
       Running(validatorSet.keys, Set.empty, maxPower, startingBlockchain)
   }.ensuring(res => neverStuckFalse2(res))
 
-  @ghost
-  def systemInvariant(blockchainState: BlockchainState, message: SystemStep): Boolean = {
-    require(blockchainState.maxHeight.value <= 3 &&
-      blockchainState.numberOfNodes == 2 &&
-      blockchainState.maxPower.value <= 1 &&
-      blockchainState.blockchain.chain.forAll(headerCheck))
-    message match {
-      case m: Messages.Fault => neverFaulty(blockchainState.step(m))
-      case m: Messages.AppendBlock => neverFaulty(blockchainState.step(m))
-      case m: Messages.TimeStep => neverFaulty(blockchainState.step(m))
-    }
-  }.holds
+  def notCaughtTransition(): Unit = {
+    val node = SimpleNode(1)
+    val nodePower: Map[Node, VotingPower] = Map((node, VotingPower(1)))
+    assert(VotingPower(1) == nodePower.values.foldLeft(VotingPower(0))((acc, value) => acc + value))
+    val validators = Validators(VotingPower(1), nodePower)
+    val firstHeader = BlockHeader(Height(1), Set.empty, validators, validators)
+    val secondHeader = BlockHeader(Height(2), Set(node), validators, validators)
+    val blockchain = Blockchain(Height(3), Height(1), ChainLink(secondHeader, Genesis(firstHeader)), Set.empty)
+    val blockchainState = Running(Set(node), Set.empty, VotingPower(1), blockchain)
+
+    val faulty = Fault(node)
+
+    assert(neverFaulty(blockchainState.step(faulty)))
+  }
+
+//  @ghost
+//  def systemInvariant(blockchainState: BlockchainState, message: SystemStep): Boolean = {
+//    require(blockchainState.maxHeight.value <= 3 &&
+//      blockchainState.numberOfNodes == 2 &&
+//      blockchainState.maxPower.value <= 1 &&
+//      blockchainState.blockchain.chain.forAll(headerCheck))
+//    message match {
+//      case m: Messages.Fault => neverFaulty(blockchainState.step(m))
+//      case m: Messages.AppendBlock => neverFaulty(blockchainState.step(m))
+//      case m: Messages.TimeStep => neverFaulty(blockchainState.step(m))
+//    }
+//  }.holds
 
   @inline
   private def headerCheck(header: BlockHeader): Boolean = {

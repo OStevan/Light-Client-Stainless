@@ -26,8 +26,9 @@ case class Blockchain(
   }
 
   def faultAssumption(): Boolean = {
-    chain.map(_.nextValidatorSet).slice(0, (chain.size - minTrustedHeight.value + 1))
-      .forall(validatorSet => validatorSet.isCorrect(faulty))
+    chain.map(id => id)
+      .filter(header => header.height.value >= minTrustedHeight.value)
+      .forall(header => header.nextValidatorSet.isCorrect(faulty))
   }
 
   def appendBlock(lastCommit: Set[Node], nextVS: Validators): Blockchain = {
