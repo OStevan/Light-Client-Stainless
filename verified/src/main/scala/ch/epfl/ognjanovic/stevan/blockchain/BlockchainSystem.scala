@@ -1,7 +1,7 @@
 package ch.epfl.ognjanovic.stevan.blockchain;
 
 import ch.epfl.ognjanovic.stevan.blockchain.BlockchainStates._
-import ch.epfl.ognjanovic.stevan.blockchain.Messages.SystemStep
+import ch.epfl.ognjanovic.stevan.blockchain.SystemSteps.SystemStep
 import ch.epfl.ognjanovic.stevan.types.Chain.Genesis
 import ch.epfl.ognjanovic.stevan.types.{BlockHeader, Height, Validators, VotingPower}
 import stainless.lang._
