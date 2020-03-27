@@ -52,6 +52,7 @@ object BlockchainStates {
     }.ensuring(res => res.isInstanceOf[Running] || res.isInstanceOf[Finished])
 
     @pure
+    @inline
     def step(systemStep: SystemStep): BlockchainState = systemStep match {
       case Fault(faultyNode) =>
         val newFaulty = faulty + faultyNode

@@ -20,11 +20,11 @@ case class Blockchain(
   def increaseMinTrustedHeight(step: BigInt): Blockchain = {
     require(step > BigInt(0))
     val newMinTrustedHeight =
-      Height(
-        min(min(maxHeight.value, chain.height.value + 1), (minTrustedHeight + step).value))
+      Height(min(min(maxHeight.value, chain.height.value + 1), (minTrustedHeight + step).value))
     Blockchain(maxHeight, newMinTrustedHeight, chain, faulty)
   }
 
+  @inline
   def faultAssumption(): Boolean = {
     chain.map(id => id)
       .filter(header => header.height.value >= minTrustedHeight.value)

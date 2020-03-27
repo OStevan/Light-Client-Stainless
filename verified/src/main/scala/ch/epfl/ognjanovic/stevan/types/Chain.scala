@@ -44,7 +44,7 @@ object Chain {
   }
 
   case class Genesis(blockHeader: BlockHeader) extends Chain {
-//    require(blockHeader.height == Height(1) && blockHeader.nextValidatorSet.keys.nonEmpty)
+    require(blockHeader.height == Height(1) && blockHeader.nextValidatorSet.keys.nonEmpty)
   }
 
   case class ChainLink(blockHeader: BlockHeader, tail: Chain) extends Chain {
