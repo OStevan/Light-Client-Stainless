@@ -20,17 +20,19 @@ case class Blockchain(
   def increaseMinTrustedHeight(step: BigInt): Blockchain = {
     require(step > BigInt(0))
     val newMinTrustedHeight =
-      Height(
-        min(min(maxHeight.value, chain.height.value + 1), (minTrustedHeight + step).value))
+      Height(min(min(maxHeight.value, chain.height.value + 1), (minTrustedHeight + step).value))
     Blockchain(maxHeight, newMinTrustedHeight, chain, faulty)
   }
 
+  @inline
   def faultAssumption(): Boolean = {
-    chain.map(_.nextValidatorSet).slice(0, (chain.size - minTrustedHeight.value + 1))
-      .forall(validatorSet => validatorSet.isCorrect(faulty))
+    chain.map(id => id)
+      .filter(header => header.height.value >= minTrustedHeight.value)
+      .forall(header => header.nextValidatorSet.isCorrect(faulty))
   }
 
   def appendBlock(lastCommit: Set[Node], nextVS: Validators): Blockchain = {
+    require(nextVS.keys.nonEmpty && lastCommit.nonEmpty)
     if (chain.height == maxHeight)
       this
     else {

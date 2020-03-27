@@ -10,6 +10,8 @@ object Chain {
    * By design chain can not be empty.
    */
   sealed abstract class Chain {
+    def forAll(condition: BlockHeader => Boolean): Boolean = map(block => block).forall(condition)
+
     @induct
     def size: BigInt = {
       this match {
@@ -33,19 +35,23 @@ object Chain {
     }
 
     def appendBlock(blockHeader: BlockHeader): Chain = {
-      require(blockHeader.height == this.height + 1 && blockHeader.validatorSet == head.nextValidatorSet)
+      require(
+        blockHeader.height == this.height + 1 &&
+          blockHeader.validatorSet == head.nextValidatorSet &&
+          blockHeader.nextValidatorSet.keys.nonEmpty)
       ChainLink(blockHeader, this)
     } ensuring(res => res.height == this.height + 1)
   }
 
   case class Genesis(blockHeader: BlockHeader) extends Chain {
-    require(blockHeader.height == Height(1))
+    require(blockHeader.height == Height(1) && blockHeader.nextValidatorSet.keys.nonEmpty)
   }
 
   case class ChainLink(blockHeader: BlockHeader, tail: Chain) extends Chain {
     require(
       blockHeader.height == tail.height + 1 && // height needs to be increasing in steps of 1
-        blockHeader.validatorSet == tail.head.nextValidatorSet // the link needs to be trusted
+        blockHeader.validatorSet == tail.head.nextValidatorSet && // the link needs to be trusted
+        blockHeader.nextValidatorSet.keys.nonEmpty
     )
   }
 }
