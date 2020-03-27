@@ -3,11 +3,11 @@ package ch.epfl.ognjanovic.stevan.types
 import stainless.lang._
 
 sealed case class Height(value: BigInt) {
+  require(value > BigInt(0))
+
   def <=(other: Height): Boolean = {
     value <= other.value
   }
-
-  require(value > BigInt(0))
 
   def +(value: BigInt): Height = {
     require(value > BigInt(0))

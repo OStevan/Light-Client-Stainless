@@ -14,7 +14,7 @@ case class Blockchain(
                        faulty: Set[Node]) {
   require(
     minTrustedHeight <= Height.min(chain.height + 1, maxHeight) &&
-      chain.height.value <= maxHeight.value)
+      chain.height <= maxHeight)
 
   def increaseMinTrustedHeight(step: BigInt): Blockchain = {
     require(step > BigInt(0))
@@ -25,7 +25,7 @@ case class Blockchain(
   @inline
   def faultAssumption(): Boolean = {
     chain.map(id => id)
-      .filter(header => header.height.value >= minTrustedHeight.value)
+      .filter(header => minTrustedHeight <= header.height)
       .forall(header => header.nextValidatorSet.isCorrect(faulty))
   }
 
@@ -38,8 +38,7 @@ case class Blockchain(
       val newChain = chain.appendBlock(header)
       Blockchain(maxHeight, minTrustedHeight, newChain, faulty)
     }
-  }.ensuring(res => res.chain.height.value <= maxHeight.value &&
-    res.minTrustedHeight == minTrustedHeight)
+  }.ensuring(res => res.chain.height <= maxHeight && res.minTrustedHeight == minTrustedHeight)
 
   def finished: Boolean = chain.height == maxHeight
 

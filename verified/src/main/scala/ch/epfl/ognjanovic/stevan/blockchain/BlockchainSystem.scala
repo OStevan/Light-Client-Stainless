@@ -27,7 +27,7 @@ object BlockchainSystem {
     val genesisBlock = BlockHeader(Height(1), Set.empty, validatorSet, nextValidatorSet)
     val initialChain = Genesis(genesisBlock)
     val minTrustedHeight = Height(1)
-    assert(initialChain.height.value <= maxHeight.value) // without this assertion, infinite verification
+    assert(initialChain.height <= maxHeight) // without this assertion, infinite verification
     val startingBlockchain = Blockchain(maxHeight, minTrustedHeight, initialChain, Set.empty)
     if (maxHeight.value == BigInt(1))
       Finished(startingBlockchain)
