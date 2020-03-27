@@ -3,6 +3,7 @@ package ch.epfl.ognjanovic.stevan.blockchain
 import ch.epfl.ognjanovic.stevan.blockchain.Messages._
 import ch.epfl.ognjanovic.stevan.types.Nodes._
 import ch.epfl.ognjanovic.stevan.types._
+import ch.epfl.ognjanovic.stevan.utils.StaticOps._
 import stainless.lang._
 import stainless.collection._
 import stainless.annotation._
@@ -84,7 +85,7 @@ object BlockchainStates {
 
     override def maxPower: VotingPower = maxVotingPower
 
-    override def numberOfNodes: BigInt = allNodes.toList.size
+    override def numberOfNodes: BigInt = allNodes.staticToList.size
   }
 
   case class Faulty(
@@ -122,7 +123,7 @@ object BlockchainStates {
 
     override def maxPower: VotingPower = maxVotingPower
 
-    override def numberOfNodes: BigInt = allNodes.toList.size
+    override def numberOfNodes: BigInt = allNodes.staticToList.size
   }
 
   case class Finished(blockchain: Blockchain) extends BlockchainState {
