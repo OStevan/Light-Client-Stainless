@@ -2,6 +2,7 @@ package ch.epfl.ognjanovic.stevan.types
 
 import ch.epfl.ognjanovic.stevan.types.Nodes.Node
 import ch.epfl.ognjanovic.stevan.utils.ListMap
+import ch.epfl.ognjanovic.stevan.utils.StaticOps._
 import stainless.lang._
 import stainless.collection._
 
@@ -29,7 +30,7 @@ case class Validators(totalPower: VotingPower, powerAssignments: ListMap[Node, V
 
   def nodesPower(nodes: Set[Node]): VotingPower = {
     require(nodes subsetOf keys)
-    nodes.toList.foldLeft(VotingPower(0))((acc, value) => acc + apply(value))
+    nodes.staticToList.foldLeft(VotingPower(0))((acc, value) => acc + apply(value))
   }
 
   def obtainedByzantineQuorum(nodes: Set[Node]): Boolean = {
