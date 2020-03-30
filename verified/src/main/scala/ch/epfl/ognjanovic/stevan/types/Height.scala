@@ -16,7 +16,7 @@ sealed case class Height(value: BigInt) {
 }
 
 object Height {
-  def min(first: Height, second: Height): Height = {
+  implicit def min(first: Height, second: Height): Height = {
     if (first.value < second.value)
       first
     else

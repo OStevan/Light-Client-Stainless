@@ -1,8 +1,9 @@
 package ch.epfl.ognjanovic.stevan.blockchain
 
 import ch.epfl.ognjanovic.stevan.types.Chain.{Chain, ChainLink}
+import ch.epfl.ognjanovic.stevan.types.{BlockHeader, Height, Validators}
+import ch.epfl.ognjanovic.stevan.types.Height._
 import ch.epfl.ognjanovic.stevan.types.Nodes._
-import ch.epfl.ognjanovic.stevan.types.{Height, _}
 import stainless.lang._
 import stainless.collection._
 import stainless.annotation._
@@ -13,12 +14,12 @@ case class Blockchain(
                        chain: Chain,
                        faulty: Set[Node]) {
   require(
-    minTrustedHeight <= Height.min(chain.height + 1, maxHeight) &&
+    minTrustedHeight <= min(chain.height + 1, maxHeight) &&
       chain.height <= maxHeight)
 
   def increaseMinTrustedHeight(step: BigInt): Blockchain = {
     require(step > BigInt(0))
-    val newMinTrustedHeight = Height.min(Height.min(maxHeight, chain.height + 1), minTrustedHeight + step)
+    val newMinTrustedHeight = min(min(maxHeight, chain.height + 1), minTrustedHeight + step)
     Blockchain(maxHeight, newMinTrustedHeight, chain, faulty)
   }
 
