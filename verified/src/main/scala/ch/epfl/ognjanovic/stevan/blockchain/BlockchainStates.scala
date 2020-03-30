@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.blockchain
 
-import ch.epfl.ognjanovic.stevan.blockchain.Messages._
+import ch.epfl.ognjanovic.stevan.blockchain.SystemSteps._
 import ch.epfl.ognjanovic.stevan.types.Nodes._
 import ch.epfl.ognjanovic.stevan.types._
 import ch.epfl.ognjanovic.stevan.utils.StaticOps._
@@ -63,15 +63,15 @@ object BlockchainStates {
         else if (newFaulty == allNodes)
           this // maintain at least one correct node, as per TLA spec
         else if (newChain.faultAssumption())
-          Running(allNodes, newFaulty, maxVotingPower, blockchain.setFaulty(newFaulty))
+          Running(allNodes, newFaulty, maxVotingPower, newChain)
         else
-          Faulty(allNodes, newFaulty, maxVotingPower, blockchain)
+          Faulty(allNodes, newFaulty, maxVotingPower, newChain)
       case TimeStep(step) =>
         val updated = blockchain.increaseMinTrustedHeight(step)
         if (updated.faultAssumption())
-          Faulty(allNodes, faulty, maxVotingPower, blockchain)
-        else
           Running(allNodes, faulty, maxVotingPower, updated)
+        else
+          Faulty(allNodes, faulty, maxVotingPower, updated)
       case AppendBlock(lastCommit, nextValidatorSet: Validators) =>
         // ignores append messages which do not preserve guarantees of the system
         if ((lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
@@ -105,9 +105,9 @@ object BlockchainStates {
         // propagation of time allows us to move away from the chain where too many fault happened
         val updated = blockchain.increaseMinTrustedHeight(step)
         if (updated.faultAssumption())
-          Faulty(allNodes, faulty, maxVotingPower, blockchain)
-        else
           Running(allNodes, faulty, maxVotingPower, updated)
+        else
+          Faulty(allNodes, faulty, maxVotingPower, updated)
       case Fault(faultyNode) =>
         val newFaulty = faulty + faultyNode
         if (!allNodes.contains(faultyNode))
@@ -115,7 +115,7 @@ object BlockchainStates {
         else if (newFaulty == allNodes)
           this // maintain at least one correct node, as per TLA spec
         else // another fault can not improve the state of the chain
-        Faulty(allNodes, newFaulty, maxVotingPower, blockchain)
+          Faulty(allNodes, newFaulty, maxVotingPower, blockchain.setFaulty(newFaulty))
       case _ => this
     }).ensuring(res => res.isInstanceOf[Faulty] || res.isInstanceOf[Running])
 
