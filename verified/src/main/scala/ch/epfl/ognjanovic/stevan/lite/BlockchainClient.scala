@@ -15,14 +15,4 @@ abstract class BlockchainClient {
    * @return true if expired, false otherwise
    */
   def expired(signedHeader: SignedHeader): Boolean
-
-  @law
-  def lawHeightDeterminesExpiration(first: SignedHeader, second: SignedHeader): Boolean = {
-    if (first.header.height == second.header.height)
-      expired(first) == expired(second)
-    else if (first.header.height <= second.header.height)
-      expired(second) ==> expired(first)
-    else
-      expired(first) ==> expired(second)
-  }
 }
