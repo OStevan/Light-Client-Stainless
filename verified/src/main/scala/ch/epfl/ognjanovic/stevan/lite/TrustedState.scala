@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.lite
 
 import ch.epfl.ognjanovic.stevan.types.SignedHeader
+import ch.epfl.ognjanovic.stevan.types.Height
 
 case class TrustedState(trustedSignedHeader: SignedHeader) {
   /**
@@ -11,19 +12,37 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
     */
   def increaseTrust(signedHeader: SignedHeader): TrustedState = {
     require(signedHeader.header.height > this.trustedSignedHeader.header.height)
-    if (trusted(this.trustedSignedHeader))
+    if (trusted(signedHeader))
       TrustedState(signedHeader)
     else
       this
   }
 
-  /**
-    * Given the internal trusted state checks if the untrusted can become trusted,
-    * should implement CheckSupport(from TLA).
-    *
-    * @param trustedHeader
-    * @param untrustedHeader 
-    * @return true if the untrusted one can become trusted and false otherwise
-    */
-  def trusted(trustedHeader: SignedHeader): Boolean = ???
+  def isAdjecent(signedHeader: SignedHeader): Boolean =
+    signedHeader.header.height == trustedSignedHeader.header.height + 1
+
+  def adjecentHeaderTrust(signedHeader: SignedHeader): Boolean = {
+    require(isAdjecent(signedHeader))
+    trustedSignedHeader.header.nextValidatorSet == signedHeader.header.validatorSet
+  }
+
+  def nonAdjecentHeaderTrust(signedHeader: SignedHeader): Boolean = {
+    require(signedHeader.header.height > this.trustedSignedHeader.header.height && !isAdjecent(signedHeader))
+    trustedSignedHeader
+      .header
+      .nextValidatorSet
+      .checkSupport(trustedSignedHeader.header.nextValidatorSet.keys & signedHeader.commit)
+  }
+
+  def bisectionHeight(signedHeader: SignedHeader): Height = {
+    require(signedHeader.header.height > this.trustedSignedHeader.header.height + 1)
+    (signedHeader.header.height + trustedSignedHeader.header.height) / 2
+  }
+
+  private def trusted(signedHeader: SignedHeader): Boolean = {
+    if (isAdjecent(signedHeader))
+      adjecentHeaderTrust(signedHeader)
+    else
+      nonAdjecentHeaderTrust(signedHeader)
+  }
 }

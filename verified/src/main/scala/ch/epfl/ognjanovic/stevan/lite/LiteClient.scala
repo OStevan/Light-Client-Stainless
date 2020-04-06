@@ -56,17 +56,30 @@ object LiteClient {
           VerifierStateMachine(
             verify(TrustedState(trustedSignedHeader), UntrustedState(Cons(signedHeaderToVerify, Nil()))),
             blockChainClient)
-      case (state: WaitingForHeader, headerResponse: HeaderResponse) => ???
+      case (state: WaitingForHeader, headerResponse: HeaderResponse) => 
+        assert(state.height == headerResponse.signedHeader.header.height)
+        VerifierStateMachine(
+          verify(state.trustedState, state.untrustedState.addSignedHeader(headerResponse.signedHeader)),
+          blockChainClient
+        )
       case _ => this
     }
 
     private def verify(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = untrustedState.removeHead match {
       case (None(), emptyUntrustedState) => Finished(true, trustedState, emptyUntrustedState)
       case (Some(nextToVerify), newUntrustedState) =>
-        if (trustedState.trusted(nextToVerify))
+        if (trustedState.isAdjecent(nextToVerify)) {
+          if (trustedState.adjecentHeaderTrust(nextToVerify))
+            verify(trustedState.increaseTrust(nextToVerify), newUntrustedState)
+          else
+            Finished(false, trustedState, untrustedState)
+        } else if (trustedState.nonAdjecentHeaderTrust(nextToVerify))
           verify(trustedState.increaseTrust(nextToVerify), newUntrustedState)
-        else
-          Finished(false, trustedState, untrustedState)
+        else {
+          val bisectionHeight: Height = trustedState.bisectionHeight(nextToVerify)
+          blockChainClient.requestHeader(bisectionHeight)
+          WaitingForHeader(bisectionHeight, trustedState, untrustedState)
+        }
     }
   }
 }
