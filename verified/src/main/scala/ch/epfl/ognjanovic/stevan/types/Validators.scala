@@ -41,4 +41,9 @@ case class Validators(totalPower: VotingPower, powerAssignments: ListMap[Node, V
   def isCorrect(faultyNodes: Set[Node]): Boolean = {
     nodesPower(keys -- faultyNodes) > nodesPower(keys & faultyNodes) * VotingPower(2)
   }
+
+  def checkSupport(nodes: Set[Node]): Boolean = {
+    require(nodes subsetOf keys)
+    VotingPower(3) * nodesPower(nodes) > nodesPower(keys)
+  }
 }
