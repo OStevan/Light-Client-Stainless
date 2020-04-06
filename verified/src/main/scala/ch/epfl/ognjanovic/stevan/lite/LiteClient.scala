@@ -12,6 +12,13 @@ object LiteClient {
     case _ => true
   }
 
+  private def untrustedStateHeightInvariant(height: Height, untrustedState: UntrustedState): Boolean = {
+    untrustedState.pending match {
+      case list: Cons[SignedHeader] => height < list.head.header.height
+      case _: Nil[SignedHeader] => true
+    }
+  }
+
   case class UntrustedState(pending: List[SignedHeader]) {
     require(pendingInvariant(pending))
 
@@ -37,7 +44,9 @@ object LiteClient {
   abstract class VerifierState
   case object InitialState extends VerifierState
   case class Finished(verdict: Boolean, trustedState: TrustedState, untrustedState: UntrustedState) extends VerifierState
-  case class WaitingForHeader(height: Height, trustedState: TrustedState, untrustedState: UntrustedState) extends VerifierState
+  case class WaitingForHeader(height: Height, trustedState: TrustedState, untrustedState: UntrustedState) extends VerifierState {
+    require(height > trustedState.currentHeight() && untrustedStateHeightInvariant(height, untrustedState))
+  }
   
   case class VerifierStateMachine(verifierState: VerifierState, blockChainClient: BlockchainClient) {
     def processMessage(message: Message): VerifierStateMachine = (verifierState, message) match {
@@ -56,16 +65,24 @@ object LiteClient {
           VerifierStateMachine(
             verify(TrustedState(trustedSignedHeader), UntrustedState(Cons(signedHeaderToVerify, Nil()))),
             blockChainClient)
-      case (state: WaitingForHeader, headerResponse: HeaderResponse) => 
-        assert(state.height == headerResponse.signedHeader.header.height)
-        VerifierStateMachine(
-          verify(state.trustedState, state.untrustedState.addSignedHeader(headerResponse.signedHeader)),
-          blockChainClient
-        )
+      case (state: WaitingForHeader, headerResponse: HeaderResponse) =>
+        if (state.height == headerResponse.signedHeader.header.height) {
+          val newUntrustedState = state.untrustedState.addSignedHeader(headerResponse.signedHeader)
+          if (untrustedStateHeightInvariant(state.trustedState.currentHeight(), newUntrustedState)) // needed for verification for now
+            VerifierStateMachine(
+              verify(state.trustedState, newUntrustedState),
+              blockChainClient
+            )
+          else
+            this
+        } else
+          this // needed for verification, ignore out od order requests
       case _ => this
     }
 
-    private def verify(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = untrustedState.removeHead match {
+    private def verify(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
+      require(untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState))
+      untrustedState.removeHead match {
       case (None(), emptyUntrustedState) => Finished(true, trustedState, emptyUntrustedState)
       case (Some(nextToVerify), newUntrustedState) =>
         if (trustedState.isAdjecent(nextToVerify)) {
@@ -80,6 +97,7 @@ object LiteClient {
           blockChainClient.requestHeader(bisectionHeight)
           WaitingForHeader(bisectionHeight, trustedState, untrustedState)
         }
+      }
     }
   }
 }

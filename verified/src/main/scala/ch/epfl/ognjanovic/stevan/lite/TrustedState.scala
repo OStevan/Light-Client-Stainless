@@ -4,6 +4,9 @@ import ch.epfl.ognjanovic.stevan.types.SignedHeader
 import ch.epfl.ognjanovic.stevan.types.Height
 
 case class TrustedState(trustedSignedHeader: SignedHeader) {
+
+  def currentHeight(): Height = trustedSignedHeader.header.height
+
   /**
     * Tries "improve" the current trusted state with addition of a new signed header of a greater height.
     *
@@ -40,6 +43,7 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
   }
 
   private def trusted(signedHeader: SignedHeader): Boolean = {
+    require(signedHeader.header.height > trustedSignedHeader.header.height)
     if (isAdjecent(signedHeader))
       adjecentHeaderTrust(signedHeader)
     else
