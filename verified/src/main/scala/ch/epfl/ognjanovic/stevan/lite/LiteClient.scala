@@ -74,7 +74,6 @@ object LiteClient {
           verify(trustedState.increaseTrust(nextToVerify), newUntrustedState)
         else {
           val bisectionHeight: Height = trustedState.bisectionHeight(nextToVerify)
-          blockChainClient.requestHeader(bisectionHeight)
           WaitingForHeader(bisectionHeight, trustedState, untrustedState)
         }
       }
