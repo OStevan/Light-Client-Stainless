@@ -7,33 +7,10 @@ import ch.epfl.ognjanovic.stevan.types.Height
 
 object LiteClient {
 
-  private def pendingInvariant(pending: List[SignedHeader]): Boolean = pending match {
-    case Cons(first, Cons(second, tail)) => first.header.height < second.header.height && pendingInvariant(Cons(second, tail))
-    case _ => true
-  }
-
   private def untrustedStateHeightInvariant(height: Height, untrustedState: UntrustedState): Boolean = {
     untrustedState.pending match {
       case list: Cons[SignedHeader] => height < list.head.header.height
       case _: Nil[SignedHeader] => true
-    }
-  }
-
-  case class UntrustedState(pending: List[SignedHeader]) {
-    require(pendingInvariant(pending))
-
-    def addSignedHeader(signedHeader: SignedHeader): UntrustedState = pending match {
-      case Nil() => UntrustedState(Cons(signedHeader, Nil()))
-      case Cons(h, _) => 
-        if (signedHeader.header.height < h.header.height)
-          UntrustedState(Cons(signedHeader, pending))
-        else
-          this
-    }
-
-    def removeHead: (Option[SignedHeader], UntrustedState) = pending match {
-      case Cons(h, t) => (Some(h), UntrustedState(t))
-      case Nil() => (None(), this)
     }
   }
 
@@ -65,6 +42,7 @@ object LiteClient {
           VerifierStateMachine(
             verify(TrustedState(trustedSignedHeader), UntrustedState(Cons(signedHeaderToVerify, Nil()))),
             blockChainClient)
+
       case (state: WaitingForHeader, headerResponse: HeaderResponse) =>
         if (state.height == headerResponse.signedHeader.header.height) {
           val newUntrustedState = state.untrustedState.addSignedHeader(headerResponse.signedHeader)
@@ -76,7 +54,8 @@ object LiteClient {
           else
             this
         } else
-          this // needed for verification, ignore out od order requests
+          this // needed for verification, ignore responses which are not what was asked for
+
       case _ => this
     }
 
@@ -84,13 +63,14 @@ object LiteClient {
       require(untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState))
       untrustedState.removeHead match {
       case (None(), emptyUntrustedState) => Finished(true, trustedState, emptyUntrustedState)
+
       case (Some(nextToVerify), newUntrustedState) =>
-        if (trustedState.isAdjecent(nextToVerify)) {
-          if (trustedState.adjecentHeaderTrust(nextToVerify))
+        if (trustedState.isAdjacent(nextToVerify)) {
+          if (trustedState.adjacentHeaderTrust(nextToVerify))
             verify(trustedState.increaseTrust(nextToVerify), newUntrustedState)
           else
             Finished(false, trustedState, untrustedState)
-        } else if (trustedState.nonAdjecentHeaderTrust(nextToVerify))
+        } else if (trustedState.nonAdjacentHeaderTrust(nextToVerify))
           verify(trustedState.increaseTrust(nextToVerify), newUntrustedState)
         else {
           val bisectionHeight: Height = trustedState.bisectionHeight(nextToVerify)

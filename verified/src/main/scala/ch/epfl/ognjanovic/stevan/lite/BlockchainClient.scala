@@ -8,7 +8,12 @@ import stainless.annotation._
  * Abstract class abstracting away main real world and verification concepts, eg. expiration.
  */
 abstract class BlockchainClient {
-  def requestHeader(height: Height): SignedHeader
+  /**
+   * Send an event to retrive the header for the specified height.
+   * 
+   * @param height of the header we are interested in
+   */
+  def requestHeader(height: Height): Unit
 
   /**
    * Given the expiration model checks if the block has expired.
