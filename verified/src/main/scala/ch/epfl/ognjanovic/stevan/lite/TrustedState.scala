@@ -21,16 +21,16 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
       this
   }
 
-  def isAdjecent(signedHeader: SignedHeader): Boolean =
+  def isAdjacent(signedHeader: SignedHeader): Boolean =
     signedHeader.header.height == trustedSignedHeader.header.height + 1
 
-  def adjecentHeaderTrust(signedHeader: SignedHeader): Boolean = {
-    require(isAdjecent(signedHeader))
+  def adjacentHeaderTrust(signedHeader: SignedHeader): Boolean = {
+    require(isAdjacent(signedHeader))
     trustedSignedHeader.header.nextValidatorSet == signedHeader.header.validatorSet
   }
 
-  def nonAdjecentHeaderTrust(signedHeader: SignedHeader): Boolean = {
-    require(signedHeader.header.height > this.trustedSignedHeader.header.height && !isAdjecent(signedHeader))
+  def nonAdjacentHeaderTrust(signedHeader: SignedHeader): Boolean = {
+    require(signedHeader.header.height > this.trustedSignedHeader.header.height && !isAdjacent(signedHeader))
     trustedSignedHeader
       .header
       .nextValidatorSet
@@ -44,9 +44,9 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
 
   private def trusted(signedHeader: SignedHeader): Boolean = {
     require(signedHeader.header.height > trustedSignedHeader.header.height)
-    if (isAdjecent(signedHeader))
-      adjecentHeaderTrust(signedHeader)
+    if (isAdjacent(signedHeader))
+      adjacentHeaderTrust(signedHeader)
     else
-      nonAdjecentHeaderTrust(signedHeader)
+      nonAdjacentHeaderTrust(signedHeader)
   }
 }
