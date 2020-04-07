@@ -25,32 +25,26 @@ object LiteClient {
     require(height > trustedState.currentHeight() && untrustedStateHeightInvariant(height, untrustedState))
   }
   
-  case class VerifierStateMachine(verifierState: VerifierState, blockChainClient: BlockchainClient) {
+  case class VerifierStateMachine(verifierState: VerifierState) {
     def processMessage(message: Message): VerifierStateMachine = (verifierState, message) match {
       case (InitialState, verificationRequest: VerificationRequest) =>
         val trustedSignedHeader = verificationRequest.trustedSignedHeader
         val signedHeaderToVerify = verificationRequest.signedHeaderToVerify
-        if (blockChainClient.expired(trustedSignedHeader))
+        if (trustedSignedHeader.isExpired())
           VerifierStateMachine(
-            Finished(false, TrustedState(trustedSignedHeader), UntrustedState(Cons(signedHeaderToVerify, Nil()))),
-            blockChainClient)
+            Finished(false, TrustedState(trustedSignedHeader), UntrustedState(Cons(signedHeaderToVerify, Nil()))))
         else if (signedHeaderToVerify.header.height <= trustedSignedHeader.header.height)
           VerifierStateMachine(
-            Finished(true, TrustedState(trustedSignedHeader), UntrustedState(Nil())),
-            blockChainClient)
+            Finished(true, TrustedState(trustedSignedHeader), UntrustedState(Nil())))
         else
           VerifierStateMachine(
-            verify(TrustedState(trustedSignedHeader), UntrustedState(Cons(signedHeaderToVerify, Nil()))),
-            blockChainClient)
+            verify(TrustedState(trustedSignedHeader), UntrustedState(Cons(signedHeaderToVerify, Nil()))))
 
       case (state: WaitingForHeader, headerResponse: HeaderResponse) =>
         if (state.height == headerResponse.signedHeader.header.height) {
           val newUntrustedState = state.untrustedState.addSignedHeader(headerResponse.signedHeader)
           if (untrustedStateHeightInvariant(state.trustedState.currentHeight(), newUntrustedState)) // needed for verification for now
-            VerifierStateMachine(
-              verify(state.trustedState, newUntrustedState),
-              blockChainClient
-            )
+            VerifierStateMachine(verify(state.trustedState, newUntrustedState))
           else
             this
         } else
