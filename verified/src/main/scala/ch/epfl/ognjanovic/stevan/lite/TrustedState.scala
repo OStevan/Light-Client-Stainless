@@ -5,6 +5,9 @@ import ch.epfl.ognjanovic.stevan.types.Height
 
 case class TrustedState(trustedSignedHeader: SignedHeader) {
 
+  /**
+    * The hight of the last block that we trust.
+    */
   def currentHeight(): Height = trustedSignedHeader.header.height
 
   /**

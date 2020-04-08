@@ -33,6 +33,10 @@ case class UntrustedState(pending: List[SignedHeader]) {
 
 object UntrustedState {
 
+  def empty: UntrustedState = UntrustedState(Nil[SignedHeader]())
+
+  def apply(signedHeader: SignedHeader): UntrustedState = UntrustedState(Cons(signedHeader, Nil()))
+
   private def pendingInvariant(pending: List[SignedHeader]): Boolean = pending match {
     case Cons(first, Cons(second, tail)) => first.header.height < second.header.height && pendingInvariant(Cons(second, tail))
     case _ => true

@@ -35,23 +35,6 @@ object BlockchainSystem {
       Running(validatorSet.keys, Set.empty, maxPower, startingBlockchain)
   }.ensuring(res => neverStuckFalse2(res))
 
-//  def notCaughtTransition(): BlockchainState = {
-//    val node = SimpleNode(1)
-//    val allNodes: Set[Node] = Set(node, SimpleNode(2))
-//    val nodePower: ListMap[Node, VotingPower] = ListMap(List((node, VotingPower(1)), (SimpleNode(2), VotingPower(1))))
-//    val validators = Validators(VotingPower(2), nodePower)
-//    val firstHeader = BlockHeader(Height(1), Set.empty, validators, validators)
-//    val secondHeader = BlockHeader(Height(2), allNodes, validators, validators)
-//    val blockchain = Blockchain(Height(3), Height(1), ChainLink(secondHeader, Genesis(firstHeader)), Set.empty)
-//    val blockchainState = Running(allNodes, Set.empty, VotingPower(1), blockchain)
-//
-//    val faulty = Fault(node)
-//
-//    val result = blockchainState.step(faulty)
-//    assert(neverFaulty(result))
-//    result
-//  }
-
     @ghost
     def systemInvariant(blockchainState: BlockchainState, message: SystemStep): Boolean = {
       neverStuckFalse2(blockchainState.step(message))
