@@ -30,7 +30,7 @@ object BlockchainSystem {
     assert(initialChain.height <= maxHeight) // without this assertion, infinite verification
     val startingBlockchain = Blockchain(maxHeight, minTrustedHeight, initialChain, Set.empty)
     if (maxHeight.value == BigInt(1))
-      Finished(startingBlockchain)
+      Finished(startingBlockchain, Set.empty)
     else
       Running(validatorSet.keys, Set.empty, maxPower, startingBlockchain)
   }.ensuring(res => neverStuckFalse2(res))
