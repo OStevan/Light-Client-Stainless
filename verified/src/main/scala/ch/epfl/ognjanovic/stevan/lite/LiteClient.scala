@@ -32,23 +32,20 @@ object LiteClient {
         val signedHeaderToVerify = verificationRequest.signedHeaderToVerify
         if (trustedSignedHeader.isExpired())
           VerifierStateMachine(
-            Finished(false, TrustedState(trustedSignedHeader), UntrustedState(Cons(signedHeaderToVerify, Nil()))))
+            Finished(false, TrustedState(trustedSignedHeader), UntrustedState(signedHeaderToVerify)))
         else if (signedHeaderToVerify.header.height <= trustedSignedHeader.header.height)
           VerifierStateMachine(
-            Finished(true, TrustedState(trustedSignedHeader), UntrustedState(Nil())))
+            Finished(true, TrustedState(trustedSignedHeader), UntrustedState.empty))
         else
           VerifierStateMachine(
-            verify(TrustedState(trustedSignedHeader), UntrustedState(Cons(signedHeaderToVerify, Nil()))))
+            verify(TrustedState(trustedSignedHeader), UntrustedState(signedHeaderToVerify)))
 
       case (state: WaitingForHeader, headerResponse: HeaderResponse) =>
         if (state.height == headerResponse.signedHeader.header.height) {
           val newUntrustedState = state.untrustedState.addSignedHeader(headerResponse.signedHeader)
-          if (untrustedStateHeightInvariant(state.trustedState.currentHeight(), newUntrustedState)) // needed for verification for now
-            VerifierStateMachine(verify(state.trustedState, newUntrustedState))
-          else
-            this
+          VerifierStateMachine(verify(state.trustedState, newUntrustedState))
         } else
-          this // needed for verification, ignore responses which are not what was asked for
+          this // ignore responses which are not what was asked for
 
       case _ => this
     }
