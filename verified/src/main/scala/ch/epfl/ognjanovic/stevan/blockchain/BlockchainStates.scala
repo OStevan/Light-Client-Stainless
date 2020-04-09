@@ -27,9 +27,15 @@ object BlockchainStates {
 
     def faulty: Set[Node]
 
-    def signedHeader(height: Height): SignedHeader = ???
+    def header(height: Height): BlockHeader = {
+      require(height <= blockchain.height)
+      blockchain.getHeader(height)
+    }
 
-    def header(height: Height): BlockHeader = ???
+    def signedHeader(height: Height): SignedHeader = {
+      require(height < blockchain.height)
+      blockchain.getSignedHeader(height)
+    }
   }
 
   case class Running(
@@ -150,5 +156,4 @@ object BlockchainStates {
 
     override def currentHeight(): Height = blockchain.chain.height
   }
-
 }

@@ -1,9 +1,10 @@
 package ch.epfl.ognjanovic.stevan.blockchain
 
-import ch.epfl.ognjanovic.stevan.types.Chain.{Chain, ChainLink}
+import ch.epfl.ognjanovic.stevan.types.Chain._
 import ch.epfl.ognjanovic.stevan.types.{BlockHeader, Height, Validators}
 import ch.epfl.ognjanovic.stevan.types.Height._
 import ch.epfl.ognjanovic.stevan.types.Nodes._
+import ch.epfl.ognjanovic.stevan.types.{SignedHeader, DefaultSignedHeader}
 import stainless.lang._
 import stainless.collection._
 import stainless.annotation._
@@ -48,4 +49,30 @@ case class Blockchain(
   def height: Height = chain.height
 
   def setFaulty(newFaulty: Set[Node]): Blockchain = Blockchain(maxHeight, minTrustedHeight, chain, newFaulty)
+
+  def getHeader(height: Height): BlockHeader = {
+    require(height <= chain.height)
+    getHeaderInternal(height, chain)
+  }
+
+  def getSignedHeader(height: Height): SignedHeader = {
+    require(height < chain.height)
+    val headerCommit = getHeader(height + 1).lastCommit
+    val blockHeader = getHeader(height)
+    DefaultSignedHeader(blockHeader, headerCommit)
+  }
+
+  private def getHeaderInternal(height: Height, chain: Chain): BlockHeader = {
+    require(height <= chain.height)
+    chain match {
+      case Genesis(blockHeader) =>  
+        assert(height == chain.height)
+        blockHeader
+      case ChainLink(blockHeader, tail) =>
+        if (height == chain.height)
+          blockHeader
+        else
+          getHeaderInternal(height, tail)
+    }
+  }
 }
