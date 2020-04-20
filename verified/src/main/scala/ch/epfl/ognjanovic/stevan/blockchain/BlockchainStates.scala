@@ -22,6 +22,20 @@ object BlockchainStates {
     def maxPower: VotingPower
 
     def blockchain: Blockchain
+
+    def currentHeight(): Height
+
+    def faulty: Set[Node]
+
+    def header(height: Height): BlockHeader = {
+      require(height <= blockchain.height)
+      blockchain.getHeader(height)
+    }
+
+    def signedHeader(height: Height): SignedHeader = {
+      require(height < blockchain.height)
+      blockchain.getSignedHeader(height)
+    }
   }
 
   case class Running(
@@ -44,7 +58,7 @@ object BlockchainStates {
       if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit) && nextValidatorSet.isCorrect(faulty)) {
         val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
         if (blockchain.finished)
-          Finished(newBlockchain)
+          Finished(newBlockchain, faulty)
         else {
           Running(allNodes, faulty, maxVotingPower, newBlockchain)
         }
@@ -86,6 +100,8 @@ object BlockchainStates {
     override def maxPower: VotingPower = maxVotingPower
 
     override def numberOfNodes: BigInt = allNodes.staticToList.size
+
+    override def currentHeight(): Height = blockchain.chain.height
   }
 
   case class Faulty(
@@ -124,9 +140,11 @@ object BlockchainStates {
     override def maxPower: VotingPower = maxVotingPower
 
     override def numberOfNodes: BigInt = allNodes.staticToList.size
+
+    override def currentHeight(): Height = blockchain.chain.height
   }
 
-  case class Finished(blockchain: Blockchain) extends BlockchainState {
+  case class Finished(blockchain: Blockchain, faulty: Set[Node]) extends BlockchainState {
     @pure
     def step(systemStep: SystemStep): BlockchainState = (this).ensuring(res => res.isInstanceOf[Finished])
 
@@ -135,6 +153,7 @@ object BlockchainStates {
     override def numberOfNodes: BigInt = BigInt(0)
 
     override def maxPower: VotingPower = VotingPower(0)
-  }
 
+    override def currentHeight(): Height = blockchain.chain.height
+  }
 }
