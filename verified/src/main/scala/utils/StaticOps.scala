@@ -1,9 +1,4 @@
-package ch.epfl.ognjanovic.stevan.utils
-
-import stainless.lang.StaticChecks._
-import stainless.annotation._
-import stainless.collection.List
-import stainless.lang._
+package utils
 
 object StaticOps {
   @library

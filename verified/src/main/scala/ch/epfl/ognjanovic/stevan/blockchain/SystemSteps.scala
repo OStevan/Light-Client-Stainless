@@ -14,8 +14,7 @@ object SystemSteps {
   /**
    * Models a progression of time in an arbitrary way by specifying by how much the min trusted height should be
    * increased. This is in line with how we think of BFT time in terms of the Tendermint blockchain. When processing
-   * this message the system invariants need to be guaranteed as they are not maintained
-   * here.
+   * this message the system invariants need to be guaranteed as they are not maintained here.
    *
    * @param step modeling the progression of time
    */

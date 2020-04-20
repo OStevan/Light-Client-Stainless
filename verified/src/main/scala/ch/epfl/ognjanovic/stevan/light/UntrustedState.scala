@@ -1,4 +1,4 @@
-package ch.epfl.ognjanovic.stevan.lite
+package ch.epfl.ognjanovic.stevan.light
 
 import ch.epfl.ognjanovic.stevan.types.SignedHeader
 import stainless.lang._

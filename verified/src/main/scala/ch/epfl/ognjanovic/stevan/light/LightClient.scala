@@ -1,11 +1,11 @@
-package ch.epfl.ognjanovic.stevan.lite
+package ch.epfl.ognjanovic.stevan.light
 
 import ch.epfl.ognjanovic.stevan.types.SignedHeader
 import stainless.lang._
 import stainless.collection._
 import ch.epfl.ognjanovic.stevan.types.Height
 
-object LiteClient {
+object LightClient {
 
   private def untrustedStateHeightInvariant(height: Height, untrustedState: UntrustedState): Boolean = {
     untrustedState.pending match {

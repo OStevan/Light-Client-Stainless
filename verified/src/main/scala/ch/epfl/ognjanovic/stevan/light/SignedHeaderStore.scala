@@ -1,9 +1,9 @@
-package ch.epfl.ognjanovic.stevan.lite
+package ch.epfl.ognjanovic.stevan.light
 
 import ch.epfl.ognjanovic.stevan.types.{Height, SignedHeader}
-import ch.epfl.ognjanovic.stevan.utils.ListMap
 import stainless.lang._
 import stainless.annotation._
+import utils.ListMap
 
 abstract class SignedHeaderStore {
   def put(signedHeader: SignedHeader): SignedHeaderStore
