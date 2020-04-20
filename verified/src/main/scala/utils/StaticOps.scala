@@ -1,5 +1,10 @@
 package utils
 
+import stainless.lang.StaticChecks._
+import stainless.annotation._
+import stainless.collection.List
+import stainless.lang._
+
 object StaticOps {
   @library
   implicit class StaticSetOps[A](val set: Set[A]) extends AnyVal {

@@ -1,5 +1,11 @@
 package utils
 
+import stainless.lang._
+import stainless.collection._
+import stainless.annotation._
+import stainless.lang._
+import stainless.proof._
+
 /**
  * Copied as is from {@link https://github.com/epfl-lara/verifythis2020/blob/f10e38d864838f70e0bf880d48e40de8e815fbec/src/main/scala/pgp/ListUtils.scala}.
  */
