@@ -1,13 +1,10 @@
 package ch.epfl.ognjanovic.stevan.blockchain
 
 import ch.epfl.ognjanovic.stevan.types.Chain._
-import ch.epfl.ognjanovic.stevan.types.{BlockHeader, Height, Validators}
 import ch.epfl.ognjanovic.stevan.types.Height._
 import ch.epfl.ognjanovic.stevan.types.Nodes._
-import ch.epfl.ognjanovic.stevan.types.{SignedHeader, DefaultSignedHeader}
+import ch.epfl.ognjanovic.stevan.types.{Chain => _, _}
 import stainless.lang._
-import stainless.collection._
-import stainless.annotation._
 
 case class Blockchain(
                        maxHeight: Height,

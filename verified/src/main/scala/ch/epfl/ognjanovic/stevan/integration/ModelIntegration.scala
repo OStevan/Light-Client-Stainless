@@ -5,7 +5,7 @@ import ch.epfl.ognjanovic.stevan.types.Height
 import stainless.lang._
 import stainless.annotation._
 import ch.epfl.ognjanovic.stevan.types.SignedHeader
-import ch.epfl.ognjanovic.stevan.lite.LiteClient._
+import ch.epfl.ognjanovic.stevan.light.LightClient._
 
 object ModelIntegration {
   def snapshotExecution(blockchainState: BlockchainState, trustedHeight: Height, heightToVerify: Height): VerifierState = {

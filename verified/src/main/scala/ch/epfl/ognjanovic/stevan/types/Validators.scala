@@ -1,10 +1,10 @@
 package ch.epfl.ognjanovic.stevan.types
 
 import ch.epfl.ognjanovic.stevan.types.Nodes.Node
-import ch.epfl.ognjanovic.stevan.utils.ListMap
-import ch.epfl.ognjanovic.stevan.utils.StaticOps._
+import utils.StaticOps._
 import stainless.lang._
 import stainless.collection._
+import utils.ListMap
 
 case class Validators(totalPower: VotingPower, powerAssignments: ListMap[Node, VotingPower]) {
   require(powerAssignments.forall(value => value._2.isPositive) &&

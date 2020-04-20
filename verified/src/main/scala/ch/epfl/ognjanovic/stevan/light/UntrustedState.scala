@@ -1,9 +1,8 @@
-package ch.epfl.ognjanovic.stevan.lite
+package ch.epfl.ognjanovic.stevan.light
 
 import ch.epfl.ognjanovic.stevan.types.SignedHeader
-import stainless.lang._
 import stainless.collection._
-import stainless.annotation._
+import stainless.lang._
 
 case class UntrustedState(pending: List[SignedHeader]) {
   require(UntrustedState.pendingInvariant(pending))

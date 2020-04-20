@@ -1,4 +1,4 @@
-package ch.epfl.ognjanovic.stevan.utils
+package utils
 
 import stainless.lang.StaticChecks._
 import stainless.annotation._

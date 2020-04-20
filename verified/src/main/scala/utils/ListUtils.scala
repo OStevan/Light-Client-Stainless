@@ -1,4 +1,6 @@
-package ch.epfl.ognjanovic.stevan.utils
+package utils
+
+import stainless.lang._
 import stainless.collection._
 import stainless.annotation._
 import stainless.lang._

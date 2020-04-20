@@ -3,14 +3,18 @@ package ch.epfl.ognjanovic.stevan.types
 import ch.epfl.ognjanovic.stevan.types.Nodes.Node
 import stainless.lang._
 
-abstract class SignedHeader {
-    def header: BlockHeader
+object SignedHeader {
 
-    def commit: Set[Node]
+    abstract class SignedHeader {
+        def header: BlockHeader
 
-    def isExpired(): Boolean
-}
+        def commit: Set[Node]
 
-case class DefaultSignedHeader(header: BlockHeader, commit: Set[Node]) extends SignedHeader {
-    def isExpired(): Boolean = false
+        def isExpired(): Boolean
+    }
+
+    case class DefaultSignedHeader(header: BlockHeader, commit: Set[Node]) extends SignedHeader {
+        def isExpired(): Boolean = false
+    }
+
 }
