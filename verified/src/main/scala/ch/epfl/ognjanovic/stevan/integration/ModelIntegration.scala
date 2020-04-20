@@ -15,7 +15,8 @@ object ModelIntegration {
       val headerToVerify = soundSignedHeaderProvider.getSignedHeader(heightToVerify)
       val verifier = VerifierStateMachine(InitialState)
       verify(soundSignedHeaderProvider, verifier, VerificationRequest(trustedSignedHeader, headerToVerify)).verifierState
-  }.ensuring(res => res.isInstanceOf[Finished] || res.isInstanceOf[WaitingForHeader])
+  }
+  // .ensuring(res => res.isInstanceOf[Finished] || res.isInstanceOf[WaitingForHeader])
 
   def verify(soundSignedHeaderProvider: SoundSignedHeaderProvider, verifier: VerifierStateMachine, request: Message): VerifierStateMachine = {
     val result = verifier.processMessage(request)
