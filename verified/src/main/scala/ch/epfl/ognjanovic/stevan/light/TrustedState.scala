@@ -1,7 +1,7 @@
 package ch.epfl.ognjanovic.stevan.light
 
-import ch.epfl.ognjanovic.stevan.types.SignedHeader
 import ch.epfl.ognjanovic.stevan.types.Height
+import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
 
 case class TrustedState(trustedSignedHeader: SignedHeader) {
 
