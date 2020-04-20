@@ -2,6 +2,7 @@ package ch.epfl.ognjanovic.stevan.blockchain
 
 import ch.epfl.ognjanovic.stevan.blockchain.SystemSteps._
 import ch.epfl.ognjanovic.stevan.types.Nodes._
+import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
 import ch.epfl.ognjanovic.stevan.types._
 import stainless.annotation._
 import stainless.lang._

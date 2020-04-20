@@ -1,8 +1,9 @@
 package ch.epfl.ognjanovic.stevan.light
 
-import ch.epfl.ognjanovic.stevan.types.{Height, SignedHeader}
-import stainless.lang._
+import ch.epfl.ognjanovic.stevan.types.Height
+import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
 import stainless.annotation._
+import stainless.lang._
 import utils.ListMap
 
 object SignedHeaderStore {
