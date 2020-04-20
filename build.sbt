@@ -14,5 +14,5 @@ lazy val verified = project
   .enablePlugins(StainlessPlugin)
   .settings(
     name := "test-verified",
-    stainlessEnabled := true,
+    stainlessEnabled := true
   )
