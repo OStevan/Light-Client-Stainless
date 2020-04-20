@@ -4,9 +4,8 @@ import ch.epfl.ognjanovic.stevan.blockchain.BlockchainStates._
 import ch.epfl.ognjanovic.stevan.blockchain.SystemSteps.SystemStep
 import ch.epfl.ognjanovic.stevan.types.Chain.Genesis
 import ch.epfl.ognjanovic.stevan.types.{BlockHeader, Height, Validators, VotingPower}
-import stainless.lang._
 import stainless.annotation._
-import stainless.collection._
+import stainless.lang._
 
 
 object BlockchainSystem {

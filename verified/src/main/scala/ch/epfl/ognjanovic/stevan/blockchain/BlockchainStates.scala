@@ -3,10 +3,9 @@ package ch.epfl.ognjanovic.stevan.blockchain
 import ch.epfl.ognjanovic.stevan.blockchain.SystemSteps._
 import ch.epfl.ognjanovic.stevan.types.Nodes._
 import ch.epfl.ognjanovic.stevan.types._
-import utils.StaticOps._
-import stainless.lang._
-import stainless.collection._
 import stainless.annotation._
+import stainless.lang._
+import utils.StaticOps._
 
 object BlockchainStates {
 
