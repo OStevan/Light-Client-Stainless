@@ -50,15 +50,17 @@ object BlockchainStates {
     )
 
     private def appendBlock(lastCommit: Set[Node], nextValidatorSet: Validators): BlockchainState = {
-      require((lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
-        (nextValidatorSet.keys subsetOf allNodes) &&
-        nextValidatorSet.keys.nonEmpty &&
-        lastCommit.nonEmpty)
+      require(
+          (lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
+          (nextValidatorSet.keys subsetOf allNodes) &&
+          nextValidatorSet.keys.nonEmpty &&
+          lastCommit.subsetOf(allNodes) &&
+          lastCommit.nonEmpty)
       val lastBlock = blockchain.chain.head
       if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit) && nextValidatorSet.isCorrect(faulty)) {
         val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
         if (blockchain.finished)
-          Finished(newBlockchain, faulty)
+          Finished(allNodes, faulty, newBlockchain)
         else {
           Running(allNodes, faulty, maxVotingPower, newBlockchain)
         }
@@ -69,30 +71,30 @@ object BlockchainStates {
     @pure
     @inline
     def step(systemStep: SystemStep): BlockchainState = systemStep match {
-      case Fault(faultyNode) =>
+      // faultyNode is from expected nodes and at least one correct node exists
+      case Fault(faultyNode) if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) =>
         val newFaulty = faulty + faultyNode
         val newChain = blockchain.setFaulty(newFaulty)
-        if (!allNodes.contains(faultyNode))
-          this // ignore cases when a random node is supplied
-        else if (newFaulty == allNodes)
-          this // maintain at least one correct node, as per TLA spec
-        else if (newChain.faultAssumption())
+
+        if (newChain.faultAssumption())
           Running(allNodes, newFaulty, maxVotingPower, newChain)
         else
           Faulty(allNodes, newFaulty, maxVotingPower, newChain)
+
       case TimeStep(step) =>
         val updated = blockchain.increaseMinTrustedHeight(step)
         if (updated.faultAssumption())
           Running(allNodes, faulty, maxVotingPower, updated)
         else
           Faulty(allNodes, faulty, maxVotingPower, updated)
-      case AppendBlock(lastCommit, nextValidatorSet: Validators) =>
-        // ignores append messages which do not preserve guarantees of the system
-        if ((lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
-          (nextValidatorSet.keys subsetOf allNodes))
-          appendBlock(lastCommit, nextValidatorSet)
-        else
-          this
+
+      // ignores append messages which do not preserve guarantees of the system
+      case AppendBlock(lastCommit, nextValidatorSet: Validators)
+        if lastCommit.subsetOf(blockchain.chain.head.validatorSet.keys) &&
+          nextValidatorSet.keys.subsetOf(allNodes) &&
+        lastCommit.subsetOf(allNodes) =>
+        appendBlock(lastCommit, nextValidatorSet)
+      case _ => this // ignored cases
     }
 
     override def maxHeight: Height = blockchain.maxHeight
@@ -124,14 +126,9 @@ object BlockchainStates {
           Running(allNodes, faulty, maxVotingPower, updated)
         else
           Faulty(allNodes, faulty, maxVotingPower, updated)
-      case Fault(faultyNode) =>
+      case Fault(faultyNode) if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) =>
         val newFaulty = faulty + faultyNode
-        if (!allNodes.contains(faultyNode))
-          this // ignore cases when a random node is supplied
-        else if (newFaulty == allNodes)
-          this // maintain at least one correct node, as per TLA spec
-        else // another fault can not improve the state of the chain
-          Faulty(allNodes, newFaulty, maxVotingPower, blockchain.setFaulty(newFaulty))
+        Faulty(allNodes, newFaulty, maxVotingPower, blockchain.setFaulty(newFaulty))
       case _ => this
     }).ensuring(res => res.isInstanceOf[Faulty] || res.isInstanceOf[Running])
 
@@ -144,9 +141,9 @@ object BlockchainStates {
     override def currentHeight(): Height = blockchain.chain.height
   }
 
-  case class Finished(blockchain: Blockchain, faulty: Set[Node]) extends BlockchainState {
+  case class Finished(allNodes: Set[Node], faulty: Set[Node], blockchain: Blockchain) extends BlockchainState {
     @pure
-    def step(systemStep: SystemStep): BlockchainState = (this).ensuring(res => res.isInstanceOf[Finished])
+    def step(systemStep: SystemStep): BlockchainState = this.ensuring(res => res.isInstanceOf[Finished])
 
     override def maxHeight: Height = blockchain.maxHeight
 
@@ -156,4 +153,5 @@ object BlockchainStates {
 
     override def currentHeight(): Height = blockchain.chain.height
   }
+
 }

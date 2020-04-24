@@ -12,10 +12,11 @@ object BlockchainSystem {
 
   @ghost
   def initialSystem(
-                     validatorSet: Validators,
-                     maxHeight: Height,
-                     maxPower: VotingPower,
-                     nextValidatorSet: Validators): BlockchainState = {
+    validatorSet: Validators,
+    maxHeight: Height,
+    maxPower: VotingPower,
+    nextValidatorSet: Validators
+  ): BlockchainState = {
     require(
       validatorSet.keys.nonEmpty &&
         validatorSet.values.forall(value => value.power == 1) &&
@@ -29,7 +30,7 @@ object BlockchainSystem {
     assert(initialChain.height <= maxHeight) // without this assertion, infinite verification
     val startingBlockchain = Blockchain(maxHeight, minTrustedHeight, initialChain, Set.empty)
     if (maxHeight.value == BigInt(1))
-      Finished(startingBlockchain, Set.empty)
+      Finished(validatorSet.keys, Set.empty, startingBlockchain)
     else
       Running(validatorSet.keys, Set.empty, maxPower, startingBlockchain)
   }.ensuring(res => neverStuckFalse2(res))

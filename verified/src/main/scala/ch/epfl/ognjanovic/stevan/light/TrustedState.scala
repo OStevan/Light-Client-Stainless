@@ -2,19 +2,21 @@ package ch.epfl.ognjanovic.stevan.light
 
 import ch.epfl.ognjanovic.stevan.types.Height
 import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
+import stainless.annotation.pure
 
 case class TrustedState(trustedSignedHeader: SignedHeader) {
 
   /**
-    * The hight of the last block that we trust.
+    * The height of the last block that we trust.
     */
+  @pure
   def currentHeight(): Height = trustedSignedHeader.header.height
 
   /**
-    * Tries "improve" the current trusted state with addition of a new signed header of a greater height.
+    * Tries to "improve" the current trusted state with addition of a new signed header of a greater height.
     *
-    * @param signedHeader
-    * @return
+    * @param signedHeader which will be the new trusted header if it can be trusted
+    * @return new trusted state or the old one if the trust is not reachable
     */
   def increaseTrust(signedHeader: SignedHeader): TrustedState = {
     require(signedHeader.header.height > this.trustedSignedHeader.header.height)
