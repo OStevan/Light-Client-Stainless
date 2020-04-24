@@ -1,8 +1,8 @@
 package ch.epfl.ognjanovic.stevan.types
 
-import stainless.lang._
 import stainless.annotation._
 import stainless.collection._
+import stainless.lang._
 
 object Chain {
 
@@ -10,7 +10,10 @@ object Chain {
    * By design chain can not be empty.
    */
   sealed abstract class Chain {
-    def forAll(condition: BlockHeader => Boolean): Boolean = map(block => block).forall(condition)
+    def forAll(condition: BlockHeader => Boolean): Boolean = this match {
+      case ChainLink(head, tail) => condition(head) && tail.forAll(condition)
+      case Genesis(blockHeader) => condition(blockHeader)
+    }
 
     @induct
     def size: BigInt = {

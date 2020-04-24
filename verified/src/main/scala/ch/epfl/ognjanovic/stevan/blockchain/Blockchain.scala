@@ -7,11 +7,7 @@ import ch.epfl.ognjanovic.stevan.types.SignedHeader.{DefaultSignedHeader, Signed
 import ch.epfl.ognjanovic.stevan.types.{Chain => _, _}
 import stainless.lang._
 
-case class Blockchain(
-                       maxHeight: Height,
-                       minTrustedHeight: Height,
-                       chain: Chain,
-                       faulty: Set[Node]) {
+case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain, faulty: Set[Node]) {
   require(
     minTrustedHeight <= min(chain.height + 1, maxHeight) &&
       chain.height <= maxHeight)
@@ -40,7 +36,9 @@ case class Blockchain(
     }
   }.ensuring(res => res.chain.height <= maxHeight && res.minTrustedHeight == minTrustedHeight)
 
-  def finished: Boolean = chain.height == maxHeight
+  def finished: Boolean = {
+    chain.height == maxHeight
+  }.ensuring(res => (res && chain.height == maxHeight) || (!res && chain.height < maxHeight))
 
   def size: BigInt = chain.size
 
@@ -60,10 +58,11 @@ case class Blockchain(
     DefaultSignedHeader(blockHeader, headerCommit)
   }
 
+  @scala.annotation.tailrec
   private def getHeaderInternal(height: Height, chain: Chain): BlockHeader = {
     require(height <= chain.height)
     chain match {
-      case Genesis(blockHeader) =>  
+      case Genesis(blockHeader) =>
         assert(height == chain.height)
         blockHeader
       case ChainLink(blockHeader, tail) =>

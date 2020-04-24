@@ -8,15 +8,13 @@ case class UntrustedState(pending: List[SignedHeader]) {
   require(UntrustedState.pendingInvariant(pending))
 
   def addSignedHeader(signedHeader: SignedHeader): UntrustedState = {
-      require(complexRequire(signedHeader))
-      pending match {
-      case Nil() => UntrustedState(Cons(signedHeader, Nil()))
-      case Cons(h, _) =>
-        UntrustedState(Cons(signedHeader, pending))
-    }
+    require(complexRequire(signedHeader))
+    UntrustedState(signedHeader :: pending)
+  }.ensuring { res =>
+    res.pending.head.header.height == signedHeader.header.height
   }
 
-  def removeHead: (Option[SignedHeader], UntrustedState) = pending match {
+  def removeHead(): (Option[SignedHeader], UntrustedState) = pending match {
     case Cons(h, t) => (Some(h), UntrustedState(t))
     case Nil() => (None(), this)
   }
@@ -31,13 +29,14 @@ case class UntrustedState(pending: List[SignedHeader]) {
 }
 
 object UntrustedState {
-
   def empty: UntrustedState = UntrustedState(Nil[SignedHeader]())
 
   def apply(signedHeader: SignedHeader): UntrustedState = UntrustedState(Cons(signedHeader, Nil()))
 
+  @scala.annotation.tailrec
   private def pendingInvariant(pending: List[SignedHeader]): Boolean = pending match {
-    case Cons(first, Cons(second, tail)) => first.header.height < second.header.height && pendingInvariant(Cons(second, tail))
+    case Cons(first, tail) if tail.isInstanceOf[Cons[SignedHeader]] =>
+      first.header.height < tail.head.header.height && pendingInvariant(tail)
     case _ => true
   }
 }

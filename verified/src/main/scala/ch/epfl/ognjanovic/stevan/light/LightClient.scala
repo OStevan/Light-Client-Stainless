@@ -15,13 +15,21 @@ object LightClient {
   }
 
   abstract class Message
+
   case class VerificationRequest(trustedSignedHeader: SignedHeader, signedHeaderToVerify: SignedHeader) extends Message
+
   case class HeaderResponse(signedHeader: SignedHeader) extends Message
 
   abstract class VerifierState
+
   case object InitialState extends VerifierState
+
   case class Finished(verdict: Boolean, trustedState: TrustedState, untrustedState: UntrustedState) extends VerifierState
-  case class WaitingForHeader(height: Height, trustedState: TrustedState, untrustedState: UntrustedState) extends VerifierState {
+
+  case class WaitingForHeader(
+    height: Height,
+    trustedState: TrustedState,
+    untrustedState: UntrustedState) extends VerifierState {
     require(height > trustedState.currentHeight() && untrustedStateHeightInvariant(height, untrustedState))
 
     def headerResponse(signedHeader: SignedHeader): (TrustedState, UntrustedState) = {
@@ -30,7 +38,7 @@ object LightClient {
       (trustedState, newUntrustedState)
     }.ensuring(res => untrustedStateHeightInvariant(res._1.currentHeight(), res._2))
   }
-  
+
   case class VerifierStateMachine(verifierState: VerifierState) {
     def processMessage(message: Message): VerifierStateMachine = (verifierState, message) match {
       case (InitialState, verificationRequest: VerificationRequest) =>
@@ -38,10 +46,10 @@ object LightClient {
         val signedHeaderToVerify = verificationRequest.signedHeaderToVerify
         if (trustedSignedHeader.isExpired())
           VerifierStateMachine(
-            Finished(false, TrustedState(trustedSignedHeader), UntrustedState(signedHeaderToVerify)))
+            Finished(verdict = false, TrustedState(trustedSignedHeader), UntrustedState(signedHeaderToVerify)))
         else if (signedHeaderToVerify.header.height <= trustedSignedHeader.header.height)
           VerifierStateMachine(
-            Finished(true, TrustedState(trustedSignedHeader), UntrustedState.empty))
+            Finished(verdict = true, TrustedState(trustedSignedHeader), UntrustedState.empty))
         else
           VerifierStateMachine(
             verify(TrustedState(trustedSignedHeader), UntrustedState(signedHeaderToVerify)))
@@ -52,27 +60,29 @@ object LightClient {
         val nextState = verify(trustedState, untrustedState)
         VerifierStateMachine(nextState)
 
-      case _ => this
+      case _ => this // transitions to ignore
     }
 
+    @scala.annotation.tailrec
     private def verify(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
       require(untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState))
       untrustedState.removeHead match {
-      case (None(), emptyUntrustedState) => Finished(true, trustedState, emptyUntrustedState)
+        case (None(), emptyUntrustedState) => Finished(verdict = true, trustedState, emptyUntrustedState)
 
-      case (Some(nextToVerify), newUntrustedState) =>
-        if (trustedState.isAdjacent(nextToVerify)) {
-          if (trustedState.adjacentHeaderTrust(nextToVerify))
+        case (Some(nextToVerify), newUntrustedState) =>
+          if (trustedState.isAdjacent(nextToVerify)) {
+            if (trustedState.adjacentHeaderTrust(nextToVerify))
+              verify(trustedState.increaseTrust(nextToVerify), newUntrustedState)
+            else
+              Finished(verdict = false, trustedState, untrustedState)
+          } else if (trustedState.nonAdjacentHeaderTrust(nextToVerify))
             verify(trustedState.increaseTrust(nextToVerify), newUntrustedState)
-          else
-            Finished(false, trustedState, untrustedState)
-        } else if (trustedState.nonAdjacentHeaderTrust(nextToVerify))
-          verify(trustedState.increaseTrust(nextToVerify), newUntrustedState)
-        else {
-          val bisectionHeight: Height = trustedState.bisectionHeight(nextToVerify)
-          WaitingForHeader(bisectionHeight, trustedState, untrustedState)
-        }
+          else {
+            val bisectionHeight: Height = trustedState.bisectionHeight(nextToVerify)
+            WaitingForHeader(bisectionHeight, trustedState, untrustedState)
+          }
       }
     }
   }
+
 }
