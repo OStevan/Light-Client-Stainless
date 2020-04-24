@@ -23,6 +23,12 @@ object LightClient {
   case class Finished(verdict: Boolean, trustedState: TrustedState, untrustedState: UntrustedState) extends VerifierState
   case class WaitingForHeader(height: Height, trustedState: TrustedState, untrustedState: UntrustedState) extends VerifierState {
     require(height > trustedState.currentHeight() && untrustedStateHeightInvariant(height, untrustedState))
+
+    def headerResponse(signedHeader: SignedHeader): (TrustedState, UntrustedState) = {
+      require(signedHeader.header.height == height && signedHeader.header.height > trustedState.currentHeight())
+      val newUntrustedState = untrustedState.addSignedHeader(signedHeader)
+      (trustedState, newUntrustedState)
+    }.ensuring(res => untrustedStateHeightInvariant(res._1.currentHeight(), res._2))
   }
   
   case class VerifierStateMachine(verifierState: VerifierState) {
@@ -40,12 +46,11 @@ object LightClient {
           VerifierStateMachine(
             verify(TrustedState(trustedSignedHeader), UntrustedState(signedHeaderToVerify)))
 
-      case (state: WaitingForHeader, headerResponse: HeaderResponse) =>
-        if (state.height == headerResponse.signedHeader.header.height) {
-          val newUntrustedState = state.untrustedState.addSignedHeader(headerResponse.signedHeader)
-          VerifierStateMachine(verify(state.trustedState, newUntrustedState))
-        } else
-          this // ignore responses which are not what was asked for
+      case (state: WaitingForHeader, headerResponse: HeaderResponse)
+        if state.height == headerResponse.signedHeader.header.height =>
+        val (trustedState, untrustedState) = state.headerResponse(headerResponse.signedHeader)
+        val nextState = verify(trustedState, untrustedState)
+        VerifierStateMachine(nextState)
 
       case _ => this
     }
