@@ -1,10 +1,11 @@
 package ch.epfl.ognjanovic.stevan.types
 
 import ch.epfl.ognjanovic.stevan.types.Nodes.Node
-import utils.StaticOps._
-import stainless.lang._
+import stainless.annotation.pure
 import stainless.collection._
+import stainless.lang._
 import utils.ListMap
+import utils.StaticOps._
 
 case class Validators(totalPower: VotingPower, powerAssignments: ListMap[Node, VotingPower]) {
   require(powerAssignments.forall(value => value._2.isPositive) &&
@@ -33,11 +34,13 @@ case class Validators(totalPower: VotingPower, powerAssignments: ListMap[Node, V
     nodes.staticToList.foldLeft(VotingPower(0))((acc, value) => acc + apply(value))
   }
 
+  @pure
   def obtainedByzantineQuorum(nodes: Set[Node]): Boolean = {
     require(nodes subsetOf keys)
     nodesPower(nodes) * VotingPower(3) > totalPower * VotingPower(2)
   }
 
+  @pure
   def isCorrect(faultyNodes: Set[Node]): Boolean = {
     nodesPower(keys -- faultyNodes) > nodesPower(keys & faultyNodes) * VotingPower(2)
   }

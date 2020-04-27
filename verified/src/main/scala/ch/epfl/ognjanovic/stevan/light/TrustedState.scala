@@ -42,6 +42,7 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
       .checkSupport(trustedSignedHeader.header.nextValidatorSet.keys & signedHeader.commit)
   }
 
+  @inline
   def bisectionHeight(signedHeader: SignedHeader): Height = {
     require(signedHeader.header.height > this.trustedSignedHeader.header.height + 1)
     (signedHeader.header.height + trustedSignedHeader.header.height) / 2

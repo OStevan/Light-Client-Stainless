@@ -37,6 +37,7 @@ object Chain {
       case ChainLink(blockHeader, _) => blockHeader
     }
 
+    @inline
     def appendBlock(blockHeader: BlockHeader): Chain = {
       require(
         blockHeader.height == this.height + 1 &&
@@ -58,4 +59,14 @@ object Chain {
     )
   }
 
+  @ghost
+  private def appendLemma(blockHeader: BlockHeader, chain: Chain, condition: BlockHeader => Boolean) = {
+    require(
+      blockHeader.height == chain.height + 1 &&
+        blockHeader.validatorSet == chain.head.nextValidatorSet &&
+        blockHeader.nextValidatorSet.keys.nonEmpty &&
+        condition(blockHeader) &&
+        chain.forAll(condition)
+    )
+  }.ensuring(_ => chain.appendBlock(blockHeader).forAll(condition))
 }

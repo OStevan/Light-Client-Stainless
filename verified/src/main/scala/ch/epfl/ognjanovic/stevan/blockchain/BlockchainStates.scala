@@ -50,7 +50,8 @@ object BlockchainStates {
         (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
         maxVotingPower.isPositive && // makes no sense to have 0 maximum voting power
         !blockchain.finished &&
-        blockchain.chain.forAll(blockHeader => blockHeader.nextValidatorSet.keys.subsetOf(allNodes))
+        blockchain.chain.forAll(blockHeader => blockHeader.nextValidatorSet.keys.subsetOf(allNodes)) &&
+        blockchain.chain.forAll(blockHeader => blockHeader.lastCommit.subsetOf(allNodes))
     )
 
     private def appendBlock(lastCommit: Set[Node], nextValidatorSet: Validators): BlockchainState = {
@@ -66,6 +67,7 @@ object BlockchainStates {
         if (newBlockchain.finished)
           Finished(allNodes, faulty, newBlockchain)
         else {
+          assert(newBlockchain.chain.head.lastCommit == lastCommit)
           Running(allNodes, faulty, maxVotingPower, newBlockchain)
         }
       } else
@@ -78,7 +80,9 @@ object BlockchainStates {
       // faultyNode is from expected nodes and at least one correct node exists
       case Fault(faultyNode) if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) =>
         val newFaulty = faulty + faultyNode
+        assert(newFaulty subsetOf allNodes)
         val newChain = blockchain.setFaulty(newFaulty)
+        assert(newChain.chain == blockchain.chain)
 
         if (newChain.faultAssumption())
           Running(allNodes, newFaulty, maxVotingPower, newChain)
@@ -122,7 +126,8 @@ object BlockchainStates {
         (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
         maxVotingPower.isPositive && // makes no sense to have 0 maximum voting power
         !blockchain.finished &&
-        blockchain.chain.forAll(blockHeader => blockHeader.nextValidatorSet.keys.subsetOf(allNodes))
+        blockchain.chain.forAll(blockHeader => blockHeader.nextValidatorSet.keys.subsetOf(allNodes)) &&
+        blockchain.chain.forAll(blockHeader => blockHeader.lastCommit.subsetOf(allNodes))
     )
 
     @pure
