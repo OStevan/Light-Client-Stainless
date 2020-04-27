@@ -28,14 +28,10 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
 
   @inline
   def appendBlock(lastCommit: Set[Node], nextVS: Validators): Blockchain = {
-    require(nextVS.keys.nonEmpty && lastCommit.nonEmpty)
-    if (chain.height == maxHeight)
-      this
-    else {
-      val header = BlockHeader(chain.height + 1, lastCommit, chain.head.nextValidatorSet, nextVS)
-      val newChain = chain.appendBlock(header)
-      Blockchain(maxHeight, minTrustedHeight, newChain, faulty)
-    }
+    require(nextVS.keys.nonEmpty && lastCommit.nonEmpty && !finished)
+    val header = BlockHeader(chain.height + 1, lastCommit, chain.head.nextValidatorSet, nextVS)
+    val newChain = chain.appendBlock(header)
+    Blockchain(maxHeight, minTrustedHeight, newChain, faulty)
   }.ensuring(res => res.chain.height <= maxHeight && res.minTrustedHeight == minTrustedHeight)
 
   @inline

@@ -148,6 +148,12 @@ object BlockchainStates {
   }
 
   case class Finished(allNodes: Set[Node], faulty: Set[Node], blockchain: Blockchain) extends BlockchainState {
+    require(
+      allNodes.nonEmpty && // makes no sense to have no nodes
+        (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
+        blockchain.finished
+    )
+
     @pure
     def step(systemStep: SystemStep): BlockchainState = this.ensuring(res => res.isInstanceOf[Finished])
 
