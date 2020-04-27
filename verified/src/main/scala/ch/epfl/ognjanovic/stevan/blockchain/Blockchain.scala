@@ -12,6 +12,7 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
     minTrustedHeight <= min(chain.height + 1, maxHeight) &&
       chain.height <= maxHeight)
 
+  @inline
   def increaseMinTrustedHeight(step: BigInt): Blockchain = {
     require(step > BigInt(0))
     val newMinTrustedHeight = min(min(maxHeight, chain.height + 1), minTrustedHeight + step)
@@ -25,6 +26,7 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
       .forall(header => header.nextValidatorSet.isCorrect(faulty))
   }
 
+  @inline
   def appendBlock(lastCommit: Set[Node], nextVS: Validators): Blockchain = {
     require(nextVS.keys.nonEmpty && lastCommit.nonEmpty)
     if (chain.height == maxHeight)
@@ -36,9 +38,10 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
     }
   }.ensuring(res => res.chain.height <= maxHeight && res.minTrustedHeight == minTrustedHeight)
 
+  @inline
   def finished: Boolean = {
     chain.height == maxHeight
-  }.ensuring(res => (res && chain.height == maxHeight) || (!res && chain.height < maxHeight))
+  }.ensuring(res => !res ==> chain.height < maxHeight)
 
   def size: BigInt = chain.size
 

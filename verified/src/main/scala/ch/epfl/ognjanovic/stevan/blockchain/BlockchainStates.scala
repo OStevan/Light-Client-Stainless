@@ -39,19 +39,20 @@ object BlockchainStates {
   }
 
   case class Running(
-                      allNodes: Set[Node],
-                      faulty: Set[Node],
-                      maxVotingPower: VotingPower,
-                      blockchain: Blockchain) extends BlockchainState {
+    allNodes: Set[Node],
+    faulty: Set[Node],
+    maxVotingPower: VotingPower,
+    blockchain: Blockchain) extends BlockchainState {
     require(
       allNodes.nonEmpty && // makes no sense to have no nodes
         (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
-        maxVotingPower.isPositive // makes no sense to have 0 maximum voting power
+        maxVotingPower.isPositive && // makes no sense to have 0 maximum voting power
+        !blockchain.finished
     )
 
     private def appendBlock(lastCommit: Set[Node], nextValidatorSet: Validators): BlockchainState = {
       require(
-          (lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
+        (lastCommit subsetOf blockchain.chain.head.validatorSet.keys) &&
           (nextValidatorSet.keys subsetOf allNodes) &&
           nextValidatorSet.keys.nonEmpty &&
           lastCommit.subsetOf(allNodes) &&
@@ -59,7 +60,7 @@ object BlockchainStates {
       val lastBlock = blockchain.chain.head
       if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit) && nextValidatorSet.isCorrect(faulty)) {
         val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
-        if (blockchain.finished)
+        if (newBlockchain.finished)
           Finished(allNodes, faulty, newBlockchain)
         else {
           Running(allNodes, faulty, maxVotingPower, newBlockchain)
@@ -83,6 +84,7 @@ object BlockchainStates {
 
       case TimeStep(step) =>
         val updated = blockchain.increaseMinTrustedHeight(step)
+
         if (updated.faultAssumption())
           Running(allNodes, faulty, maxVotingPower, updated)
         else
@@ -92,7 +94,7 @@ object BlockchainStates {
       case AppendBlock(lastCommit, nextValidatorSet: Validators)
         if lastCommit.subsetOf(blockchain.chain.head.validatorSet.keys) &&
           nextValidatorSet.keys.subsetOf(allNodes) &&
-        lastCommit.subsetOf(allNodes) =>
+          lastCommit.subsetOf(allNodes) =>
         appendBlock(lastCommit, nextValidatorSet)
       case _ => this // ignored cases
     }
@@ -107,14 +109,15 @@ object BlockchainStates {
   }
 
   case class Faulty(
-                     allNodes: Set[Node],
-                     faulty: Set[Node],
-                     maxVotingPower: VotingPower,
-                     blockchain: Blockchain) extends BlockchainState {
+    allNodes: Set[Node],
+    faulty: Set[Node],
+    maxVotingPower: VotingPower,
+    blockchain: Blockchain) extends BlockchainState {
     require(
       allNodes.nonEmpty && // makes no sense to have no nodes
         (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
-        maxVotingPower.isPositive // makes no sense to have 0 maximum voting power
+        maxVotingPower.isPositive && // makes no sense to have 0 maximum voting power
+        !blockchain.finished
     )
 
     @pure
@@ -122,13 +125,16 @@ object BlockchainStates {
       case TimeStep(step) =>
         // propagation of time allows us to move away from the chain where too many fault happened
         val updated = blockchain.increaseMinTrustedHeight(step)
+
         if (updated.faultAssumption())
           Running(allNodes, faulty, maxVotingPower, updated)
         else
           Faulty(allNodes, faulty, maxVotingPower, updated)
+
       case Fault(faultyNode) if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) =>
         val newFaulty = faulty + faultyNode
         Faulty(allNodes, newFaulty, maxVotingPower, blockchain.setFaulty(newFaulty))
+
       case _ => this
     }).ensuring(res => res.isInstanceOf[Faulty] || res.isInstanceOf[Running])
 
