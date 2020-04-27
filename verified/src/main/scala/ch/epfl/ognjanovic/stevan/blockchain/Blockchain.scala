@@ -43,6 +43,7 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
 
   def height: Height = chain.height
 
+  @inline
   def setFaulty(newFaulty: Set[Node]): Blockchain = Blockchain(maxHeight, minTrustedHeight, chain, newFaulty)
 
   def getHeader(height: Height): BlockHeader = {

@@ -43,7 +43,7 @@ object Chain {
           blockHeader.validatorSet == head.nextValidatorSet &&
           blockHeader.nextValidatorSet.keys.nonEmpty)
       ChainLink(blockHeader, this)
-    } ensuring(res => res.height == this.height + 1)
+    } ensuring (res => res.height == this.height + 1)
   }
 
   case class Genesis(blockHeader: BlockHeader) extends Chain {
@@ -57,4 +57,5 @@ object Chain {
         blockHeader.nextValidatorSet.keys.nonEmpty
     )
   }
+
 }
