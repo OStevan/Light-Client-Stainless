@@ -1,9 +1,7 @@
 package utils
 
-import stainless.lang._
-import stainless.collection._
 import stainless.annotation._
-import stainless.lang._
+import stainless.collection._
 import stainless.proof._
 
 /**
@@ -155,12 +153,12 @@ object ListUtils {
         ()
     }
 
-  }.ensuring(subseq(l1.map(f), l2.map(f)))
+  }.ensuring(_ => subseq(l1.map(f), l2.map(f)))
 
   @opaque
   def filterSubseq[A](@induct l: List[A], p: A => Boolean): Unit = {
 
-  }.ensuring(subseq(l.filter(p), l))
+  }.ensuring(_ => subseq(l.filter(p), l))
 
   @opaque
   def noDuplicateMapFilter[A, B](l: List[A], p: A => Boolean, f: A => B): Unit = {
