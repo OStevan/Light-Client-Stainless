@@ -2,11 +2,13 @@ package ch.epfl.ognjanovic.stevan.light
 
 import ch.epfl.ognjanovic.stevan.types.Height
 import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
+import stainless.annotation.inlineInvariant
 import stainless.collection._
 import stainless.lang._
 
 object LightClient {
 
+  @inline
   private def untrustedStateHeightInvariant(height: Height, untrustedState: UntrustedState): Boolean = {
     untrustedState.pending match {
       case list: Cons[SignedHeader] => height < list.head.header.height
@@ -26,6 +28,7 @@ object LightClient {
 
   case class Finished(verdict: Boolean, trustedState: TrustedState, untrustedState: UntrustedState) extends VerifierState
 
+  @inlineInvariant
   case class WaitingForHeader(
     height: Height,
     trustedState: TrustedState,
@@ -66,7 +69,7 @@ object LightClient {
     @scala.annotation.tailrec
     private def verify(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
       require(untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState))
-      untrustedState.removeHead match {
+      untrustedState.removeHead() match {
         case (None(), emptyUntrustedState) => Finished(verdict = true, trustedState, emptyUntrustedState)
 
         case (Some(nextToVerify), newUntrustedState) =>

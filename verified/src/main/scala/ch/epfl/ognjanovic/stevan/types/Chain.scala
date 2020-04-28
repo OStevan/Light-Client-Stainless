@@ -37,13 +37,14 @@ object Chain {
       case ChainLink(blockHeader, _) => blockHeader
     }
 
+    @inline
     def appendBlock(blockHeader: BlockHeader): Chain = {
       require(
         blockHeader.height == this.height + 1 &&
           blockHeader.validatorSet == head.nextValidatorSet &&
           blockHeader.nextValidatorSet.keys.nonEmpty)
       ChainLink(blockHeader, this)
-    } ensuring(res => res.height == this.height + 1)
+    } ensuring (res => res.height == this.height + 1)
   }
 
   case class Genesis(blockHeader: BlockHeader) extends Chain {
@@ -57,4 +58,15 @@ object Chain {
         blockHeader.nextValidatorSet.keys.nonEmpty
     )
   }
+
+  @ghost
+  private def appendLemma(blockHeader: BlockHeader, chain: Chain, condition: BlockHeader => Boolean) = {
+    require(
+      blockHeader.height == chain.height + 1 &&
+        blockHeader.validatorSet == chain.head.nextValidatorSet &&
+        blockHeader.nextValidatorSet.keys.nonEmpty &&
+        condition(blockHeader) &&
+        chain.forAll(condition)
+    )
+  }.ensuring(_ => chain.appendBlock(blockHeader).forAll(condition))
 }

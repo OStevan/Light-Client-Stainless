@@ -10,6 +10,7 @@ import utils.StaticOps._
 
 object BlockchainStates {
 
+  @inlineInvariant
   sealed abstract class BlockchainState {
     @pure
     @inline
@@ -38,6 +39,7 @@ object BlockchainStates {
     }
   }
 
+  @inlineInvariant
   case class Running(
     allNodes: Set[Node],
     faulty: Set[Node],
@@ -47,7 +49,9 @@ object BlockchainStates {
       allNodes.nonEmpty && // makes no sense to have no nodes
         (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
         maxVotingPower.isPositive && // makes no sense to have 0 maximum voting power
-        !blockchain.finished
+        !blockchain.finished &&
+        blockchain.chain.forAll(blockHeader => blockHeader.nextValidatorSet.keys.subsetOf(allNodes)) &&
+        blockchain.chain.forAll(blockHeader => blockHeader.lastCommit.subsetOf(allNodes))
     )
 
     private def appendBlock(lastCommit: Set[Node], nextValidatorSet: Validators): BlockchainState = {
@@ -63,6 +67,7 @@ object BlockchainStates {
         if (newBlockchain.finished)
           Finished(allNodes, faulty, newBlockchain)
         else {
+          assert(newBlockchain.chain.head.lastCommit == lastCommit)
           Running(allNodes, faulty, maxVotingPower, newBlockchain)
         }
       } else
@@ -75,7 +80,9 @@ object BlockchainStates {
       // faultyNode is from expected nodes and at least one correct node exists
       case Fault(faultyNode) if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) =>
         val newFaulty = faulty + faultyNode
+        assert(newFaulty subsetOf allNodes)
         val newChain = blockchain.setFaulty(newFaulty)
+        assert(newChain.chain == blockchain.chain)
 
         if (newChain.faultAssumption())
           Running(allNodes, newFaulty, maxVotingPower, newChain)
@@ -108,6 +115,7 @@ object BlockchainStates {
     override def currentHeight(): Height = blockchain.chain.height
   }
 
+  @inlineInvariant
   case class Faulty(
     allNodes: Set[Node],
     faulty: Set[Node],
@@ -117,7 +125,9 @@ object BlockchainStates {
       allNodes.nonEmpty && // makes no sense to have no nodes
         (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
         maxVotingPower.isPositive && // makes no sense to have 0 maximum voting power
-        !blockchain.finished
+        !blockchain.finished &&
+        blockchain.chain.forAll(blockHeader => blockHeader.nextValidatorSet.keys.subsetOf(allNodes)) &&
+        blockchain.chain.forAll(blockHeader => blockHeader.lastCommit.subsetOf(allNodes))
     )
 
     @pure
@@ -147,11 +157,13 @@ object BlockchainStates {
     override def currentHeight(): Height = blockchain.chain.height
   }
 
+  @inlineInvariant
   case class Finished(allNodes: Set[Node], faulty: Set[Node], blockchain: Blockchain) extends BlockchainState {
     require(
       allNodes.nonEmpty && // makes no sense to have no nodes
         (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
-        blockchain.finished
+        blockchain.finished &&
+        blockchain.chain.forAll(blockHeader => blockHeader.nextValidatorSet.keys.subsetOf(allNodes))
     )
 
     @pure

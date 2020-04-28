@@ -5,6 +5,7 @@ import ch.epfl.ognjanovic.stevan.types.Height._
 import ch.epfl.ognjanovic.stevan.types.Nodes._
 import ch.epfl.ognjanovic.stevan.types.SignedHeader.{DefaultSignedHeader, SignedHeader}
 import ch.epfl.ognjanovic.stevan.types.{Chain => _, _}
+import stainless.annotation.pure
 import stainless.lang._
 
 case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain, faulty: Set[Node]) {
@@ -27,6 +28,7 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
   }
 
   @inline
+  @pure
   def appendBlock(lastCommit: Set[Node], nextVS: Validators): Blockchain = {
     require(nextVS.keys.nonEmpty && lastCommit.nonEmpty && !finished)
     val header = BlockHeader(chain.height + 1, lastCommit, chain.head.nextValidatorSet, nextVS)
@@ -43,6 +45,7 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
 
   def height: Height = chain.height
 
+  @inline
   def setFaulty(newFaulty: Set[Node]): Blockchain = Blockchain(maxHeight, minTrustedHeight, chain, newFaulty)
 
   def getHeader(height: Height): BlockHeader = {

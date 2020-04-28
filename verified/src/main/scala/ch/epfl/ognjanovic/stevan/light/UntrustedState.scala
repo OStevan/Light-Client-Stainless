@@ -14,6 +14,7 @@ case class UntrustedState(pending: List[SignedHeader]) {
     res.pending.head.header.height == signedHeader.header.height
   }
 
+  @inline
   def removeHead(): (Option[SignedHeader], UntrustedState) = pending match {
     case Cons(h, t) => (Some(h), UntrustedState(t))
     case Nil() => (None(), this)
