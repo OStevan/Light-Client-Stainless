@@ -5,7 +5,6 @@ import stainless.annotation.pure
 import stainless.collection._
 import stainless.lang._
 import utils.ListMap
-import utils.StaticOps._
 
 case class Validators(totalPower: VotingPower, powerAssignments: ListMap[Node, VotingPower]) {
   require(powerAssignments.forall(value => value._2.isPositive) &&
@@ -31,7 +30,7 @@ case class Validators(totalPower: VotingPower, powerAssignments: ListMap[Node, V
 
   def nodesPower(nodes: Set[Node]): VotingPower = {
     require(nodes subsetOf keys)
-    nodes.staticToList.foldLeft(VotingPower(0))((acc, value) => acc + apply(value))
+    nodes.toList.foldLeft(VotingPower(0))((acc, value) => acc + apply(value))
   }
 
   @pure

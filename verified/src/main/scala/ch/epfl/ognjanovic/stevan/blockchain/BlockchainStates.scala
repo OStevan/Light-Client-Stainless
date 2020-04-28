@@ -6,7 +6,6 @@ import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
 import ch.epfl.ognjanovic.stevan.types._
 import stainless.annotation._
 import stainless.lang._
-import utils.StaticOps._
 
 object BlockchainStates {
 
@@ -110,7 +109,7 @@ object BlockchainStates {
 
     override def maxPower: VotingPower = maxVotingPower
 
-    override def numberOfNodes: BigInt = allNodes.staticToList.size
+    override def numberOfNodes: BigInt = allNodes.toList.size
 
     override def currentHeight(): Height = blockchain.chain.height
   }
@@ -152,7 +151,7 @@ object BlockchainStates {
 
     override def maxPower: VotingPower = maxVotingPower
 
-    override def numberOfNodes: BigInt = allNodes.staticToList.size
+    override def numberOfNodes: BigInt = allNodes.toList.size
 
     override def currentHeight(): Height = blockchain.chain.height
   }
