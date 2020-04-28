@@ -163,7 +163,8 @@ object BlockchainStates {
       allNodes.nonEmpty && // makes no sense to have no nodes
         (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
         blockchain.finished &&
-        blockchain.chain.forAll(blockHeader => blockHeader.nextValidatorSet.keys.subsetOf(allNodes))
+        blockchain.chain.forAll(blockHeader => blockHeader.nextValidatorSet.keys.subsetOf(allNodes)) &&
+        blockchain.chain.forAll(blockHeader => blockHeader.lastCommit.subsetOf(allNodes))
     )
 
     @pure
