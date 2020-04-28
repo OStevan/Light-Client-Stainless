@@ -34,7 +34,10 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
     val header = BlockHeader(chain.height + 1, lastCommit, chain.head.nextValidatorSet, nextVS)
     val newChain = chain.appendBlock(header)
     Blockchain(maxHeight, minTrustedHeight, newChain, faulty)
-  }.ensuring(res => res.chain.height <= maxHeight && res.minTrustedHeight == minTrustedHeight)
+  }.ensuring(res =>
+    res.chain.height <= maxHeight &&
+      res.minTrustedHeight == minTrustedHeight &&
+      res.chain.head.validatorSet == chain.head.nextValidatorSet)
 
   @inline
   def finished: Boolean = {

@@ -15,9 +15,7 @@ object BlockchainStates {
     faulty: Set[Node],
     maxVotingPower: VotingPower,
     blockchain: Blockchain): Boolean = {
-    maxVotingPower.isPositive &&
-      !blockchain.finished &&
-      globalStateInvariant(allNodes, faulty, blockchain)
+    maxVotingPower.isPositive && !blockchain.finished && globalStateInvariant(allNodes, faulty, blockchain)
   }
 
   @inline
@@ -26,18 +24,12 @@ object BlockchainStates {
     faulty: Set[Node],
     maxVotingPower: VotingPower,
     blockchain: Blockchain): Boolean = {
-    maxVotingPower.isPositive &&
-      !blockchain.finished &&
-      globalStateInvariant(allNodes, faulty, blockchain)
+    maxVotingPower.isPositive && !blockchain.finished && globalStateInvariant(allNodes, faulty, blockchain)
   }
 
   @inline
-  private def finishedStateInvariant(
-    allNodes: Set[Node],
-    faulty: Set[Node],
-    blockchain: Blockchain): Boolean = {
-    blockchain.finished &&
-      globalStateInvariant(allNodes, faulty, blockchain)
+  private def finishedStateInvariant(allNodes: Set[Node], faulty: Set[Node], blockchain: Blockchain): Boolean = {
+    blockchain.finished && globalStateInvariant(allNodes, faulty, blockchain)
   }
 
   // state invariant forced in TLA
@@ -45,8 +37,9 @@ object BlockchainStates {
   private def globalStateInvariant(allNodes: Set[Node], faulty: Set[Node], blockchain: Blockchain): Boolean = {
     allNodes.nonEmpty && // makes no sense to have no nodes
       (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
-      blockchain.chain.forAll(blockHeader => blockHeader.nextValidatorSet.keys.subsetOf(allNodes)) &&
-      blockchain.chain.forAll(blockHeader => blockHeader.lastCommit.subsetOf(allNodes))
+      blockchain.chain.forAll(_.nextValidatorSet.keys.subsetOf(allNodes)) &&
+      blockchain.chain.forAll(_.lastCommit.subsetOf(allNodes)) &&
+      blockchain.chain.forAll(_.validatorSet.keys.subsetOf(allNodes))
   }
 
   @inlineInvariant
@@ -120,6 +113,7 @@ object BlockchainStates {
           val lastBlock = blockchain.chain.head
           if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit) && nextValidatorSet.isCorrect(faulty)) {
             val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
+            StaticChecks.assert(newBlockchain.chain.head.validatorSet.keys.subsetOf(allNodes))
             StaticChecks.assert(globalStateInvariant(allNodes, faulty, newBlockchain))
 
             if (newBlockchain.finished)
