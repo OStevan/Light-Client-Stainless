@@ -6,6 +6,7 @@ import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
 import ch.epfl.ognjanovic.stevan.types._
 import stainless.annotation._
 import stainless.lang._
+import utils.SetInvariants
 
 object BlockchainStates {
 
@@ -15,7 +16,10 @@ object BlockchainStates {
     faulty: Set[Node],
     maxVotingPower: VotingPower,
     blockchain: Blockchain): Boolean = {
-    maxVotingPower.isPositive && !blockchain.finished && globalStateInvariant(allNodes, faulty, blockchain)
+    blockchain.faultAssumption() &&
+      maxVotingPower.isPositive &&
+      !blockchain.finished &&
+      globalStateInvariant(allNodes, faulty, blockchain)
   }
 
   @inline
@@ -24,19 +28,26 @@ object BlockchainStates {
     faulty: Set[Node],
     maxVotingPower: VotingPower,
     blockchain: Blockchain): Boolean = {
-    maxVotingPower.isPositive && !blockchain.finished && globalStateInvariant(allNodes, faulty, blockchain)
+    !blockchain.faultAssumption() &&
+      maxVotingPower.isPositive &&
+      !blockchain.finished &&
+      globalStateInvariant(allNodes, faulty, blockchain)
   }
 
   @inline
   private def finishedStateInvariant(allNodes: Set[Node], faulty: Set[Node], blockchain: Blockchain): Boolean = {
-    blockchain.finished && globalStateInvariant(allNodes, faulty, blockchain)
+    blockchain.faultAssumption() &&
+      blockchain.finished &&
+      globalStateInvariant(allNodes, faulty, blockchain)
   }
 
   // state invariant forced in TLA
   @inline
-  private def globalStateInvariant(allNodes: Set[Node], faulty: Set[Node], blockchain: Blockchain): Boolean = {
+//  private
+  def globalStateInvariant(allNodes: Set[Node], faulty: Set[Node], blockchain: Blockchain): Boolean = {
     allNodes.nonEmpty && // makes no sense to have no nodes
       (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
+      faulty == blockchain.faulty &&
       blockchain.chain.forAll(_.nextValidatorSet.keys.subsetOf(allNodes)) &&
       blockchain.chain.forAll(_.lastCommit.subsetOf(allNodes)) &&
       blockchain.chain.forAll(_.validatorSet.keys.subsetOf(allNodes))
@@ -85,8 +96,10 @@ object BlockchainStates {
       StaticChecks.require(runningStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
       systemStep match {
         // faultyNode is from expected nodes and at least one correct node exists
-        case Fault(faultyNode) if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) =>
+        case Fault(faultyNode)
+          if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
           val newFaulty = faulty + faultyNode
+          SetInvariants.setAdd(faulty, faultyNode, allNodes)
           val newChain = blockchain.setFaulty(newFaulty)
           assert(newChain.chain == blockchain.chain)
 
@@ -118,9 +131,8 @@ object BlockchainStates {
 
             if (newBlockchain.finished)
               Finished(allNodes, faulty, newBlockchain)
-            else {
+            else
               Running(allNodes, faulty, maxVotingPower, newBlockchain)
-            }
           } else
             this
         case _ => this // ignored cases
@@ -146,7 +158,7 @@ object BlockchainStates {
 
     @pure
     def step(systemStep: SystemStep): BlockchainState = {
-      faultyStateInvariant(allNodes, faulty, maxVotingPower, blockchain)
+      StaticChecks.require(faultyStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
       systemStep match {
         case TimeStep(step) =>
           // propagation of time allows us to move away from the chain where too many fault happened
@@ -157,8 +169,9 @@ object BlockchainStates {
           else
             Faulty(allNodes, faulty, maxVotingPower, updated)
 
-        case Fault(faultyNode) if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) =>
-          val newFaulty = faulty + faultyNode
+        case Fault(faultyNode)
+          if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
+          val newFaulty = SetInvariants.setAdd(faulty, faultyNode, allNodes)
           Faulty(allNodes, newFaulty, maxVotingPower, blockchain.setFaulty(newFaulty))
 
         case _ => this

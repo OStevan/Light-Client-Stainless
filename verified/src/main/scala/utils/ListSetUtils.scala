@@ -1,7 +1,5 @@
 package utils
 
-package utils
-
 import stainless.annotation.{induct, opaque}
 import stainless.collection.{Cons, List, Nil}
 import stainless.lang.StaticChecks._
