@@ -3,7 +3,7 @@ package utils
 import stainless.annotation._
 import stainless.collection._
 import stainless.lang._
-import utils.ListUtils._
+import ListUtils._
 
 /**
  * Copied as is from `https://github.com/epfl-lara/verifythis2020/blob/f10e38d864838f70e0bf880d48e40de8e815fbec/src/main/scala/pgp/ListMap.scala`
