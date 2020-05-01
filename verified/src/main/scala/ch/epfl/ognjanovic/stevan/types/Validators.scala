@@ -53,7 +53,7 @@ case class Validators(totalPower: VotingPower, powerAssignments: ListMap[Node, V
 object Validators {
 
   @extern
-  def moreFaultyDoesNotHelp(current: Set[Node], next: Set[Node], validators: Validators): Unit = {
+  def moreFaultyDoesNotHelp(current: Set[Node], next: Set[Node]): Unit = {
     require(current subsetOf next)
-  }.ensuring(_ => !validators.isCorrect(current) ==> !validators.isCorrect(next))
+  }.ensuring(_ => forall((validator: Validators) => !validator.isCorrect(current) ==> !validator.isCorrect(next)))
 }

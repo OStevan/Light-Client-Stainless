@@ -5,7 +5,7 @@ import ch.epfl.ognjanovic.stevan.types.Height._
 import ch.epfl.ognjanovic.stevan.types.Nodes._
 import ch.epfl.ognjanovic.stevan.types.SignedHeader.{DefaultSignedHeader, SignedHeader}
 import ch.epfl.ognjanovic.stevan.types.{Chain => _, _}
-import stainless.annotation.pure
+import stainless.annotation.{extern, pure}
 import stainless.lang._
 
 case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain, faulty: Set[Node]) {
@@ -20,21 +20,23 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
     Blockchain(maxHeight, newMinTrustedHeight, chain, faulty)
   }
 
-  @inline
+  @pure
   def faultAssumption(): Boolean = {
-    chain.map(id => id)
-      .filter(header => minTrustedHeight <= header.height)
-      .forall(header => header.nextValidatorSet.isCorrect(faulty))
+    chain.forAll(header => minTrustedHeight > header.height || header.nextValidatorSet.isCorrect(faulty))
   }
 
   @inline
   @pure
   def appendBlock(lastCommit: Set[Node], nextVS: Validators): Blockchain = {
-    require(nextVS.keys.nonEmpty && lastCommit.nonEmpty && !finished)
+    require(nextVS.keys.nonEmpty &&
+      lastCommit.nonEmpty &&
+      !finished && nextVS.isCorrect(faulty) &&
+      faultAssumption())
     val header = BlockHeader(chain.height + 1, lastCommit, chain.head.nextValidatorSet, nextVS)
     val newChain = chain.appendBlock(header)
     Blockchain(maxHeight, minTrustedHeight, newChain, faulty)
   }.ensuring(res =>
+    res.faultAssumption() &&
     res.chain.height <= maxHeight &&
       res.minTrustedHeight == minTrustedHeight &&
       res.chain.head.validatorSet == chain.head.nextValidatorSet)
@@ -49,7 +51,11 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
   def height: Height = chain.height
 
   @inline
-  def setFaulty(newFaulty: Set[Node]): Blockchain = Blockchain(maxHeight, minTrustedHeight, chain, newFaulty)
+  def setFaulty(newFaulty: Set[Node]): Blockchain = {
+    require(faulty subsetOf newFaulty)
+    Blockchain.faultyChainDoesNotRecoverWithNewFault(minTrustedHeight, chain, faulty, newFaulty)
+    Blockchain(maxHeight, minTrustedHeight, chain, newFaulty)
+  }.ensuring(res => !faultAssumption() ==> !res.faultAssumption())
 
   def getHeader(height: Height): BlockHeader = {
     require(height <= chain.height)
@@ -76,5 +82,21 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
         else
           getHeaderInternal(height, tail)
     }
+  }
+}
+
+object Blockchain {
+
+  @extern
+  def faultyChainDoesNotRecoverWithNewFault(
+    minTrustedHeight: Height,
+    chain: Chain,
+    faulty: Set[Node],
+    newFaulty: Set[Node]): Unit = {
+    require(faulty subsetOf newFaulty)
+  }.ensuring { _ =>
+    Validators.moreFaultyDoesNotHelp(faulty, newFaulty)
+    !chain.forAll(header => minTrustedHeight > header.height || header.nextValidatorSet.isCorrect(faulty)) ==>
+      !chain.forAll(header => minTrustedHeight > header.height || header.nextValidatorSet.isCorrect(newFaulty))
   }
 }

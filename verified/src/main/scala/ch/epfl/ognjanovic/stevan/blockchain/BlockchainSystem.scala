@@ -3,6 +3,7 @@ package ch.epfl.ognjanovic.stevan.blockchain;
 import ch.epfl.ognjanovic.stevan.blockchain.BlockchainStates._
 import ch.epfl.ognjanovic.stevan.blockchain.SystemSteps.SystemStep
 import ch.epfl.ognjanovic.stevan.types.Chain.Genesis
+import ch.epfl.ognjanovic.stevan.types.Nodes.Node
 import ch.epfl.ognjanovic.stevan.types.{BlockHeader, Height, Validators, VotingPower}
 import stainless.annotation._
 import stainless.lang._
@@ -22,23 +23,28 @@ object BlockchainSystem {
         validatorSet.values.forall(value => value.power == 1) &&
         maxPower.isPositive &&
         nextValidatorSet.keys.nonEmpty &&
-        (nextValidatorSet.keys subsetOf validatorSet.keys))
+        (nextValidatorSet.keys subsetOf validatorSet.keys) &&
+        nextValidatorSet.isCorrect(Set.empty))
+
+    val noFaulty = Set.empty[Node]
 
     val genesisBlock = BlockHeader(Height(1), Set.empty, validatorSet, nextValidatorSet)
     val initialChain = Genesis(genesisBlock)
     val minTrustedHeight = Height(1)
+
     assert(initialChain.height <= maxHeight) // without this assertion, infinite verification
     val startingBlockchain = Blockchain(maxHeight, minTrustedHeight, initialChain, Set.empty)
+
     if (maxHeight.value == BigInt(1))
-      Finished(validatorSet.keys, Set.empty, startingBlockchain)
+      Finished(validatorSet.keys, noFaulty, startingBlockchain)
     else
-      Running(validatorSet.keys, Set.empty, maxPower, startingBlockchain)
+      Running(validatorSet.keys, noFaulty, maxPower, startingBlockchain)
   }.ensuring(res => neverStuckFalse2(res))
 
-    @ghost
-    def systemInvariant(blockchainState: BlockchainState, message: SystemStep): Boolean = {
-      neverStuckFalse2(blockchainState.step(message))
-    }.holds
+  @ghost
+  def systemInvariant(blockchainState: BlockchainState, message: SystemStep): Boolean = {
+    neverStuckFalse2(blockchainState.step(message))
+  }.holds
 
   /**
    * This invariant is basically NeverStuckFalse2 from the TLA spec. Ignoring the uninitialized state.
