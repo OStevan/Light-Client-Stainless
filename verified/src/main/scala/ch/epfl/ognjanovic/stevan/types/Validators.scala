@@ -1,7 +1,7 @@
 package ch.epfl.ognjanovic.stevan.types
 
 import ch.epfl.ognjanovic.stevan.types.Nodes.Node
-import stainless.annotation.pure
+import stainless.annotation.{extern, pure}
 import stainless.collection._
 import stainless.lang._
 import utils.ListMap
@@ -48,4 +48,12 @@ case class Validators(totalPower: VotingPower, powerAssignments: ListMap[Node, V
     require(nodes subsetOf keys)
     VotingPower(3) * nodesPower(nodes) > nodesPower(keys)
   }
+}
+
+object Validators {
+
+  @extern
+  def moreFaultyDoesNotHelp(current: Set[Node], next: Set[Node], validators: Validators): Unit = {
+    require(current subsetOf next)
+  }.ensuring(_ => !validators.isCorrect(current) ==> !validators.isCorrect(next))
 }

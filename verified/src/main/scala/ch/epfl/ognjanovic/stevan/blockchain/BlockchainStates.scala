@@ -37,6 +37,7 @@ object BlockchainStates {
   private def globalStateInvariant(allNodes: Set[Node], faulty: Set[Node], blockchain: Blockchain): Boolean = {
     allNodes.nonEmpty && // makes no sense to have no nodes
       (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
+      faulty == blockchain.faulty &&
       blockchain.chain.forAll(_.nextValidatorSet.keys.subsetOf(allNodes)) &&
       blockchain.chain.forAll(_.lastCommit.subsetOf(allNodes)) &&
       blockchain.chain.forAll(_.validatorSet.keys.subsetOf(allNodes))
@@ -85,8 +86,11 @@ object BlockchainStates {
       StaticChecks.require(runningStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
       systemStep match {
         // faultyNode is from expected nodes and at least one correct node exists
-        case Fault(faultyNode) if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) =>
+        case Fault(faultyNode)
+          if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
           val newFaulty = faulty + faultyNode
+          assert(faulty subsetOf newFaulty)
+          assert(newFaulty subsetOf allNodes)
           val newChain = blockchain.setFaulty(newFaulty)
           assert(newChain.chain == blockchain.chain)
 
