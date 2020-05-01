@@ -32,10 +32,8 @@ object ListUtils {
 
   }.ensuring(_ => l1.forall(l2.contains))
 
-  def noDuplicate[T](l: List[T]): Boolean = l match {
-    case Nil() => true
-    case Cons(x, xs) => !xs.contains(x) && noDuplicate(xs)
-  }
+  @inline
+  def noDuplicate[T](l: List[T]): Boolean = ListOps.noDuplicates(l)
 
   @opaque
   def forallContained[T](l: List[T], p: T => Boolean, x: T): Unit = {
