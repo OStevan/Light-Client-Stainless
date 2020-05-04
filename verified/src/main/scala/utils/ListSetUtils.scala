@@ -1,21 +1,25 @@
 package utils
 
-import stainless.annotation.{induct, opaque}
+import stainless.annotation.{induct, opaque, pure}
 import stainless.collection.{Cons, List, Nil}
 import stainless.lang.StaticChecks._
 import stainless.lang._
 
 object ListSetUtils {
-//  def subsetInterestingLemmas[T](first: Set[T], second: Set[T]): Unit = {
-//    require((first subsetOf second) && first.toList.forall(first.contains) && second.toList.forall(second.contains))
-//    expandingContainment(first.toList, first.contains, second.contains)
-//    assert(first.toList.forall(second.contains))
-//  }.ensuring(_ => first.toList.forall(second.contains))
+  @opaque
+  def uniquenessPreserved[A, B](list: List[(A, B)]): Unit = {
+    require(ListUtils.noDuplicate(list.map(_._1)))
+    list match {
+      case Nil() => ()
+      case Cons(h, t) =>
+        uniquenessPreserved(t)
+        pairUniquenessOnFirstElementLemma(h, t)
+    }
+  }.ensuring(_ => ListUtils.noDuplicate(list))
 
-//  def listSetSubsetRelation[T](first: Set[T], second: Set[T]): Unit = {
-//    require(first subsetOf second)
-//    assert(first.toList.forall(first.toList.contains))
-//  }.ensuring(_ => first.toList.forall(first.contains))
+  def pairUniquenessOnFirstElementLemma[A, B](elem: (A, B), @induct list: List[(A, B)]): Unit = {
+    require(!list.map(_._1).contains(elem._1) && ListUtils.noDuplicate(list))
+  }.ensuring(_ => !list.contains(elem))
 
   def listSetSubsetEquivalence[T](set: Set[T]): List[T] = {
     val list = set.toList
@@ -173,16 +177,12 @@ object ListSetUtils {
     }
   }.ensuring(_ => first.forall(third.contains))
 
-  def unionOfTwoDisjointSets[T](@induct first: List[T], second: List[T]): List[T] = {
-    require(ListUtils.noDuplicate(first) && ListUtils.noDuplicate(second) && (first & second).isEmpty)
-    first ++ second
-  }.ensuring(res => ListUtils.noDuplicate(res))
-
+  @pure
   def removingFromSet[T](@induct first: List[T], second: List[T]): List[T] = {
     require(ListUtils.noDuplicate(first))
     restOfSetIsSubset(first, second)
     first -- second
-  }.ensuring{ res =>
+  }.ensuring { res =>
     assert(ListUtils.noDuplicate(res))
     assert((res & second).isEmpty)
     assert(res.forall(first.contains))
@@ -280,4 +280,49 @@ object ListSetUtils {
     expandingContainment(firstIntersection, firstIntersection.contains, secondIntersection.contains)
     firstIntersection.forall(secondIntersection.contains)
   }
+
+  @opaque
+  def removingDifference[T](first: List[T], second: List[T]): Unit = {
+    require(first.nonEmpty && ListUtils.noDuplicate(first) && first.forall(second.contains))
+    first match {
+      case Cons(h, Nil()) =>
+        assert((second -- first.tail).contains(h))
+      case Cons(h, t) =>
+        assert((second -- first.tail).contains(h))
+    }
+  }.ensuring(_ => (second -- first.tail).contains(first.head))
+
+  @opaque
+  def sameAfterRemove[T](@induct list: List[T]): Unit = {
+  }.ensuring(_ => (list -- List.empty) == list)
+
+  @opaque
+  def doesNotHaveHeadContainedInTail[T](@induct first: List[T], second: List[T]): Unit = {
+    require(second.nonEmpty && !first.contains(second.head) && first.forall(second.contains))
+  }.ensuring(_ => first.forall(second.tail.contains))
+
+  @opaque
+  def removingContainment[T](elem: T, @induct first: List[T], second: List[T]): Unit = {
+    require(first.forall(second.contains))
+  }.ensuring(_ => (first - elem).forall((second - elem).contains))
+
+  @opaque
+  def interestingEquality[T](elem: T, first: List[T], @induct second: List[T]): Unit = {
+    require(!second.contains(elem))
+  }.ensuring(_ => second -- first == second -- (first - elem))
+
+  @opaque
+  def listSetRemoveHeadSameIsSubtraction[T](list: List[T]): Unit = {
+    require(list.nonEmpty && ListUtils.noDuplicate(list))
+    list match {
+      case Cons(h, t) =>
+        assert(!t.contains(h))
+        removingNonContained(t, h)
+    }
+  }.ensuring(_ => list.tail == (list - list.head))
+
+  @opaque
+  def removingNonContained[T](@induct list: List[T], elem: T): Unit = {
+    require(!list.contains(elem))
+  }.ensuring(_ => list == list - elem)
 }
