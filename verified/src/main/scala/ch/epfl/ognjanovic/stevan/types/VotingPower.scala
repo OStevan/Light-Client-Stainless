@@ -15,5 +15,7 @@ sealed case class VotingPower(value: BigInt) {
 
   def >=(other: VotingPower): Boolean = value >= other.power()
 
+  def <=(other: VotingPower): Boolean = !(this > other)
+
   def isPositive: Boolean = value > BigInt(0)
 }
