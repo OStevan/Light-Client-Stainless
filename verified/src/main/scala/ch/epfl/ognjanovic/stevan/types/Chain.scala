@@ -15,7 +15,6 @@ object Chain {
       case Genesis(blockHeader) => condition(blockHeader)
     }
 
-    @induct
     def size: BigInt = {
       this match {
         case Genesis(_) => BigInt(1)
@@ -58,15 +57,4 @@ object Chain {
         blockHeader.nextValidatorSet.keys.nonEmpty
     )
   }
-
-  @ghost
-  private def appendLemma(blockHeader: BlockHeader, chain: Chain, condition: BlockHeader => Boolean) = {
-    require(
-      blockHeader.height == chain.height + 1 &&
-        blockHeader.validatorSet == chain.head.nextValidatorSet &&
-        blockHeader.nextValidatorSet.keys.nonEmpty &&
-        condition(blockHeader) &&
-        chain.forAll(condition)
-    )
-  }.ensuring(_ => chain.appendBlock(blockHeader).forAll(condition))
 }

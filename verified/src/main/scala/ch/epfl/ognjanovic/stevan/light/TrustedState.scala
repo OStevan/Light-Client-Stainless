@@ -3,6 +3,7 @@ package ch.epfl.ognjanovic.stevan.light
 import ch.epfl.ognjanovic.stevan.types.Height
 import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
 import stainless.annotation.pure
+import utils.SetInvariants
 
 case class TrustedState(trustedSignedHeader: SignedHeader) {
 
@@ -36,10 +37,13 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
 
   def nonAdjacentHeaderTrust(signedHeader: SignedHeader): Boolean = {
     require(signedHeader.header.height > this.trustedSignedHeader.header.height && !isAdjacent(signedHeader))
+    val intersection = SetInvariants.setIntersection(
+      trustedSignedHeader.header.nextValidatorSet.keys,
+      signedHeader.commit)
     trustedSignedHeader
       .header
       .nextValidatorSet
-      .checkSupport(trustedSignedHeader.header.nextValidatorSet.keys & signedHeader.commit)
+      .checkSupport(intersection)
   }
 
   @inline
