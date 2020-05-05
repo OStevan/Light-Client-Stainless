@@ -84,7 +84,7 @@ object Validators {
     val nextDiff = removingFromSet(keys, nextList)
 
     val difference_proof = {
-      expandingContainment(currentList, currentList.contains, nextList.contains)
+      expandPredicate(currentList, currentList.contains, nextList.contains)
       subsetRemovingLemma(keys, currentList, nextList)
       subsetPowerLemma(nextDiff, currentDiff, validators)
       check(validators.nodesPower(currentDiff) >= validators.nodesPower(nextDiff))
@@ -138,7 +138,7 @@ object Validators {
     )
     transitivityLemma(first, second, validators.powerAssignments.toList.map(_._1))
     val firstFiltered = validators.powerAssignments.toList.filter(node => first.contains(node._1))
-    uniquenessPreserved(validators.powerAssignments.toList)
+    uniquenessTransitivity(validators.powerAssignments.toList)
     filteringPreservesPredicate(first, validators.powerAssignments.toList)
 
     val secondFiltered = validators.powerAssignments.toList.filter(node => second.contains(node._1))
@@ -162,40 +162,29 @@ object Validators {
   def sumWithDifferenceIsEqual(first: List[(Node, VotingPower)], second: List[(Node, VotingPower)]): Unit = {
     require(first.forall(second.contains) && ListUtils.noDuplicate(first) && ListUtils.noDuplicate(second))
     second match {
-      case Nil() =>
-        ()
+      case Nil() => ()
+
       case Cons(h, t) if first.contains(h) =>
         val removed = first - h
         removeOne(h, first)
         interestingEquality(h, first, t)
         listSetRemoveHeadSameIsSubtraction(second)
-        assert(t == second - h)
         removingContainment(h, first, second)
         sumWithDifferenceIsEqual(removed, t)
-        assert(sumVotingPower(first) == h._2 + sumVotingPower(removed))
-        assert(sumVotingPower(second) == h._2 + sumVotingPower(t))
-        assert(sumVotingPower(second -- first) == sumVotingPower(t -- removed))
-      case Cons(h, t) =>
+
+      case Cons(_, t) =>
         doesNotHaveHeadContainedInTail(first, second)
         sumWithDifferenceIsEqual(first, t)
-        assert(second -- first == h :: (t -- first))
-        assert(sumVotingPower(second -- first) == h._2 + sumVotingPower(t -- first))
     }
   }.ensuring(_ => sumVotingPower(first) + sumVotingPower(second -- first) == sumVotingPower(second))
 
+  @opaque
   def removeOne(elem: (Node, VotingPower), list: List[(Node, VotingPower)]): Unit = {
     require(ListUtils.noDuplicate(list) && list.contains(elem) && list.nonEmpty)
     list match {
-      case Cons(_, Nil()) =>
-        ()
-      case Cons(h, tail) if !tail.contains(elem) =>
-        assert(h == elem)
-        removingNonContained(tail, elem)
-        assert(list - elem == tail)
-      case Cons(h, tail) =>
-        assert(h != elem)
-        removeOne(elem, tail)
-        assert(list - elem == h :: (tail - elem))
+      case Cons(_, Nil()) => ()
+      case Cons(_, tail) if !tail.contains(elem) => removingNonContained(tail, elem)
+      case Cons(_, tail) => removeOne(elem, tail)
     }
   }.ensuring(_ => sumVotingPower(list) == elem._2 + sumVotingPower(list - elem) && ListUtils.noDuplicate(list - elem))
 

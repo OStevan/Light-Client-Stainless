@@ -7,16 +7,17 @@ import stainless.lang._
 
 object ListSetUtils {
   @opaque
-  def uniquenessPreserved[A, B](list: List[(A, B)]): Unit = {
+  def uniquenessTransitivity[A, B](list: List[(A, B)]): Unit = {
     require(ListUtils.noDuplicate(list.map(_._1)))
     list match {
       case Nil() => ()
       case Cons(h, t) =>
-        uniquenessPreserved(t)
+        uniquenessTransitivity(t)
         pairUniquenessOnFirstElementLemma(h, t)
     }
   }.ensuring(_ => ListUtils.noDuplicate(list))
 
+  @opaque
   def pairUniquenessOnFirstElementLemma[A, B](elem: (A, B), @induct list: List[(A, B)]): Unit = {
     require(!list.map(_._1).contains(elem._1) && ListUtils.noDuplicate(list))
   }.ensuring(_ => !list.contains(elem))
@@ -34,20 +35,13 @@ object ListSetUtils {
       case Nil() => ()
       case Cons(h, t) =>
         selfContainment(t)
-        expandingContainment(t, t.contains, list.contains)
-        assert(t.forall(list.contains))
+        expandPredicate(t, t.contains, list.contains)
         prependMaintainsCondition(h, t, list.contains)
     }
   }.ensuring(_ => list.forall(list.contains))
 
   @opaque
-  def expandingSetContainment[T](list: List[T], first: Set[T], second: Set[T]): Unit = {
-    require((first subsetOf second) && list.forall(first.contains))
-    expandingContainment(list, first.contains, second.contains)
-  }.ensuring(_ => list.forall(second.contains))
-
-  @opaque
-  def expandingContainment[T](@induct list: List[T], p1: T => Boolean, p2: T => Boolean): Unit = {
+  def expandPredicate[T](@induct list: List[T], p1: T => Boolean, p2: T => Boolean): Unit = {
     require(forall((elem: T) => p1(elem) ==> p2(elem)) && list.forall(p1))
   }.ensuring(_ => list.forall(p2))
 
@@ -182,14 +176,9 @@ object ListSetUtils {
     require(ListUtils.noDuplicate(first))
     restOfSetIsSubset(first, second)
     first -- second
-  }.ensuring { res =>
-    assert(ListUtils.noDuplicate(res))
-    assert((res & second).isEmpty)
-    assert(res.forall(first.contains))
-    ListUtils.noDuplicate(res) && (res & second).isEmpty && res.forall(first.contains)
-  }
+  }.ensuring(res => ListUtils.noDuplicate(res) && (res & second).isEmpty && res.forall(first.contains))
 
-
+  @opaque
   def restOfSetIsSubset[T](first: List[T], second: List[T]): Unit = {
     require(ListUtils.noDuplicate(first))
     val diff = first -- second
@@ -197,10 +186,10 @@ object ListSetUtils {
       case Nil() => assert(diff.isEmpty)
       case Cons(h, t) if second.contains(h) =>
         restOfSetIsSubset(t, second)
-        expandingContainment(diff, t.contains, first.contains)
+        expandPredicate(diff, t.contains, first.contains)
       case Cons(h, t) =>
         restOfSetIsSubset(t, second)
-        expandingContainment(t -- second, t.contains, first.contains)
+        expandPredicate(t -- second, t.contains, first.contains)
         prependMaintainsCondition(h, t -- second, first.contains)
     }
   }.ensuring(_ => (first -- second).forall(first.contains))
@@ -277,7 +266,7 @@ object ListSetUtils {
     val firstIntersection = original & first
     val secondIntersection = original & second
     selfContainment(firstIntersection)
-    expandingContainment(firstIntersection, firstIntersection.contains, secondIntersection.contains)
+    expandPredicate(firstIntersection, firstIntersection.contains, secondIntersection.contains)
     firstIntersection.forall(secondIntersection.contains)
   }
 
@@ -287,14 +276,10 @@ object ListSetUtils {
     first match {
       case Cons(h, Nil()) =>
         assert((second -- first.tail).contains(h))
-      case Cons(h, t) =>
+      case Cons(h, _) =>
         assert((second -- first.tail).contains(h))
     }
   }.ensuring(_ => (second -- first.tail).contains(first.head))
-
-  @opaque
-  def sameAfterRemove[T](@induct list: List[T]): Unit = {
-  }.ensuring(_ => (list -- List.empty) == list)
 
   @opaque
   def doesNotHaveHeadContainedInTail[T](@induct first: List[T], second: List[T]): Unit = {
@@ -316,7 +301,6 @@ object ListSetUtils {
     require(list.nonEmpty && ListUtils.noDuplicate(list))
     list match {
       case Cons(h, t) =>
-        assert(!t.contains(h))
         removingNonContained(t, h)
     }
   }.ensuring(_ => list.tail == (list - list.head))

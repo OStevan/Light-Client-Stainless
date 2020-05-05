@@ -11,7 +11,8 @@ object SetInvariants {
   }.ensuring(res => res.subsetOf(first) && res.subsetOf(second))
 
 
-  @extern @opaque
+  @extern
+  @opaque
   def setAdd[T](set: Set[T], elem: T, allNodes: Set[T]): Set[T] = {
     require(allNodes.contains(elem) && set.subsetOf(allNodes))
     set + elem
