@@ -110,15 +110,12 @@ object BlockchainStates {
 
         case TimeStep(step) =>
           val updated = blockchain.increaseMinTrustedHeight(step)
-
-          if (updated.faultAssumption())
-            Running(allNodes, faulty, maxVotingPower, updated)
-          else
-            Faulty(allNodes, faulty, maxVotingPower, updated)
+          Running(allNodes, faulty, maxVotingPower, updated)
 
         // ignores append messages which do not preserve guarantees of the system
         case AppendBlock(lastCommit, nextValidatorSet: Validators)
           if lastCommit.subsetOf(blockchain.chain.head.validatorSet.keys) &&
+            nextValidatorSet.values.forall(_ <= maxVotingPower) &&
             nextValidatorSet.keys.subsetOf(allNodes) &&
             lastCommit.subsetOf(allNodes) =>
           assert(lastCommit.nonEmpty)
@@ -157,7 +154,7 @@ object BlockchainStates {
     require(faultyStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
 
     @pure
-    def step(systemStep: SystemStep): BlockchainState = {
+    override def step(systemStep: SystemStep): BlockchainState = {
       StaticChecks.require(faultyStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
       systemStep match {
         case TimeStep(step) =>
@@ -176,7 +173,8 @@ object BlockchainStates {
 
         case _ => this
       }
-    }.ensuring(res => res.isInstanceOf[Faulty] || res.isInstanceOf[Running])
+    }.ensuring(res => (res.blockchain.faultAssumption() && res.isInstanceOf[Running]) ||
+      (!res.blockchain.faultAssumption() && res.isInstanceOf[Faulty]))
 
     override def maxHeight: Height = blockchain.maxHeight
 
@@ -192,7 +190,7 @@ object BlockchainStates {
     require(finishedStateInvariant(allNodes, faulty, blockchain))
 
     @pure
-    def step(systemStep: SystemStep): BlockchainState = this.ensuring(res => res.isInstanceOf[Finished])
+    override def step(systemStep: SystemStep): BlockchainState = this.ensuring(res => res.isInstanceOf[Finished])
 
     override def maxHeight: Height = blockchain.maxHeight
 
