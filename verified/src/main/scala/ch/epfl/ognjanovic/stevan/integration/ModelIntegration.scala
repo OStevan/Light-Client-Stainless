@@ -2,9 +2,11 @@ package ch.epfl.ognjanovic.stevan.integration
 
 import ch.epfl.ognjanovic.stevan.blockchain.BlockchainStates.BlockchainState
 import ch.epfl.ognjanovic.stevan.light.LightClient._
+import ch.epfl.ognjanovic.stevan.light.{TrustedState, UntrustedState}
 import ch.epfl.ognjanovic.stevan.types.Height
 import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
 import stainless.annotation._
+import stainless.collection._
 
 object ModelIntegration {
   def snapshotExecution(
@@ -12,14 +14,21 @@ object ModelIntegration {
     trustedHeight: Height,
     heightToVerify: Height
   ): VerifierState = {
-    require(blockchainState.currentHeight() > heightToVerify && trustedHeight < heightToVerify)
+    require(blockchainState.currentHeight() > heightToVerify && heightToVerify > trustedHeight)
     val soundSignedHeaderProvider = SoundSignedHeaderProvider(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.getSignedHeader(trustedHeight)
-    val headerToVerify = soundSignedHeaderProvider.getSignedHeader(heightToVerify)
-    val verifier = VerifierStateMachine(InitialState)
-    verify(soundSignedHeaderProvider, verifier, VerificationRequest(trustedSignedHeader, headerToVerify)).verifierState
+    val untrustedSignedHeader = soundSignedHeaderProvider.getSignedHeader(heightToVerify)
+
+    val trustedState = TrustedState(trustedSignedHeader)
+    assert(heightToVerify > trustedState.currentHeight())
+
+    val verifier = VerifierStateMachine(
+      WaitingForHeader(
+        heightToVerify,
+        trustedState,
+        UntrustedState(Nil[SignedHeader]())))
+    verify(soundSignedHeaderProvider, verifier, HeaderResponse(untrustedSignedHeader)).verifierState
   }
-  // .ensuring(res => res.isInstanceOf[Finished] || res.isInstanceOf[WaitingForHeader])
 
   @scala.annotation.tailrec
   def verify(
@@ -43,7 +52,7 @@ object ModelIntegration {
       require(height < blockchainState.currentHeight())
       blockchainState.signedHeader(height)
     }.ensuring(res =>
-      (res.header == blockchainState.header(height)) ||
+      (res.header == blockchainState.header(height) && res.header.height == height) ||
         (res.commit.subsetOf(blockchainState.faulty) && res.header.height == height))
   }
 

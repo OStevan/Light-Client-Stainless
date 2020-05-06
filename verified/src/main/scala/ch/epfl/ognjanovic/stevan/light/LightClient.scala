@@ -24,8 +24,6 @@ object LightClient {
 
   abstract class VerifierState
 
-  case object InitialState extends VerifierState
-
   case class Finished(verdict: Boolean, trustedState: TrustedState, untrustedState: UntrustedState) extends VerifierState
 
   @inlineInvariant
@@ -44,19 +42,6 @@ object LightClient {
 
   case class VerifierStateMachine(verifierState: VerifierState) {
     def processMessage(message: Message): VerifierStateMachine = (verifierState, message) match {
-      case (InitialState, verificationRequest: VerificationRequest) =>
-        val trustedSignedHeader = verificationRequest.trustedSignedHeader
-        val signedHeaderToVerify = verificationRequest.signedHeaderToVerify
-        if (trustedSignedHeader.isExpired())
-          VerifierStateMachine(
-            Finished(verdict = false, TrustedState(trustedSignedHeader), UntrustedState(signedHeaderToVerify)))
-        else if (signedHeaderToVerify.header.height <= trustedSignedHeader.header.height)
-          VerifierStateMachine(
-            Finished(verdict = true, TrustedState(trustedSignedHeader), UntrustedState.empty))
-        else
-          VerifierStateMachine(
-            verify(TrustedState(trustedSignedHeader), UntrustedState(signedHeaderToVerify)))
-
       case (state: WaitingForHeader, headerResponse: HeaderResponse)
         if state.height == headerResponse.signedHeader.header.height =>
         val (trustedState, untrustedState) = state.headerResponse(headerResponse.signedHeader)
@@ -69,19 +54,19 @@ object LightClient {
     @scala.annotation.tailrec
     private def verify(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
       require(untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState))
-      untrustedState.removeHead() match {
-        case (None(), emptyUntrustedState) => Finished(verdict = true, trustedState, emptyUntrustedState)
+      untrustedState.pending match {
+        case Nil() => Finished(verdict = true, trustedState, untrustedState)
 
-        case (Some(nextToVerify), newUntrustedState) =>
-          if (trustedState.isAdjacent(nextToVerify)) {
-            if (trustedState.adjacentHeaderTrust(nextToVerify))
-              verify(trustedState.increaseTrust(nextToVerify), newUntrustedState)
+        case Cons(next, tail) =>
+          if (trustedState.isAdjacent(next)) {
+            if (trustedState.adjacentHeaderTrust(next))
+              verify(trustedState.increaseTrust(next), UntrustedState(tail))
             else
               Finished(verdict = false, trustedState, untrustedState)
-          } else if (trustedState.nonAdjacentHeaderTrust(nextToVerify))
-            verify(trustedState.increaseTrust(nextToVerify), newUntrustedState)
+          } else if (trustedState.nonAdjacentHeaderTrust(next))
+            verify(trustedState.increaseTrust(next), UntrustedState(tail))
           else {
-            val bisectionHeight: Height = trustedState.bisectionHeight(nextToVerify)
+            val bisectionHeight: Height = trustedState.bisectionHeight(next)
             WaitingForHeader(bisectionHeight, trustedState, untrustedState)
           }
       }

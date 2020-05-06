@@ -92,7 +92,7 @@ object BlockchainStates {
 
     @pure
     @inline
-    def step(systemStep: SystemStep): BlockchainState = {
+    override def step(systemStep: SystemStep): BlockchainState = {
       StaticChecks.require(runningStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
       systemStep match {
         // faultyNode is from expected nodes and at least one correct node exists
