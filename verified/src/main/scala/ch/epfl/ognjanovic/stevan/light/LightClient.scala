@@ -54,6 +54,7 @@ object LightClient {
     @scala.annotation.tailrec
     private def verify(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
       require(untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState))
+      decreases(untrustedState.pending.size)
       untrustedState.pending match {
         case Nil() => Finished(verdict = true, trustedState, untrustedState)
 
