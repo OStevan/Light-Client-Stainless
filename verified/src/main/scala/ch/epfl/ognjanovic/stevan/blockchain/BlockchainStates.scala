@@ -67,6 +67,7 @@ object BlockchainStates {
 
     def blockchain: Blockchain
 
+    @pure
     def currentHeight(): Height
 
     def faulty: Set[Node]
