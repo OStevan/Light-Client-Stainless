@@ -16,7 +16,7 @@ object LightClient {
     }
   }
 
-  abstract class VerifierState
+  sealed abstract class VerifierState
 
   case class Finished(
     verdict: Boolean,
@@ -39,15 +39,20 @@ object LightClient {
     }.ensuring(res => untrustedStateHeightInvariant(res._1.currentHeight(), res._2))
   }
 
-  case class VerifierStateMachine(verifierState: VerifierState) {
-    def processHeader(signedHeader: SignedHeader): VerifierStateMachine = verifierState match {
-      case state: WaitingForHeader if state.height == signedHeader.header.height =>
-        val (trustedState, untrustedState) = state.headerResponse(signedHeader)
-        val nextState = verify(trustedState, untrustedState)
-        VerifierStateMachine(nextState)
-
-      case _ => this // transitions to ignore
+  case class VerifierStateMachine() {
+    def processHeader(
+      waitingForHeader: WaitingForHeader,
+      signedHeader: SignedHeader): VerifierState = {
+      val (trustedState, untrustedState) = waitingForHeader.headerResponse(signedHeader)
+      verify(trustedState, untrustedState)
     }
+//      .ensuring{ res =>
+//      val previousTerminationMeasure = terminationMeasure(waitingForHeader)
+//      val currentTerminationMeasure = terminationMeasure(res)
+//      (previousTerminationMeasure._1 > currentTerminationMeasure._1) ||
+//        (previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
+//          previousTerminationMeasure._2 > currentTerminationMeasure._2)
+//    }
 
     @scala.annotation.tailrec
     private def verify(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
@@ -76,10 +81,12 @@ object LightClient {
     verifierState match {
       case WaitingForHeader(height, trustedState, untrustedState) =>
         val difference: BigInt = height.value - trustedState.currentHeight().value
+        assert(difference > 0)
         if (untrustedState.pending.isEmpty)
           (difference, difference)
         else {
           val secondDiff: BigInt = untrustedState.pending.reverse.head.header.height.value - trustedState.currentHeight().value
+          assert(secondDiff > 0)
           (secondDiff, difference)
         }
       case _: Finished => (BigInt(0), BigInt(0))

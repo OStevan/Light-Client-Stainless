@@ -17,33 +17,27 @@ object ModelIntegration {
     require(blockchainState.currentHeight() > heightToVerify && heightToVerify > trustedHeight)
     val soundSignedHeaderProvider = SoundSignedHeaderProvider(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.getSignedHeader(trustedHeight)
-    val untrustedSignedHeader = soundSignedHeaderProvider.getSignedHeader(heightToVerify)
 
     val trustedState = TrustedState(trustedSignedHeader)
     assert(heightToVerify > trustedState.currentHeight())
 
-    val verifier = VerifierStateMachine(
-      WaitingForHeader(
-        heightToVerify,
-        trustedState,
-        UntrustedState(Nil[SignedHeader]())))
-    verify(soundSignedHeaderProvider, verifier, untrustedSignedHeader).verifierState
+    val verifier = WaitingForHeader(
+      heightToVerify,
+      trustedState,
+      UntrustedState(Nil[SignedHeader]()))
+
+    verify(verifier, soundSignedHeaderProvider, VerifierStateMachine())
   }
 
   @scala.annotation.tailrec
   def verify(
+    waitingForHeader: WaitingForHeader,
     soundSignedHeaderProvider: SoundSignedHeaderProvider,
-    verifier: VerifierStateMachine,
-    signedHeader: SignedHeader
-  ): VerifierStateMachine = {
-    decreases(LightClient.terminationMeasure(verifier.verifierState))
-    val result = verifier.processHeader(signedHeader)
-    result.verifierState match {
-      case state: WaitingForHeader if state.height < soundSignedHeaderProvider.blockchainState.currentHeight =>
-        val requestHeight = state.height
-        val soundSignedHeader = soundSignedHeaderProvider.getSignedHeader(requestHeight)
-        verify(soundSignedHeaderProvider, result, soundSignedHeader)
-      case _ => result
+    verifier: VerifierStateMachine): Finished = {
+//    decreases(LightClient.terminationMeasure(waitingForHeader))
+    verifier.processHeader(waitingForHeader, soundSignedHeaderProvider.getSignedHeader(waitingForHeader.height)) match {
+      case state: WaitingForHeader => verify(state, soundSignedHeaderProvider, verifier)
+      case state: Finished => state
     }
   }
 }
