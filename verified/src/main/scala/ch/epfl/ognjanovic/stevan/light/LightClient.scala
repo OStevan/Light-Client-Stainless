@@ -72,4 +72,18 @@ object LightClient {
     }
   }
 
+  def terminationMeasure(verifierState: VerifierState): (BigInt, BigInt) = {
+    verifierState match {
+      case WaitingForHeader(height, trustedState, untrustedState) =>
+        val difference: BigInt = height.value - trustedState.currentHeight().value
+        if (untrustedState.pending.isEmpty)
+          (difference, difference)
+        else {
+          val secondDiff: BigInt = untrustedState.pending.reverse.head.header.height.value - trustedState.currentHeight().value
+          (secondDiff, difference)
+        }
+      case _: Finished => (BigInt(0), BigInt(0))
+    }
+  }.ensuring(res => (res._1 >= BigInt(0)) && (res._2 >= BigInt(0)))
+
 }
