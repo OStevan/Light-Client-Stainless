@@ -2,7 +2,7 @@ package ch.epfl.ognjanovic.stevan.integration
 
 import ch.epfl.ognjanovic.stevan.blockchain.BlockchainStates.BlockchainState
 import ch.epfl.ognjanovic.stevan.light.LightClient._
-import ch.epfl.ognjanovic.stevan.light.{TrustedState, UntrustedState}
+import ch.epfl.ognjanovic.stevan.light.{SoundSignedHeaderProvider, TrustedState, UntrustedState}
 import ch.epfl.ognjanovic.stevan.types.Height
 import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
 import stainless.annotation._
@@ -44,16 +44,6 @@ object ModelIntegration {
         verify(soundSignedHeaderProvider, result, HeaderResponse(soundSignedHeader))
       case _ => result
     }
-  }
-
-  case class SoundSignedHeaderProvider(blockchainState: BlockchainState) {
-    @extern
-    def getSignedHeader(height: Height): SignedHeader = {
-      require(height < blockchainState.currentHeight())
-      blockchainState.signedHeader(height)
-    }.ensuring(res =>
-      (res.header == blockchainState.header(height) && res.header.height == height) ||
-        (res.commit.subsetOf(blockchainState.faulty) && res.header.height == height))
   }
 
 }
