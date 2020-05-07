@@ -27,23 +27,22 @@ object ModelIntegration {
         heightToVerify,
         trustedState,
         UntrustedState(Nil[SignedHeader]())))
-    verify(soundSignedHeaderProvider, verifier, HeaderResponse(untrustedSignedHeader)).verifierState
+    verify(soundSignedHeaderProvider, verifier, untrustedSignedHeader).verifierState
   }
 
   @scala.annotation.tailrec
   def verify(
     soundSignedHeaderProvider: SoundSignedHeaderProvider,
     verifier: VerifierStateMachine,
-    request: Message
+    signedHeader: SignedHeader
   ): VerifierStateMachine = {
-    val result = verifier.processMessage(request)
+    val result = verifier.processHeader(signedHeader)
     result.verifierState match {
       case state: WaitingForHeader if state.height < soundSignedHeaderProvider.blockchainState.currentHeight =>
         val requestHeight = state.height
         val soundSignedHeader = soundSignedHeaderProvider.getSignedHeader(requestHeight)
-        verify(soundSignedHeaderProvider, result, HeaderResponse(soundSignedHeader))
+        verify(soundSignedHeaderProvider, result, soundSignedHeader)
       case _ => result
     }
   }
-
 }

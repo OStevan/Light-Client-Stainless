@@ -16,15 +16,14 @@ object LightClient {
     }
   }
 
-  abstract class Message
-
-  case class VerificationRequest(trustedSignedHeader: SignedHeader, signedHeaderToVerify: SignedHeader) extends Message
-
-  case class HeaderResponse(signedHeader: SignedHeader) extends Message
-
   abstract class VerifierState
 
-  case class Finished(verdict: Boolean, trustedState: TrustedState, untrustedState: UntrustedState) extends VerifierState
+  case class Finished(
+    verdict: Boolean,
+    trustedState: TrustedState,
+    untrustedState: UntrustedState) extends VerifierState {
+    require((!verdict && untrustedState.pending.nonEmpty) || (verdict && untrustedState.pending.isEmpty))
+  }
 
   @inlineInvariant
   case class WaitingForHeader(
@@ -41,10 +40,9 @@ object LightClient {
   }
 
   case class VerifierStateMachine(verifierState: VerifierState) {
-    def processMessage(message: Message): VerifierStateMachine = (verifierState, message) match {
-      case (state: WaitingForHeader, headerResponse: HeaderResponse)
-        if state.height == headerResponse.signedHeader.header.height =>
-        val (trustedState, untrustedState) = state.headerResponse(headerResponse.signedHeader)
+    def processHeader(signedHeader: SignedHeader): VerifierStateMachine = verifierState match {
+      case state: WaitingForHeader if state.height == signedHeader.header.height =>
+        val (trustedState, untrustedState) = state.headerResponse(signedHeader)
         val nextState = verify(trustedState, untrustedState)
         VerifierStateMachine(nextState)
 
