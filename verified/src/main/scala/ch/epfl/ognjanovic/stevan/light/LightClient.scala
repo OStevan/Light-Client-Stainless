@@ -2,7 +2,7 @@ package ch.epfl.ognjanovic.stevan.light
 
 import ch.epfl.ognjanovic.stevan.types.Height
 import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
-import stainless.annotation.inlineInvariant
+import stainless.annotation.{inlineInvariant, opaque, pure}
 import stainless.collection._
 import stainless.lang._
 
@@ -37,14 +37,31 @@ object LightClient {
       val newUntrustedState = untrustedState.addSignedHeader(signedHeader)
       (trustedState, newUntrustedState)
     }.ensuring(res => untrustedStateHeightInvariant(res._1.currentHeight(), res._2))
+
+    @pure
+    def targetHeight(): Height = {
+      if (untrustedState.pending.isEmpty)
+        height
+      else {
+        reverseLemma(height, untrustedState)
+        untrustedState.pending.reverse.head.header.height
+      }
+    }.ensuring(res => height <= res)
   }
 
   case class VerifierStateMachine() {
     def processHeader(
       waitingForHeader: WaitingForHeader,
       signedHeader: SignedHeader): VerifierState = {
+      require(signedHeader.header.height == waitingForHeader.height)
+
       val (trustedState, untrustedState) = waitingForHeader.headerResponse(signedHeader)
       verify(trustedState, untrustedState)
+    }.ensuring{ res =>
+      res match {
+        case state: WaitingForHeader => waitingForHeader.targetHeight() == state.targetHeight()
+        case _: Finished => true
+      }
     }
 //      .ensuring{ res =>
 //      val previousTerminationMeasure = terminationMeasure(waitingForHeader)
@@ -81,16 +98,28 @@ object LightClient {
     verifierState match {
       case WaitingForHeader(height, trustedState, untrustedState) =>
         val difference: BigInt = height.value - trustedState.currentHeight().value
-        assert(difference > 0)
-        if (untrustedState.pending.isEmpty)
+        assert(difference > BigInt(0))
+        val measure: (BigInt, BigInt) = if (untrustedState.pending.isEmpty)
           (difference, difference)
         else {
-          val secondDiff: BigInt = untrustedState.pending.reverse.head.header.height.value - trustedState.currentHeight().value
-          assert(secondDiff > 0)
+          reverseLemma(trustedState.currentHeight(), untrustedState)
+          val secondDiff = untrustedState.pending.reverse.head.header.height.value - trustedState.currentHeight().value
+          assert(secondDiff > BigInt(0)) // helps verification
           (secondDiff, difference)
         }
+        measure
+
       case _: Finished => (BigInt(0), BigInt(0))
     }
   }.ensuring(res => (res._1 >= BigInt(0)) && (res._2 >= BigInt(0)))
+
+  @opaque
+  def reverseLemma(height: Height, untrustedState: UntrustedState): Unit = {
+    require(untrustedState.pending.nonEmpty && height < untrustedState.pending.head.header.height)
+    untrustedState.pending match {
+      case Cons(_, Nil()) => ()
+      case Cons(_, t) => reverseLemma(height, UntrustedState(t))
+    }
+  }.ensuring(_ => height < untrustedState.pending.reverse.head.header.height)
 
 }

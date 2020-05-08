@@ -1,5 +1,6 @@
 package ch.epfl.ognjanovic.stevan.types
 
+import stainless.annotation.{ghost, opaque}
 import stainless.lang._
 
 sealed case class Height(value: BigInt) {
@@ -35,4 +36,9 @@ object Height {
     else
       second
   } ensuring (res => (res == first || res == second) && (res.value <= first.value && res.value <= second.value))
+
+  @opaque
+  def helperLemma(first: Height, second: Height, third: Height): Unit = {
+    require(first <= second && second < third)
+  }.ensuring(_ => first < third)
 }

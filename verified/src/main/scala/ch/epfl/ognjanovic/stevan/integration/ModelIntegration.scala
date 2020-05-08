@@ -34,10 +34,16 @@ object ModelIntegration {
     waitingForHeader: WaitingForHeader,
     soundSignedHeaderProvider: SoundSignedHeaderProvider,
     verifier: VerifierStateMachine): Finished = {
-    require(waitingForHeader.height < soundSignedHeaderProvider.blockchainState.currentHeight())
-//    decreases(LightClient.terminationMeasure(waitingForHeader))
+    require(waitingForHeader.targetHeight() < soundSignedHeaderProvider.blockchainState.currentHeight())
+    //    decreases(LightClient.terminationMeasure(waitingForHeader))
+    Height.helperLemma(
+      waitingForHeader.height,
+      waitingForHeader.targetHeight(),
+      soundSignedHeaderProvider.blockchainState.currentHeight())
     verifier.processHeader(waitingForHeader, soundSignedHeaderProvider.getSignedHeader(waitingForHeader.height)) match {
-      case state: WaitingForHeader => verify(state, soundSignedHeaderProvider, verifier)
+      case state: WaitingForHeader =>
+        assert(state.targetHeight() < soundSignedHeaderProvider.blockchainState.currentHeight())
+        verify(state, soundSignedHeaderProvider, verifier)
       case state: Finished => state
     }
   }
