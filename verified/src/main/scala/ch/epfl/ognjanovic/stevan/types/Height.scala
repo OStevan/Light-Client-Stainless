@@ -12,7 +12,9 @@ sealed case class Height(value: BigInt) {
 
   def >(other: Height): Boolean = !(this <= other)
 
-  def <(other: Height): Boolean = this <= other && this != other
+  def <(other: Height): Boolean = {
+    this <= other && this != other
+  }.ensuring(res => res == other > this)
 
   def +(value: BigInt): Height = {
     require(value > BigInt(0))

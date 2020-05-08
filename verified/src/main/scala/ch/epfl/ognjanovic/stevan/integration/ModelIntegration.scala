@@ -19,7 +19,7 @@ object ModelIntegration {
     val trustedSignedHeader = soundSignedHeaderProvider.getSignedHeader(trustedHeight)
 
     val trustedState = TrustedState(trustedSignedHeader)
-    assert(heightToVerify > trustedState.currentHeight())
+    assert(trustedState.currentHeight() < heightToVerify)
 
     val verifier = WaitingForHeader(
       heightToVerify,
@@ -35,7 +35,7 @@ object ModelIntegration {
     soundSignedHeaderProvider: SoundSignedHeaderProvider,
     verifier: VerifierStateMachine): Finished = {
     require(waitingForHeader.targetHeight() < soundSignedHeaderProvider.blockchainState.currentHeight())
-    decreases(LightClient.terminationMeasure(waitingForHeader))
+    decreases(LightClient.terminationMeasure(waitingForHeader)._1, LightClient.terminationMeasure(waitingForHeader)._2)
 
     Height.helperLemma(
       waitingForHeader.height,
@@ -45,7 +45,14 @@ object ModelIntegration {
     verifier.processHeader(waitingForHeader, soundSignedHeaderProvider.getSignedHeader(waitingForHeader.height)) match {
       case state: WaitingForHeader =>
         assert(state.targetHeight() < soundSignedHeaderProvider.blockchainState.currentHeight())
+        val previousTerminationMeasure = terminationMeasure(waitingForHeader)
+        val currentTerminationMeasure = terminationMeasure(state)
+        assert((previousTerminationMeasure._1 > currentTerminationMeasure._1) ||
+          (previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
+            previousTerminationMeasure._2 > currentTerminationMeasure._2))
+
         verify(state, soundSignedHeaderProvider, verifier)
+
       case state: Finished => state
     }
   }

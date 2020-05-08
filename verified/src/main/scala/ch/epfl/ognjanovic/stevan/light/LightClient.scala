@@ -30,10 +30,10 @@ object LightClient {
     height: Height,
     trustedState: TrustedState,
     untrustedState: UntrustedState) extends VerifierState {
-    require(height > trustedState.currentHeight() && untrustedStateHeightInvariant(height, untrustedState))
+    require(trustedState.currentHeight() < height && untrustedStateHeightInvariant(height, untrustedState))
 
     def headerResponse(signedHeader: SignedHeader): (TrustedState, UntrustedState) = {
-      require(signedHeader.header.height == height && signedHeader.header.height > trustedState.currentHeight())
+      require(signedHeader.header.height == height && trustedState.currentHeight() < signedHeader.header.height)
       val newUntrustedState = untrustedState.addSignedHeader(signedHeader)
       (trustedState, newUntrustedState)
     }.ensuring(res => untrustedStateHeightInvariant(res._1.currentHeight(), res._2) &&
@@ -44,10 +44,11 @@ object LightClient {
       if (untrustedState.pending.isEmpty)
         height
       else {
+        val value = untrustedState.pending.reverse.head.header.height
         reverseLemma(height, untrustedState)
-        untrustedState.pending.reverse.head.header.height
+        value
       }
-    }.ensuring(res => height <= res)
+    }.ensuring(res => height <= res && trustedState.currentHeight() < res)
   }
 
   case class VerifierStateMachine() {
@@ -72,9 +73,11 @@ object LightClient {
 
         val previousTerminationMeasure = terminationMeasure(waitingForHeader)
         val currentTerminationMeasure = terminationMeasure(state)
-        (previousTerminationMeasure._1 > currentTerminationMeasure._1) ||
+        ((previousTerminationMeasure._1 > currentTerminationMeasure._1) ||
           (previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
-            previousTerminationMeasure._2 > currentTerminationMeasure._2)
+            previousTerminationMeasure._2 > currentTerminationMeasure._2)) &&
+          state.targetHeight() == waitingForHeader.targetHeight()
+
       case _: Finished => true
     }
 
@@ -113,12 +116,13 @@ object LightClient {
     }
   }
 
-  @inlineOnce
+  @pure
   def terminationMeasure(waitingForHeader: WaitingForHeader): (BigInt, BigInt) = {
     val res: (BigInt, BigInt) = (
       waitingForHeader.targetHeight().value - waitingForHeader.trustedState.currentHeight().value,
       waitingForHeader.height.value - waitingForHeader.trustedState.currentHeight().value
     )
+    assert(res._1 > BigInt(0) && res._2 > BigInt(0))
     res
   }.ensuring(res => res._1 >= BigInt(0) && res._2 >= BigInt(0))
 
