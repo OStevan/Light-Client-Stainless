@@ -20,11 +20,8 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
     * @return new trusted state or the old one if the trust is not reachable
     */
   def increaseTrust(signedHeader: SignedHeader): TrustedState = {
-    require(signedHeader.header.height > this.trustedSignedHeader.header.height)
-    if (trusted(signedHeader))
-      TrustedState(signedHeader)
-    else
-      this
+    require(signedHeader.header.height > this.trustedSignedHeader.header.height && trusted(signedHeader))
+    TrustedState(signedHeader)
   }
 
   def isAdjacent(signedHeader: SignedHeader): Boolean =
@@ -52,8 +49,8 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
     (signedHeader.header.height + trustedSignedHeader.header.height) / 2
   }
 
-  private def trusted(signedHeader: SignedHeader): Boolean = {
-    require(signedHeader.header.height > trustedSignedHeader.header.height)
+  def trusted(signedHeader: SignedHeader): Boolean = {
+    require(signedHeader.header.height > currentHeight())
     if (isAdjacent(signedHeader))
       adjacentHeaderTrust(signedHeader)
     else
