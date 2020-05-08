@@ -36,7 +36,8 @@ object LightClient {
       require(signedHeader.header.height == height && signedHeader.header.height > trustedState.currentHeight())
       val newUntrustedState = untrustedState.addSignedHeader(signedHeader)
       (trustedState, newUntrustedState)
-    }.ensuring(res => untrustedStateHeightInvariant(res._1.currentHeight(), res._2))
+    }.ensuring(res => untrustedStateHeightInvariant(res._1.currentHeight(), res._2) &&
+      res._2.pending.reverse.head.header.height == targetHeight())
 
     @pure
     def targetHeight(): Height = {
@@ -56,10 +57,12 @@ object LightClient {
       require(signedHeader.header.height == waitingForHeader.height)
 
       val (trustedState, untrustedState) = waitingForHeader.headerResponse(signedHeader)
+      assert(waitingForHeader.targetHeight() == untrustedState.pending.reverse.head.header.height)
       verify(trustedState, untrustedState)
     }.ensuring{ res =>
       res match {
-        case state: WaitingForHeader => waitingForHeader.targetHeight() == state.targetHeight()
+        case state: WaitingForHeader =>
+          waitingForHeader.targetHeight() == state.targetHeight()
         case _: Finished => true
       }
     }
@@ -71,25 +74,30 @@ object LightClient {
 //          previousTerminationMeasure._2 > currentTerminationMeasure._2)
 //    }
 
-    @scala.annotation.tailrec
     private def verify(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
-      require(untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState))
+      require(untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState) &&
+        untrustedState.pending.nonEmpty)
       decreases(untrustedState.pending.size)
-      untrustedState.pending match {
-        case Nil() => Finished(verdict = true, trustedState, untrustedState)
 
-        case Cons(next, tail) =>
-          if (trustedState.isAdjacent(next)) {
-            if (trustedState.adjacentHeaderTrust(next))
-              verify(trustedState.increaseTrust(next), UntrustedState(tail))
-            else
-              Finished(verdict = false, trustedState, untrustedState)
-          } else if (trustedState.nonAdjacentHeaderTrust(next))
-            verify(trustedState.increaseTrust(next), UntrustedState(tail))
+      untrustedState.pending match {
+        case Cons(h, tail) =>
+          if (trustedState.trusted(h) && tail.isEmpty)
+            Finished(verdict = true, trustedState.increaseTrust(h), UntrustedState(Nil[SignedHeader]()))
+          else if (trustedState.trusted(h)) {
+            assert(tail.nonEmpty)
+            verify(trustedState.increaseTrust(h), UntrustedState(tail))
+          } else if (trustedState.isAdjacent(h))
+            Finished(verdict = false, trustedState, untrustedState)
           else {
-            val bisectionHeight: Height = trustedState.bisectionHeight(next)
+            assert(!trustedState.isAdjacent(h) && !trustedState.trusted(h))
+            val bisectionHeight: Height = trustedState.bisectionHeight(h)
             WaitingForHeader(bisectionHeight, trustedState, untrustedState)
           }
+      }
+    }.ensuring{ res =>
+      res match {
+        case state: WaitingForHeader => untrustedState.pending.reverse.head.header.height == state.targetHeight()
+        case _: Finished => true
       }
     }
   }
@@ -98,20 +106,24 @@ object LightClient {
     verifierState match {
       case WaitingForHeader(height, trustedState, untrustedState) =>
         val difference: BigInt = height.value - trustedState.currentHeight().value
-        assert(difference > BigInt(0))
         val measure: (BigInt, BigInt) = if (untrustedState.pending.isEmpty)
           (difference, difference)
         else {
           reverseLemma(trustedState.currentHeight(), untrustedState)
           val secondDiff = untrustedState.pending.reverse.head.header.height.value - trustedState.currentHeight().value
-          assert(secondDiff > BigInt(0)) // helps verification
           (secondDiff, difference)
         }
+        speedUpLemma(measure)
         measure
 
       case _: Finished => (BigInt(0), BigInt(0))
     }
   }.ensuring(res => (res._1 >= BigInt(0)) && (res._2 >= BigInt(0)))
+
+  @opaque
+  def speedUpLemma(pair: (BigInt, BigInt)): Unit = {
+    require(pair._1 > BigInt(0) && pair._2 > BigInt(0))
+  }.ensuring(_ => pair._1 >= BigInt(0) && pair._2 >= BigInt(0))
 
   @opaque
   def reverseLemma(height: Height, untrustedState: UntrustedState): Unit = {
