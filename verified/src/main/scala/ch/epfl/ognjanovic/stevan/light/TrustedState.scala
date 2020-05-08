@@ -30,7 +30,7 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
   def adjacentHeaderTrust(signedHeader: SignedHeader): Boolean = {
     require(isAdjacent(signedHeader))
     trustedSignedHeader.header.nextValidatorSet == signedHeader.header.validatorSet
-  }
+  }.ensuring(_ => trusted(signedHeader))
 
   def nonAdjacentHeaderTrust(signedHeader: SignedHeader): Boolean = {
     require(signedHeader.header.height > this.trustedSignedHeader.header.height && !isAdjacent(signedHeader))
@@ -41,7 +41,7 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
       .header
       .nextValidatorSet
       .checkSupport(intersection)
-  }
+  }.ensuring(_ => trusted(signedHeader))
 
   @inline
   def bisectionHeight(signedHeader: SignedHeader): Height = {
