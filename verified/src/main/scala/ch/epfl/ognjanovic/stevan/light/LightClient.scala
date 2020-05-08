@@ -2,12 +2,12 @@ package ch.epfl.ognjanovic.stevan.light
 
 import ch.epfl.ognjanovic.stevan.types.Height
 import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
-import stainless.annotation.{inlineInvariant, opaque, pure}
+import stainless.annotation.{inlineInvariant, inlineOnce, opaque, pure}
 import stainless.collection._
 import stainless.lang._
+import StaticChecks.Ensuring
 
 object LightClient {
-
   @inline
   private def untrustedStateHeightInvariant(height: Height, untrustedState: UntrustedState): Boolean = {
     untrustedState.pending match {
@@ -58,23 +58,27 @@ object LightClient {
 
       val (trustedState, untrustedState) = waitingForHeader.headerResponse(signedHeader)
       assert(waitingForHeader.targetHeight() == untrustedState.pending.reverse.head.header.height)
-      verify(trustedState, untrustedState)
-    }.ensuring{ res =>
-      res match {
-        case state: WaitingForHeader =>
-          waitingForHeader.targetHeight() == state.targetHeight()
-        case _: Finished => true
-      }
-    }
-//      .ensuring{ res =>
-//      val previousTerminationMeasure = terminationMeasure(waitingForHeader)
-//      val currentTerminationMeasure = terminationMeasure(res)
-//      (previousTerminationMeasure._1 > currentTerminationMeasure._1) ||
-//        (previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
-//          previousTerminationMeasure._2 > currentTerminationMeasure._2)
-//    }
+      assert(waitingForHeader.height == untrustedState.pending.head.header.height)
+      verifyInternal(trustedState, untrustedState)
+    }.ensuring {
+      case state: WaitingForHeader =>
+        assert(state.untrustedState.pending.nonEmpty)
+        if (waitingForHeader.trustedState.currentHeight() == state.trustedState.currentHeight()) {
+          assert(waitingForHeader.height > state.height)
+          sameTrustedStateTerminationMeasure(waitingForHeader, state)
+        } else {
+          improvedTrustedStateLemma(waitingForHeader, state)
+        }
 
-    private def verify(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
+        val previousTerminationMeasure = terminationMeasure(waitingForHeader)
+        val currentTerminationMeasure = terminationMeasure(state)
+        (previousTerminationMeasure._1 > currentTerminationMeasure._1) ||
+          (previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
+            previousTerminationMeasure._2 > currentTerminationMeasure._2)
+      case _: Finished => true
+    }
+
+    private def verifyInternal(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
       require(untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState) &&
         untrustedState.pending.nonEmpty)
       decreases(untrustedState.pending.size)
@@ -85,7 +89,7 @@ object LightClient {
             Finished(verdict = true, trustedState.increaseTrust(h), UntrustedState(Nil[SignedHeader]()))
           else if (trustedState.trusted(h)) {
             assert(tail.nonEmpty)
-            verify(trustedState.increaseTrust(h), UntrustedState(tail))
+            verifyInternal(trustedState.increaseTrust(h), UntrustedState(tail))
           } else if (trustedState.isAdjacent(h))
             Finished(verdict = false, trustedState, untrustedState)
           else {
@@ -94,31 +98,29 @@ object LightClient {
             WaitingForHeader(bisectionHeight, trustedState, untrustedState)
           }
       }
-    }.ensuring{ res =>
-      res match {
-        case state: WaitingForHeader => untrustedState.pending.reverse.head.header.height == state.targetHeight()
-        case _: Finished => true
-      }
+    }.ensuring {
+      case state: WaitingForHeader =>
+        state.untrustedState.pending.nonEmpty &&
+          untrustedState.pending.reverse.head.header.height == state.targetHeight() &&
+          trustedState.currentHeight() <= state.trustedState.currentHeight() &&
+          (
+            (trustedState.currentHeight() == state.trustedState.currentHeight() &&
+              state.height < state.untrustedState.pending.head.header.height &&
+              state.untrustedState.pending == untrustedState.pending) ||
+              trustedState.currentHeight() < state.trustedState.currentHeight())
+
+      case _: Finished => true
     }
   }
 
-  def terminationMeasure(verifierState: VerifierState): (BigInt, BigInt) = {
-    verifierState match {
-      case WaitingForHeader(height, trustedState, untrustedState) =>
-        val difference: BigInt = height.value - trustedState.currentHeight().value
-        val measure: (BigInt, BigInt) = if (untrustedState.pending.isEmpty)
-          (difference, difference)
-        else {
-          reverseLemma(trustedState.currentHeight(), untrustedState)
-          val secondDiff = untrustedState.pending.reverse.head.header.height.value - trustedState.currentHeight().value
-          (secondDiff, difference)
-        }
-        speedUpLemma(measure)
-        measure
-
-      case _: Finished => (BigInt(0), BigInt(0))
-    }
-  }.ensuring(res => (res._1 >= BigInt(0)) && (res._2 >= BigInt(0)))
+  @inlineOnce
+  def terminationMeasure(waitingForHeader: WaitingForHeader): (BigInt, BigInt) = {
+    val res: (BigInt, BigInt) = (
+      waitingForHeader.targetHeight().value - waitingForHeader.trustedState.currentHeight().value,
+      waitingForHeader.height.value - waitingForHeader.trustedState.currentHeight().value
+    )
+    res
+  }.ensuring(res => res._1 >= BigInt(0) && res._2 >= BigInt(0))
 
   @opaque
   def speedUpLemma(pair: (BigInt, BigInt)): Unit = {
@@ -134,4 +136,29 @@ object LightClient {
     }
   }.ensuring(_ => height < untrustedState.pending.reverse.head.header.height)
 
+  @opaque
+  def sameTrustedStateTerminationMeasure(previous: WaitingForHeader, current: WaitingForHeader): Unit = {
+    require(previous.targetHeight() == current.targetHeight() &&
+      previous.trustedState.currentHeight() == current.trustedState.currentHeight() &&
+      previous.height > current.height
+    )
+  }.ensuring { _ =>
+    val previousTerminationMeasure = terminationMeasure(previous)
+    val currentTerminationMeasure = terminationMeasure(current)
+
+    previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
+      previousTerminationMeasure._2 > currentTerminationMeasure._2
+  }
+
+  @opaque
+  def improvedTrustedStateLemma(previous: WaitingForHeader, current: WaitingForHeader): Unit = {
+    require(previous.targetHeight() == current.targetHeight() &&
+      previous.trustedState.currentHeight() < current.trustedState.currentHeight()
+    )
+  }.ensuring { _ =>
+    val previousTerminationMeasure = terminationMeasure(previous)
+    val currentTerminationMeasure = terminationMeasure(current)
+
+    previousTerminationMeasure._1 > currentTerminationMeasure._1
+  }
 }
