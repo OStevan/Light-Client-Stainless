@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.types
 
-import stainless.annotation.{ghost, opaque}
+import stainless.annotation.opaque
 import stainless.lang._
 
 sealed case class Height(value: BigInt) {
