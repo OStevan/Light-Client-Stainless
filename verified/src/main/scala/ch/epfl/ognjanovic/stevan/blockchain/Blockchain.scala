@@ -17,7 +17,6 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
   def increaseMinTrustedHeight(step: BigInt): Blockchain = {
     require(step > BigInt(0))
     val newMinTrustedHeight = min(min(maxHeight, chain.height + 1), minTrustedHeight + step)
-    assert(newMinTrustedHeight >= minTrustedHeight)
     Blockchain.timeProgressDoesNotDeteriorateTheState(newMinTrustedHeight, minTrustedHeight, chain, faulty)
     Blockchain(maxHeight, newMinTrustedHeight, chain, faulty)
   }.ensuring(res => faultAssumption() ==> res.faultAssumption())
@@ -72,20 +71,17 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
     DefaultSignedHeader(blockHeader, headerCommit)
   }
 
-  @scala.annotation.tailrec
   private def getHeaderInternal(height: Height, chain: Chain): BlockHeader = {
     require(height <= chain.height)
     chain match {
-      case Genesis(blockHeader) =>
-        assert(height == chain.height)
-        blockHeader
+      case Genesis(blockHeader) => blockHeader
       case ChainLink(blockHeader, tail) =>
         if (height == chain.height)
           blockHeader
         else
           getHeaderInternal(height, tail)
     }
-  }
+  }.ensuring(res => res.height == height)
 }
 
 object Blockchain {
