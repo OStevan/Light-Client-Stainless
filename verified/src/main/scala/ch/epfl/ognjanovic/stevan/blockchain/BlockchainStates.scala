@@ -7,6 +7,7 @@ import ch.epfl.ognjanovic.stevan.types._
 import stainless.annotation._
 import stainless.lang._
 import utils.SetInvariants
+import StaticChecks.assert
 
 object BlockchainStates {
 
@@ -43,8 +44,7 @@ object BlockchainStates {
 
   // state invariant forced in TLA
   @inline
-//  private
-  def globalStateInvariant(allNodes: Set[Node], faulty: Set[Node], blockchain: Blockchain): Boolean = {
+  private def globalStateInvariant(allNodes: Set[Node], faulty: Set[Node], blockchain: Blockchain): Boolean = {
     allNodes.nonEmpty && // makes no sense to have no nodes
       (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
       faulty == blockchain.faulty &&
@@ -92,7 +92,6 @@ object BlockchainStates {
     require(runningStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
 
     @pure
-    @inline
     override def step(systemStep: SystemStep): BlockchainState = {
       StaticChecks.require(runningStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
       systemStep match {
@@ -102,7 +101,6 @@ object BlockchainStates {
           val newFaulty = faulty + faultyNode
           SetInvariants.setAdd(faulty, faultyNode, allNodes)
           val newChain = blockchain.setFaulty(newFaulty)
-          assert(newChain.chain == blockchain.chain)
 
           if (newChain.faultAssumption())
             Running(allNodes, newFaulty, maxVotingPower, newChain)
@@ -121,11 +119,12 @@ object BlockchainStates {
             lastCommit.subsetOf(allNodes) =>
           assert(lastCommit.nonEmpty)
           assert(nextValidatorSet.keys.nonEmpty)
+
           val lastBlock = blockchain.chain.head
           if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit) && nextValidatorSet.isCorrect(faulty)) {
             val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
-            StaticChecks.assert(newBlockchain.chain.head.validatorSet.keys.subsetOf(allNodes))
-            StaticChecks.assert(globalStateInvariant(allNodes, faulty, newBlockchain))
+            assert(newBlockchain.chain.head.validatorSet.keys.subsetOf(allNodes))
+            assert(globalStateInvariant(allNodes, faulty, newBlockchain))
 
             if (newBlockchain.finished)
               Finished(allNodes, faulty, newBlockchain)

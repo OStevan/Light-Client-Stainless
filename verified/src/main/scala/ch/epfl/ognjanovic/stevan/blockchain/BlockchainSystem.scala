@@ -7,6 +7,7 @@ import ch.epfl.ognjanovic.stevan.types.Nodes.Node
 import ch.epfl.ognjanovic.stevan.types.{BlockHeader, Height, Validators, VotingPower}
 import stainless.annotation._
 import stainless.lang._
+import StaticChecks.assert
 
 
 object BlockchainSystem {
