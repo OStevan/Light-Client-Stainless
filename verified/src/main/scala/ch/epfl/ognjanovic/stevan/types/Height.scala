@@ -1,5 +1,6 @@
 package ch.epfl.ognjanovic.stevan.types
 
+import stainless.annotation.opaque
 import stainless.lang._
 
 sealed case class Height(value: BigInt) {
@@ -11,7 +12,9 @@ sealed case class Height(value: BigInt) {
 
   def >(other: Height): Boolean = !(this <= other)
 
-  def <(other: Height): Boolean = this <= other && this != other
+  def <(other: Height): Boolean = {
+    this <= other && this != other
+  }.ensuring(res => res == other > this)
 
   def +(value: BigInt): Height = {
     require(value > BigInt(0))
@@ -35,4 +38,9 @@ object Height {
     else
       second
   } ensuring (res => (res == first || res == second) && (res.value <= first.value && res.value <= second.value))
+
+  @opaque
+  def helperLemma(first: Height, second: Height, third: Height): Unit = {
+    require(first <= second && second < third)
+  }.ensuring(_ => first < third)
 }

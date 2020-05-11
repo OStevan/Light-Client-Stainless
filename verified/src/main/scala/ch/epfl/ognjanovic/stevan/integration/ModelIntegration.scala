@@ -2,9 +2,11 @@ package ch.epfl.ognjanovic.stevan.integration
 
 import ch.epfl.ognjanovic.stevan.blockchain.BlockchainStates.BlockchainState
 import ch.epfl.ognjanovic.stevan.light.LightClient._
+import ch.epfl.ognjanovic.stevan.light.{LightClient, SoundSignedHeaderProvider, TrustedState, UntrustedState}
 import ch.epfl.ognjanovic.stevan.types.Height
 import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
-import stainless.annotation._
+import stainless.collection._
+import stainless.lang._
 
 object ModelIntegration {
   def snapshotExecution(
@@ -12,39 +14,46 @@ object ModelIntegration {
     trustedHeight: Height,
     heightToVerify: Height
   ): VerifierState = {
-    require(blockchainState.currentHeight() > heightToVerify && trustedHeight < heightToVerify)
+    require(blockchainState.currentHeight() > heightToVerify && heightToVerify > trustedHeight)
     val soundSignedHeaderProvider = SoundSignedHeaderProvider(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.getSignedHeader(trustedHeight)
-    val headerToVerify = soundSignedHeaderProvider.getSignedHeader(heightToVerify)
-    val verifier = VerifierStateMachine(InitialState)
-    verify(soundSignedHeaderProvider, verifier, VerificationRequest(trustedSignedHeader, headerToVerify)).verifierState
+
+    val trustedState = TrustedState(trustedSignedHeader)
+    assert(trustedState.currentHeight() < heightToVerify)
+
+    val verifier = WaitingForHeader(
+      heightToVerify,
+      trustedState,
+      UntrustedState(Nil[SignedHeader]()))
+
+    verify(verifier, soundSignedHeaderProvider, VerifierStateMachine())
   }
-  // .ensuring(res => res.isInstanceOf[Finished] || res.isInstanceOf[WaitingForHeader])
 
   @scala.annotation.tailrec
   def verify(
+    waitingForHeader: WaitingForHeader,
     soundSignedHeaderProvider: SoundSignedHeaderProvider,
-    verifier: VerifierStateMachine,
-    request: Message
-  ): VerifierStateMachine = {
-    val result = verifier.processMessage(request)
-    result.verifierState match {
-      case state: WaitingForHeader if state.height < soundSignedHeaderProvider.blockchainState.currentHeight =>
-        val requestHeight = state.height
-        val soundSignedHeader = soundSignedHeaderProvider.getSignedHeader(requestHeight)
-        verify(soundSignedHeaderProvider, result, HeaderResponse(soundSignedHeader))
-      case _ => result
+    verifier: VerifierStateMachine): Finished = {
+    require(waitingForHeader.targetHeight() < soundSignedHeaderProvider.blockchainState.currentHeight())
+    decreases(LightClient.terminationMeasure(waitingForHeader)._1, LightClient.terminationMeasure(waitingForHeader)._2)
+
+    Height.helperLemma(
+      waitingForHeader.height,
+      waitingForHeader.targetHeight(),
+      soundSignedHeaderProvider.blockchainState.currentHeight())
+
+    verifier.processHeader(waitingForHeader, soundSignedHeaderProvider.getSignedHeader(waitingForHeader.height)) match {
+      case state: WaitingForHeader =>
+        assert(state.targetHeight() < soundSignedHeaderProvider.blockchainState.currentHeight())
+        val previousTerminationMeasure = terminationMeasure(waitingForHeader)
+        val currentTerminationMeasure = terminationMeasure(state)
+        assert((previousTerminationMeasure._1 > currentTerminationMeasure._1) ||
+          (previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
+            previousTerminationMeasure._2 > currentTerminationMeasure._2))
+
+        verify(state, soundSignedHeaderProvider, verifier)
+
+      case state: Finished => state
     }
   }
-
-  case class SoundSignedHeaderProvider(blockchainState: BlockchainState) {
-    @extern
-    def getSignedHeader(height: Height): SignedHeader = {
-      require(height < blockchainState.currentHeight())
-      blockchainState.signedHeader(height)
-    }.ensuring(res =>
-      (res.header == blockchainState.header(height)) ||
-        (res.commit.subsetOf(blockchainState.faulty) && res.header.height == height))
-  }
-
 }
