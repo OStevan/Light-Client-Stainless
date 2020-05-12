@@ -43,16 +43,7 @@ object ModelIntegration {
       soundSignedHeaderProvider.blockchainState.currentHeight())
 
     verifier.processHeader(waitingForHeader, soundSignedHeaderProvider.getSignedHeader(waitingForHeader.height)) match {
-      case state: WaitingForHeader =>
-        assert(state.targetHeight() < soundSignedHeaderProvider.blockchainState.currentHeight())
-        val previousTerminationMeasure = terminationMeasure(waitingForHeader)
-        val currentTerminationMeasure = terminationMeasure(state)
-        assert((previousTerminationMeasure._1 > currentTerminationMeasure._1) ||
-          (previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
-            previousTerminationMeasure._2 > currentTerminationMeasure._2))
-
-        verify(state, soundSignedHeaderProvider, verifier)
-
+      case state: WaitingForHeader => verify(state, soundSignedHeaderProvider, verifier)
       case state: Finished => state
     }
   }
