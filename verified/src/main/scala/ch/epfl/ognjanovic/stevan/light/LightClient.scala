@@ -5,6 +5,7 @@ import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
 import stainless.annotation.{inlineInvariant, opaque, pure}
 import stainless.collection._
 import stainless.lang.StaticChecks.Ensuring
+import stainless.lang.StaticChecks.assert
 import stainless.lang._
 
 object LightClient {
