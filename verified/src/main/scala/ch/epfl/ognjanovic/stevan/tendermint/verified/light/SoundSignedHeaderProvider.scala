@@ -1,8 +1,8 @@
-package ch.epfl.ognjanovic.stevan.verified.light
+package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.verified.blockchain.BlockchainStates.BlockchainState
-import ch.epfl.ognjanovic.stevan.verified.types.Height
-import ch.epfl.ognjanovic.stevan.verified.types.SignedHeader.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates.BlockchainState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeader.SignedHeader
 import stainless.annotation.extern
 
 case class SoundSignedHeaderProvider(blockchainState: BlockchainState) {

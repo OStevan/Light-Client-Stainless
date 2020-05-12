@@ -1,4 +1,4 @@
-package ch.epfl.ognjanovic.stevan.verified.types
+package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
 import stainless.collection._
 import stainless.lang._

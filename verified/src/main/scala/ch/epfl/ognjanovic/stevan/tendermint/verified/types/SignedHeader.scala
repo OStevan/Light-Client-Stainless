@@ -1,6 +1,6 @@
-package ch.epfl.ognjanovic.stevan.verified.types
+package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
-import ch.epfl.ognjanovic.stevan.verified.types.Nodes.Node
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes.Node
 import stainless.lang._
 
 object SignedHeader {

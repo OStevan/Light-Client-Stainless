@@ -1,9 +1,9 @@
-package ch.epfl.ognjanovic.stevan.verified.blockchain
+package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
-import ch.epfl.ognjanovic.stevan.verified.blockchain.SystemSteps.{SystemStep, _}
-import ch.epfl.ognjanovic.stevan.verified.types.Nodes._
-import ch.epfl.ognjanovic.stevan.verified.types.SignedHeader.SignedHeader
-import ch.epfl.ognjanovic.stevan.verified.types.{BlockHeader, Height, Validators, VotingPower}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.{SystemStep, _}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeader.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height, Validators, VotingPower}
 import stainless.annotation._
 import stainless.lang.StaticChecks.assert
 import stainless.lang._
