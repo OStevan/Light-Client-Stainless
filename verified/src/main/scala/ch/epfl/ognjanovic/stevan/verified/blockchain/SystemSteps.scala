@@ -1,7 +1,7 @@
-package ch.epfl.ognjanovic.stevan.blockchain
+package ch.epfl.ognjanovic.stevan.verified.blockchain
 
-import ch.epfl.ognjanovic.stevan.types.Nodes._
-import ch.epfl.ognjanovic.stevan.types._
+import ch.epfl.ognjanovic.stevan.verified.types.Nodes._
+import ch.epfl.ognjanovic.stevan.verified.types.Validators
 import stainless.lang._
 
 object SystemSteps {

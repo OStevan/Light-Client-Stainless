@@ -1,6 +1,6 @@
-package ch.epfl.ognjanovic.stevan.types
+package ch.epfl.ognjanovic.stevan.verified.types
 
-import ch.epfl.ognjanovic.stevan.types.Nodes.Node
+import ch.epfl.ognjanovic.stevan.verified.types.Nodes.Node
 import stainless.annotation.{extern, induct, opaque, pure}
 import stainless.collection._
 import stainless.lang._

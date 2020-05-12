@@ -1,10 +1,10 @@
-package ch.epfl.ognjanovic.stevan.blockchain
+package ch.epfl.ognjanovic.stevan.verified.blockchain
 
-import ch.epfl.ognjanovic.stevan.types.Chain._
-import ch.epfl.ognjanovic.stevan.types.Height._
-import ch.epfl.ognjanovic.stevan.types.Nodes._
-import ch.epfl.ognjanovic.stevan.types.SignedHeader.{DefaultSignedHeader, SignedHeader}
-import ch.epfl.ognjanovic.stevan.types.{Chain => _, _}
+import ch.epfl.ognjanovic.stevan.verified.types.Chain._
+import ch.epfl.ognjanovic.stevan.verified.types.Height._
+import ch.epfl.ognjanovic.stevan.verified.types.Nodes._
+import ch.epfl.ognjanovic.stevan.verified.types.SignedHeader.{DefaultSignedHeader, SignedHeader}
+import ch.epfl.ognjanovic.stevan.verified.types.{BlockHeader, Height, Validators}
 import stainless.annotation.{induct, opaque, pure}
 import stainless.lang._
 
