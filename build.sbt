@@ -24,6 +24,15 @@ lazy val tendermintRpc = project
     commonSettings
   )
 
+val lightClient = "light-client"
+lazy val core = project
+  .in(file(lightClient))
+  .settings(
+    name := lightClient,
+    commonSettings
+  )
+  .dependsOn(tendermintRpc)
+
 val lightClientCoreName = "light-client-core"
 lazy val verified = project
   .in(file(lightClientCoreName))
