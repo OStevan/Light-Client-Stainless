@@ -1,6 +1,5 @@
-package ch.epfl.ognjanovic.stevan.types
+package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
-import stainless.annotation._
 import stainless.collection._
 import stainless.lang._
 

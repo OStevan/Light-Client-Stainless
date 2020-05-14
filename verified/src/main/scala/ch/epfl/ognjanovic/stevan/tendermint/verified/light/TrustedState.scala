@@ -1,7 +1,7 @@
-package ch.epfl.ognjanovic.stevan.light
+package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.types.Height
-import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeader.SignedHeader
 import stainless.annotation.pure
 import utils.SetInvariants
 

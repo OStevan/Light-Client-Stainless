@@ -1,10 +1,10 @@
-package ch.epfl.ognjanovic.stevan.integration
+package ch.epfl.ognjanovic.stevan.tendermint.verified.integration
 
-import ch.epfl.ognjanovic.stevan.blockchain.BlockchainStates.BlockchainState
-import ch.epfl.ognjanovic.stevan.light.LightClient._
-import ch.epfl.ognjanovic.stevan.light.{LightClient, SoundSignedHeaderProvider, TrustedState, UntrustedState}
-import ch.epfl.ognjanovic.stevan.types.Height
-import ch.epfl.ognjanovic.stevan.types.SignedHeader.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates.BlockchainState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClient._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{LightClient, SoundSignedHeaderProvider, TrustedState, UntrustedState}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeader.SignedHeader
 import stainless.collection._
 import stainless.lang._
 

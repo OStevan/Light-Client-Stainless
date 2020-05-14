@@ -1,13 +1,13 @@
-package ch.epfl.ognjanovic.stevan.blockchain;
+package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
-import ch.epfl.ognjanovic.stevan.blockchain.BlockchainStates._
-import ch.epfl.ognjanovic.stevan.blockchain.SystemSteps.SystemStep
-import ch.epfl.ognjanovic.stevan.types.Chain.Genesis
-import ch.epfl.ognjanovic.stevan.types.Nodes.Node
-import ch.epfl.ognjanovic.stevan.types.{BlockHeader, Height, Validators, VotingPower}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.SystemStep
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain.Genesis
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes.Node
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height, Validators, VotingPower}
 import stainless.annotation._
+import stainless.lang.StaticChecks.assert
 import stainless.lang._
-import StaticChecks.assert
 
 
 object BlockchainSystem {

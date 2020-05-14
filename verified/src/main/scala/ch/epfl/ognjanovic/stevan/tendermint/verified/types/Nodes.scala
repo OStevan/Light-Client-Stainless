@@ -1,4 +1,4 @@
-package ch.epfl.ognjanovic.stevan.types
+package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
 /**
  * Defines interface modeling nodes which are used by blockchain.
