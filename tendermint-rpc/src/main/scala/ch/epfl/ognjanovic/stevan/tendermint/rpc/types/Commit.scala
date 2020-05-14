@@ -12,9 +12,9 @@ object Commit {
       height <- cursor.downField("height").as[Long]
       round <- cursor.downField("round").as[Long]
       blockId <- cursor.downField("block_id").as[BlockId](BlockId.deserializer.decoder)
-      signatures <- cursor.downField("signatures").as[Array[Signature]]
+      signatures <- cursor.downField("signatures").as[List[Signature]]
     } yield {
-      Commit(height, round, blockId, signatures)
+      Commit(height, round, blockId, signatures.toArray)
     }
   }
 }
