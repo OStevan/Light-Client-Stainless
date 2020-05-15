@@ -1,0 +1,9 @@
+{
+  "address": "01F527D77D3FFCC4FCFF2DDC2952EEA5414F2A33",
+  "pub_key": {
+    "type": "tendermint/PubKeyEd25519",
+    "value": "OAaNq3DX/15fGJP2MI6bujt1GRpvjwrqIevChirJsbc="
+  },
+  "voting_power": "50",
+  "proposer_priority": "-50"
+}

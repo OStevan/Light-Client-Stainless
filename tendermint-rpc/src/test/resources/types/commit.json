@@ -1,0 +1,25 @@
+{
+  "height": "4",
+  "round": "1",
+  "block_id": {
+    "hash": "533F85C98275E70D185185552FFC0175B10EA015FD4937F187E1C9DB73D574E9",
+    "parts": {
+      "total": "1",
+      "hash": "5ACD2FDE7D377584223D61AA2243EA53D71D9C7D1A226917532797114D5B9F27"
+    }
+  },
+  "signatures": [
+    {
+      "block_id_flag": 2,
+      "validator_address": "01F527D77D3FFCC4FCFF2DDC2952EEA5414F2A33",
+      "timestamp": "2019-11-02T15:04:30Z",
+      "signature": "CuRzn/99eNNFVGtUaaeuaEk3zhTdDT80EfBBWg/+VXCSdWSyWif5vdBy9gBRjZ/pQ1qLINA9osH+7LT9aQtEBA=="
+    },
+    {
+      "block_id_flag": 2,
+      "validator_address": "026CC7B6F3E62F789DBECEC59766888B5464737D",
+      "timestamp": "2019-11-02T15:04:30Z",
+      "signature": "GPonysln3hjNxUzzN9EBcl+ljH4AKgVSMO204d+Fd/9TS7et6hWTQPoQvtn2bk4cV4qoUW7nBLBZDmQWbx5SBQ=="
+    }
+  ]
+}

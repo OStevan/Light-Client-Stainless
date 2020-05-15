@@ -1,0 +1,25 @@
+{
+  "version": {
+    "block": "0",
+    "app": "0"
+  },
+  "chain_id": "test-chain-01",
+  "height": "3",
+  "time": "2019-11-02T15:04:20Z",
+  "last_block_id": {
+    "hash": "BB4E88B37D3E3579FB9050995A5C5C190DCA1CD3A736EAA9E487A82E81D6B9FD",
+    "parts": {
+      "total": "1",
+      "hash": "FBDBEB6CCB91FE6E248860A51715688664E9AAA46CD2676BE6383401D932BE92"
+    }
+  },
+  "last_commit_hash": "6E253517FC7E138AB1728CB5C18B31C29AED4236020CD5440AE02BDF025E8887",
+  "data_hash": "",
+  "validators_hash": "ADAE23D9D908638F3866C11A39E31CE4399AE6DE8EC8EBBCB1916B90C46EDDE3",
+  "next_validators_hash": "ADAE23D9D908638F3866C11A39E31CE4399AE6DE8EC8EBBCB1916B90C46EDDE3",
+  "consensus_hash": "048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F",
+  "app_hash": "6170705F68617368",
+  "last_results_hash": "",
+  "evidence_hash": "",
+  "proposer_address": "026CC7B6F3E62F789DBECEC59766888B5464737D"
+}
