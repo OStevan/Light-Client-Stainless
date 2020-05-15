@@ -14,7 +14,9 @@ case class Validators(totalPower: VotingPower, powerAssignments: ListMap[Node, V
     !powerAssignments.isEmpty)
 
   @pure @extern
-  def keys: Set[Node] = powerAssignments.toList.map(_._1).content
+  def keys: Set[Node] = {
+    powerAssignments.toList.map(_._1).content
+  }.ensuring(res => res.nonEmpty)
 
   def values: List[VotingPower] = powerAssignments.toList.map(_._2)
 

@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes.Node
 import stainless.lang._
 
-object SignedHeader {
+object SignedHeaders {
 
     abstract class SignedHeader {
         def header: BlockHeader
