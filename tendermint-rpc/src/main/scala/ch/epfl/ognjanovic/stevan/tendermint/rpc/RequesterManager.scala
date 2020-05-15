@@ -9,7 +9,7 @@ trait RequesterManager {
   /**
    * Returns a requester for a given address.
    *
-   * @param address ina network of a full node
+   * @param address in a network of a full node
    */
   def requester(address: Address)
 }
