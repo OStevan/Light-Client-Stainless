@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeader.{DefaultSignedHeader, SignedHeader}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.{DefaultSignedHeader, SignedHeader}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height, Validators}
 import stainless.annotation.{induct, opaque, pure}
 import stainless.lang._
@@ -62,7 +62,7 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
   def getHeader(height: Height): BlockHeader = {
     require(height <= chain.height)
     getHeaderInternal(height, chain)
-  }
+  }.ensuring(res => res.height == height)
 
   def getSignedHeader(height: Height): SignedHeader = {
     require(height < chain.height)

@@ -1,22 +1,23 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.integration
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates.BlockchainState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{LightClient, TrustedState, UntrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClient._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{LightClient, SoundSignedHeaderProvider, TrustedState, UntrustedState}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.SignedHeaderProviders.SignedHeaderProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeader.SignedHeader
-import stainless.collection._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.SignedHeader
+import stainless.annotation.pure
 import stainless.lang._
 
-object ModelIntegration {
+private object ModelIntegration {
   def snapshotExecution(
     blockchainState: BlockchainState,
     trustedHeight: Height,
     heightToVerify: Height
   ): VerifierState = {
     require(blockchainState.currentHeight() > heightToVerify && heightToVerify > trustedHeight)
-    val soundSignedHeaderProvider = SoundSignedHeaderProvider(blockchainState)
-    val trustedSignedHeader = soundSignedHeaderProvider.getSignedHeader(trustedHeight)
+    val soundSignedHeaderProvider: SignedHeaderProvider = BlockchainSignedHeaderProvider(blockchainState)
+    val trustedSignedHeader = soundSignedHeaderProvider.signedHeader(trustedHeight)
 
     val trustedState = TrustedState(trustedSignedHeader)
     assert(trustedState.currentHeight() < heightToVerify)
@@ -24,7 +25,9 @@ object ModelIntegration {
     val verifier = WaitingForHeader(
       heightToVerify,
       trustedState,
-      UntrustedState(Nil[SignedHeader]()))
+      UntrustedState.empty)
+
+    assert(heightToVerify < soundSignedHeaderProvider.currentHeight)
 
     verify(verifier, soundSignedHeaderProvider, VerifierStateMachine())
   }
@@ -32,19 +35,32 @@ object ModelIntegration {
   @scala.annotation.tailrec
   def verify(
     waitingForHeader: WaitingForHeader,
-    soundSignedHeaderProvider: SoundSignedHeaderProvider,
+    signedHeaderProvider: SignedHeaderProvider,
     verifier: VerifierStateMachine): Finished = {
-    require(waitingForHeader.targetHeight() < soundSignedHeaderProvider.blockchainState.currentHeight())
+    require(waitingForHeader.targetHeight() < signedHeaderProvider.currentHeight)
     decreases(LightClient.terminationMeasure(waitingForHeader)._1, LightClient.terminationMeasure(waitingForHeader)._2)
 
     Height.helperLemma(
       waitingForHeader.height,
       waitingForHeader.targetHeight(),
-      soundSignedHeaderProvider.blockchainState.currentHeight())
+      signedHeaderProvider.currentHeight)
 
-    verifier.processHeader(waitingForHeader, soundSignedHeaderProvider.getSignedHeader(waitingForHeader.height)) match {
-      case state: WaitingForHeader => verify(state, soundSignedHeaderProvider, verifier)
+    verifier.processHeader(waitingForHeader, signedHeaderProvider.signedHeader(waitingForHeader.height)) match {
+      case state: WaitingForHeader => verify(state, signedHeaderProvider, verifier)
       case state: Finished => state
     }
   }
+
+  case class BlockchainSignedHeaderProvider(blockchainState: BlockchainState) extends SignedHeaderProvider {
+
+    @pure
+    override def signedHeader(height: Height): SignedHeader = {
+      require(height < blockchainState.currentHeight())
+      blockchainState.signedHeader(height)
+    }
+
+    @pure
+    override def currentHeight: Height = blockchainState.currentHeight()
+  }
+
 }

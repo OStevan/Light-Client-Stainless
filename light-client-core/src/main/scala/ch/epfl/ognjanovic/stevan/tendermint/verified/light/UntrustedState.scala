@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeader.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.SignedHeader
 import stainless.collection._
 
 case class UntrustedState(pending: List[SignedHeader]) {
