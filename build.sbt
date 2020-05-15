@@ -25,7 +25,7 @@ lazy val tendermintRpc = project
   )
 
 val lightClientCoreName = "light-client-core"
-lazy val verified = project
+lazy val lightClientCore = project
   .in(file(lightClientCoreName))
   .enablePlugins(StainlessPlugin)
   .settings(
@@ -33,11 +33,11 @@ lazy val verified = project
     stainlessEnabled := true
 )
 
-val lightClient = "light-client"
-lazy val core = project
-  .in(file(lightClient))
+val lightClientName = "light-client"
+lazy val lightClient = project
+  .in(file(lightClientName))
   .settings(
-    name := lightClient,
+    name := lightClientName,
     commonSettings
   )
   .dependsOn(tendermintRpc)
