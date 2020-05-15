@@ -2,12 +2,11 @@ ThisBuild / version      := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "com.example"
 ThisBuild / scalaVersion := "2.12.9"
 
-lazy val core = project
-  .in(file("core"))
+lazy val tendermintRpc = project
+  .in(file("tendermint-rpc"))
   .settings(
-    name := "test",
+    name := "tendermint-rpc",
   )
-  .dependsOn(lightClientCore)
 
 lazy val lightClientCore = project
   .in(file("light-client-core"))
