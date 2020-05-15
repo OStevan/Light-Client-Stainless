@@ -2,7 +2,10 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Requester
 
-class DefaultProvider(private val requester: Requester) extends Provider {
+/**
+ * Only does the fetching and of the necessary data using a requester of a specified peer. Doesn't validate hashes, etc.
+ */
+sealed class DefaultProvider(private val requester: Requester) extends Provider {
   /**
    * For a given height gives back the `LightBlock` of that height.
    *
