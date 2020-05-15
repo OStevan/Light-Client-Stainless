@@ -7,12 +7,12 @@ lazy val core = project
   .settings(
     name := "test",
   )
-  .dependsOn(verified)
+  .dependsOn(lightClientCore)
 
-lazy val verified = project
-  .in(file("verified"))
+lazy val lightClientCore = project
+  .in(file("light-client-core"))
   .enablePlugins(StainlessPlugin)
   .settings(
-    name := "test-verified",
+    name := "light-client-core",
     stainlessEnabled := true
   )
