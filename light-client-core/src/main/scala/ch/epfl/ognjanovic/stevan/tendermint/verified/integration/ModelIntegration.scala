@@ -51,7 +51,8 @@ private object ModelIntegration {
     }
   }
 
-  case class BlockchainSignedHeaderProvider(blockchainState: BlockchainState) extends SignedHeaderProvider {
+  private[integration] case class BlockchainSignedHeaderProvider(
+    blockchainState: BlockchainState) extends SignedHeaderProvider {
 
     @pure
     override def signedHeader(height: Height): SignedHeader = {
