@@ -16,7 +16,7 @@ private object ModelIntegration {
     heightToVerify: Height
   ): VerifierState = {
     require(blockchainState.currentHeight() > heightToVerify && heightToVerify > trustedHeight)
-    val soundSignedHeaderProvider: SignedHeaderProvider = BlockchainSignedHeaderProvider(blockchainState)
+    val soundSignedHeaderProvider = BlockchainSignedHeaderProvider(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.signedHeader(trustedHeight)
 
     val trustedState = TrustedState(trustedSignedHeader)
@@ -26,8 +26,6 @@ private object ModelIntegration {
       heightToVerify,
       trustedState,
       UntrustedState.empty)
-
-    assert(heightToVerify < soundSignedHeaderProvider.currentHeight)
 
     verify(verifier, soundSignedHeaderProvider, VerifierStateMachine())
   }
@@ -51,7 +49,8 @@ private object ModelIntegration {
     }
   }
 
-  case class BlockchainSignedHeaderProvider(blockchainState: BlockchainState) extends SignedHeaderProvider {
+  private[integration] case class BlockchainSignedHeaderProvider(
+    blockchainState: BlockchainState) extends SignedHeaderProvider {
 
     @pure
     override def signedHeader(height: Height): SignedHeader = {
