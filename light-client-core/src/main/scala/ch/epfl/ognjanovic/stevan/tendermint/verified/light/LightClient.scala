@@ -4,7 +4,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.SignedHeader
 import stainless.annotation.{inlineInvariant, opaque, pure}
 import stainless.collection._
-import stainless.lang.StaticChecks.{Ensuring, assert}
+import stainless.lang.StaticChecks.Ensuring
 import stainless.lang._
 
 object LightClient {
@@ -58,18 +58,13 @@ object LightClient {
       require(signedHeader.header.height == waitingForHeader.height)
 
       val (trustedState, untrustedState) = waitingForHeader.headerResponse(signedHeader)
-      assert(waitingForHeader.targetHeight() == untrustedState.pending.reverse.head.header.height)
-      assert(waitingForHeader.height == untrustedState.pending.head.header.height)
       verifyInternal(trustedState, untrustedState)
     }.ensuring {
       case state: WaitingForHeader =>
-        assert(state.untrustedState.pending.nonEmpty)
-        if (waitingForHeader.trustedState.currentHeight() == state.trustedState.currentHeight()) {
-          assert(waitingForHeader.height > state.height)
+        if (waitingForHeader.trustedState.currentHeight() == state.trustedState.currentHeight())
           sameTrustedStateTerminationMeasure(waitingForHeader, state)
-        } else {
+        else
           improvedTrustedStateLemma(waitingForHeader, state)
-        }
 
         val previousTerminationMeasure = terminationMeasure(waitingForHeader)
         val currentTerminationMeasure = terminationMeasure(state)
@@ -82,24 +77,21 @@ object LightClient {
     }
 
     private def verifyInternal(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
-      require(untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState) &&
-        untrustedState.pending.nonEmpty)
+      require(
+        untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState) &&
+          untrustedState.pending.nonEmpty)
       decreases(untrustedState.pending.size)
 
       untrustedState.pending match {
         case Cons(h, tail) =>
           if (trustedState.trusted(h) && tail.isEmpty)
             Finished(verdict = true, trustedState.increaseTrust(h), UntrustedState(Nil[SignedHeader]()))
-          else if (trustedState.trusted(h)) {
-            assert(tail.nonEmpty)
+          else if (trustedState.trusted(h))
             verifyInternal(trustedState.increaseTrust(h), UntrustedState(tail))
-          } else if (trustedState.isAdjacent(h))
+          else if (trustedState.isAdjacent(h))
             Finished(verdict = false, trustedState, untrustedState)
-          else {
-            assert(!trustedState.isAdjacent(h) && !trustedState.trusted(h))
-            val bisectionHeight: Height = trustedState.bisectionHeight(h)
-            WaitingForHeader(bisectionHeight, trustedState, untrustedState)
-          }
+          else
+            WaitingForHeader(trustedState.bisectionHeight(h), trustedState, untrustedState)
       }
     }.ensuring {
       case state: WaitingForHeader =>
@@ -122,7 +114,6 @@ object LightClient {
       waitingForHeader.targetHeight().value - waitingForHeader.trustedState.currentHeight().value,
       waitingForHeader.height.value - waitingForHeader.trustedState.currentHeight().value
     )
-    assert(res._1 > BigInt(0) && res._2 > BigInt(0))
     res
   }.ensuring(res => res._1 >= BigInt(0) && res._2 >= BigInt(0))
 
