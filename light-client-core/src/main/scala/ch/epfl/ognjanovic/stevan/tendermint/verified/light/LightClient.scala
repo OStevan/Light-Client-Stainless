@@ -16,13 +16,24 @@ object LightClient {
     }
   }
 
+  sealed abstract class VerificationOutcome
+
+  case object Success extends VerificationOutcome
+
+  case object InvalidCommit extends VerificationOutcome
+
+  case object Failure extends VerificationOutcome
+
   sealed abstract class VerifierState
 
+  @inlineInvariant
   case class Finished(
-    verdict: Boolean,
+    outcome: VerificationOutcome,
     trustedState: TrustedState,
     untrustedState: UntrustedState) extends VerifierState {
-    require((!verdict && untrustedState.pending.nonEmpty) || (verdict && untrustedState.pending.isEmpty))
+    require(
+      (outcome == Success && untrustedState.pending.isEmpty) ||
+        (outcome != Success && untrustedState.pending.nonEmpty))
   }
 
   @inlineInvariant
@@ -58,7 +69,13 @@ object LightClient {
       require(signedHeader.header.height == waitingForHeader.height)
 
       val (trustedState, untrustedState) = waitingForHeader.headerResponse(signedHeader)
-      verifyInternal(trustedState, untrustedState)
+
+      val bisection = verifyInternal(trustedState, untrustedState)
+
+      if (invalidCommit(signedHeader))
+        Finished(InvalidCommit, trustedState, untrustedState)
+      else
+        bisection
     }.ensuring {
       case state: WaitingForHeader =>
         if (waitingForHeader.trustedState.currentHeight() == state.trustedState.currentHeight())
@@ -76,6 +93,12 @@ object LightClient {
       case _: Finished => true
     }
 
+    private def invalidCommit(header: SignedHeader): Boolean = {
+      header.commit.nonEmpty &&
+        (header.commit subsetOf header.header.validatorSet.keys) &&
+        header.header.validatorSet.obtainedByzantineQuorum(header.commit)
+    }
+
     private def verifyInternal(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
       require(
         untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState) &&
@@ -85,11 +108,11 @@ object LightClient {
       untrustedState.pending match {
         case Cons(h, tail) =>
           if (trustedState.trusted(h) && tail.isEmpty)
-            Finished(verdict = true, trustedState.increaseTrust(h), UntrustedState(Nil[SignedHeader]()))
+            Finished(outcome = Success, trustedState.increaseTrust(h), UntrustedState(Nil[SignedHeader]()))
           else if (trustedState.trusted(h))
             verifyInternal(trustedState.increaseTrust(h), UntrustedState(tail))
           else if (trustedState.isAdjacent(h))
-            Finished(verdict = false, trustedState, untrustedState)
+            Finished(outcome = Failure, trustedState, untrustedState)
           else
             WaitingForHeader(trustedState.bisectionHeight(h), trustedState, untrustedState)
       }
