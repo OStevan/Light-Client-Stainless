@@ -9,9 +9,10 @@ import utils.ListSetUtils._
 import utils.{ListMap, ListSetUtils, ListUtils}
 
 case class Validators(totalPower: VotingPower, powerAssignments: ListMap[Node, VotingPower]) {
-  require(powerAssignments.forall(value => value._2.isPositive) &&
-    totalPower == Validators.sumVotingPower(powerAssignments.toList) &&
-    !powerAssignments.isEmpty)
+  require(
+    powerAssignments.forall(value => value._2.isPositive) &&
+      totalPower == Validators.sumVotingPower(powerAssignments.toList) &&
+      !powerAssignments.isEmpty)
 
   @pure @extern
   def keys: Set[Node] = {

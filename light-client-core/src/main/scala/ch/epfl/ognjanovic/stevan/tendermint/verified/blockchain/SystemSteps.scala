@@ -37,8 +37,7 @@ object SystemSteps {
    */
   case class AppendBlock(lastCommit: Set[Node], nextValidatorSet: Validators) extends SystemStep {
     require(
-      nextValidatorSet.keys.nonEmpty &&
-        nextValidatorSet.values.forall(value => value.power == 1) &&
+      nextValidatorSet.values.forall(value => value.power == 1) &&
         lastCommit.nonEmpty)
   }
 
