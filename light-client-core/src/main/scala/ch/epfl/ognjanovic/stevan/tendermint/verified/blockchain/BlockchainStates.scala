@@ -119,7 +119,6 @@ object BlockchainStates {
             nextValidatorSet.keys.subsetOf(allNodes) &&
             lastCommit.subsetOf(allNodes) =>
           assert(lastCommit.nonEmpty)
-          assert(nextValidatorSet.keys.nonEmpty)
 
           val lastBlock = blockchain.chain.head
           if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit) && nextValidatorSet.isCorrect(faulty)) {

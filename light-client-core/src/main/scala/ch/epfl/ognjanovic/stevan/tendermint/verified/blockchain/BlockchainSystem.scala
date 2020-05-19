@@ -6,7 +6,6 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain.Genesis
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes.Node
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height, Validators, VotingPower}
 import stainless.annotation._
-import stainless.lang.StaticChecks.assert
 import stainless.lang._
 
 
@@ -20,10 +19,8 @@ object BlockchainSystem {
     nextValidatorSet: Validators
   ): BlockchainState = {
     require(
-      validatorSet.keys.nonEmpty &&
-        validatorSet.values.forall(value => value.power == 1) &&
+      validatorSet.values.forall(value => value.power == 1) &&
         maxPower.isPositive &&
-        nextValidatorSet.keys.nonEmpty &&
         (nextValidatorSet.keys subsetOf validatorSet.keys) &&
         nextValidatorSet.isCorrect(Set.empty))
 
@@ -33,8 +30,7 @@ object BlockchainSystem {
     val initialChain = Genesis(genesisBlock)
     val minTrustedHeight = Height(1)
 
-    assert(initialChain.height <= maxHeight) // without this assertion, infinite verification
-    val startingBlockchain = Blockchain(maxHeight, minTrustedHeight, initialChain, Set.empty)
+    val startingBlockchain: Blockchain = Blockchain(maxHeight, minTrustedHeight, initialChain, Set.empty)
 
     if (maxHeight.value == BigInt(1))
       Finished(validatorSet.keys, noFaulty, startingBlockchain)
