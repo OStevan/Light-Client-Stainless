@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 import stainless.annotation.invariant
 import stainless.lang._
 
-case class VotingPower(value: BigInt) extends AnyVal {
+case class VotingPower(value: BigInt) {
   @invariant
   def invariant: Boolean = value >= 0
 

@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 import stainless.annotation.{invariant, opaque}
 import stainless.lang._
 
-case class Height(value: BigInt) extends AnyVal {
+case class Height(value: BigInt) {
 
   @invariant
   def invariant: Boolean = value > 0
@@ -14,14 +14,12 @@ case class Height(value: BigInt) extends AnyVal {
 
   def >(other: Height): Boolean = value > other.value
 
-  def <(other: Height): Boolean = {
-    value < other.value
-  }.ensuring(res => res == other > this)
+  def <(other: Height): Boolean = value < other.value
 
   def +(value: BigInt): Height = {
     require(value > BigInt(0))
     Height(this.value + value)
-  } ensuring (res => res.value == this.value + value)
+  }
 
   def +(other: Height): Height = {
     Height(this.value + other.value)
