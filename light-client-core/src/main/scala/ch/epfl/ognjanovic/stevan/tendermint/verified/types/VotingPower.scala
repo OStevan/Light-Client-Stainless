@@ -2,7 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
 import stainless.lang._
 
-sealed case class VotingPower(value: BigInt) {
+sealed case class VotingPower(value: BigInt) extends AnyVal {
   require(value >= BigInt(0))
 
   def power(): BigInt = value

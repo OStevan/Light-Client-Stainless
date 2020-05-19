@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 import stainless.annotation.opaque
 import stainless.lang._
 
-sealed case class Height(value: BigInt) {
+sealed case class Height(value: BigInt) extends AnyVal {
   require(value > BigInt(0))
 
   def <=(other: Height): Boolean = value <= other.value
