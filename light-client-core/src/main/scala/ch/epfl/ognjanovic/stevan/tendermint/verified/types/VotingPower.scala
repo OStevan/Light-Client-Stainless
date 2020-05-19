@@ -1,9 +1,11 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
+import stainless.annotation.invariant
 import stainless.lang._
 
-sealed case class VotingPower(value: BigInt) extends AnyVal {
-  require(value >= BigInt(0))
+case class VotingPower(value: BigInt) extends AnyVal {
+  @invariant
+  def invariant: Boolean = value >= 0
 
   def power(): BigInt = value
 

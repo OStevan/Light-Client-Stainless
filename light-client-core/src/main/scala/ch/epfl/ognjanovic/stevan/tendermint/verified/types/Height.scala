@@ -1,10 +1,12 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
-import stainless.annotation.opaque
+import stainless.annotation.{invariant, opaque}
 import stainless.lang._
 
-sealed case class Height(value: BigInt) extends AnyVal {
-  require(value > BigInt(0))
+case class Height(value: BigInt) extends AnyVal {
+
+  @invariant
+  def invariant: Boolean = value > 0
 
   def <=(other: Height): Boolean = value <= other.value
 
