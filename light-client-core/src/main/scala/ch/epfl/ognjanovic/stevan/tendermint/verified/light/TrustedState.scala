@@ -19,11 +19,13 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
     * @param signedHeader which will be the new trusted header if it can be trusted
     * @return new trusted state or the old one if the trust is not reachable
     */
+  @pure
   def increaseTrust(signedHeader: SignedHeader): TrustedState = {
     require(signedHeader.header.height > this.trustedSignedHeader.header.height && trusted(signedHeader))
     TrustedState(signedHeader)
-  }.ensuring(res => res.currentHeight() > currentHeight())
+  }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == signedHeader.header.height)
 
+  @pure
   def isAdjacent(signedHeader: SignedHeader): Boolean =
     signedHeader.header.height == trustedSignedHeader.header.height + 1
 
@@ -60,10 +62,10 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
   }
 
   @pure
-  def bisectionHeight(signedHeader: SignedHeader): Height = {
-    require(signedHeader.header.height > this.trustedSignedHeader.header.height + 1)
-    (signedHeader.header.height + trustedSignedHeader.header.height) / 2
-  }.ensuring(res => res < signedHeader.header.height && currentHeight() < res)
+  def bisectionHeight(height: Height): Height = {
+    require(height > this.trustedSignedHeader.header.height + 1)
+    (height + trustedSignedHeader.header.height) / 2
+  }.ensuring(res => res < height && currentHeight() < res)
 
   @pure
   def trusted(signedHeader: SignedHeader): Boolean = {

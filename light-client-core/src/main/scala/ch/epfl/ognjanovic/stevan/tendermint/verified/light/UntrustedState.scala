@@ -14,7 +14,8 @@ case class UntrustedState(pending: List[SignedHeader]) {
     UntrustedState(signedHeader :: pending)
   }.ensuring(res =>
     (pending.isEmpty || pending.reverse.head == res.pending.reverse.head) &&
-      res.pending.head.header.height == signedHeader.header.height
+      res.pending.head.header.height == signedHeader.header.height &&
+      res.pending.nonEmpty
   )
 
   def size: BigInt = pending.size
