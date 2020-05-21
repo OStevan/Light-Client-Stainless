@@ -67,7 +67,7 @@ object LightClient {
         Failure
       else
         InsufficientTrust
-    }.ensuring(res => (res == Success) == trustedState.trusted(signedHeader) )
+    }.ensuring(res => (res == Success) ==> trustedState.trusted(signedHeader) )
 
     def processHeader(
       waitingForHeader: WaitingForHeader,
