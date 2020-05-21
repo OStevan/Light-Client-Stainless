@@ -16,6 +16,11 @@ object LightClient {
     }
   }
 
+  @inline
+  private def targetHeightInvariant(targetHeight: Height, untrustedState: List[SignedHeader]): Boolean = {
+    untrustedState.isEmpty || untrustedState.reverse.head.header.height == targetHeight
+  }
+
   sealed abstract class VerificationOutcome
 
   case object Success extends VerificationOutcome
@@ -38,39 +43,33 @@ object LightClient {
 
   @inlineInvariant
   case class WaitingForHeader(
-    height: Height,
+    requestHeight: Height,
+    targetHeight: Height,
     trustedState: TrustedState,
     untrustedState: UntrustedState) extends VerifierState {
-    require(trustedState.currentHeight() < height && untrustedStateHeightInvariant(height, untrustedState))
+    require(
+      requestHeight <= targetHeight &&
+        trustedState.currentHeight() < requestHeight &&
+        untrustedStateHeightInvariant(requestHeight, untrustedState) &&
+        targetHeightInvariant(targetHeight, untrustedState.pending))
 
     def headerResponse(signedHeader: SignedHeader): (TrustedState, UntrustedState) = {
-      require(signedHeader.header.height == height && trustedState.currentHeight() < signedHeader.header.height)
+      require(signedHeader.header.height == requestHeight && trustedState.currentHeight() < signedHeader.header.height)
       val newUntrustedState = untrustedState.addSignedHeader(signedHeader)
       (trustedState, newUntrustedState)
     }.ensuring(res => untrustedStateHeightInvariant(res._1.currentHeight(), res._2) &&
-      res._2.pending.reverse.head.header.height == targetHeight())
-
-    @pure
-    def targetHeight(): Height = {
-      if (untrustedState.pending.isEmpty)
-        height
-      else {
-        val value = untrustedState.pending.reverse.head.header.height
-        reverseLemma(height, untrustedState)
-        value
-      }
-    }.ensuring(res => height <= res && trustedState.currentHeight() < res)
+      res._2.pending.reverse.head.header.height == targetHeight)
   }
 
   case class VerifierStateMachine() {
     def processHeader(
       waitingForHeader: WaitingForHeader,
       signedHeader: SignedHeader): VerifierState = {
-      require(signedHeader.header.height == waitingForHeader.height)
+      require(signedHeader.header.height == waitingForHeader.requestHeight)
 
       val (trustedState, untrustedState) = waitingForHeader.headerResponse(signedHeader)
 
-      val bisection = verifyInternal(trustedState, untrustedState)
+      val bisection = verifyInternal(waitingForHeader.targetHeight, trustedState, untrustedState)
 
       if (invalidCommit(signedHeader))
         Finished(InvalidCommit, trustedState, untrustedState)
@@ -88,7 +87,7 @@ object LightClient {
         ((previousTerminationMeasure._1 > currentTerminationMeasure._1) ||
           (previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
             previousTerminationMeasure._2 > currentTerminationMeasure._2)) &&
-          state.targetHeight() == waitingForHeader.targetHeight()
+          state.targetHeight == waitingForHeader.targetHeight
 
       case _: Finished => true
     }
@@ -99,7 +98,10 @@ object LightClient {
         header.header.validatorSet.obtainedByzantineQuorum(header.commit)
     }
 
-    private def verifyInternal(trustedState: TrustedState, untrustedState: UntrustedState): VerifierState = {
+    private def verifyInternal(
+      targetHeight: Height,
+      trustedState: TrustedState,
+      untrustedState: UntrustedState): VerifierState = {
       require(
         untrustedStateHeightInvariant(trustedState.currentHeight(), untrustedState) &&
           untrustedState.pending.nonEmpty)
@@ -110,20 +112,20 @@ object LightClient {
           if (trustedState.trusted(h) && tail.isEmpty)
             Finished(outcome = Success, trustedState.increaseTrust(h), UntrustedState(Nil[SignedHeader]()))
           else if (trustedState.trusted(h))
-            verifyInternal(trustedState.increaseTrust(h), UntrustedState(tail))
+            verifyInternal(targetHeight, trustedState.increaseTrust(h), UntrustedState(tail))
           else if (trustedState.isAdjacent(h))
             Finished(outcome = Failure, trustedState, untrustedState)
           else
-            WaitingForHeader(trustedState.bisectionHeight(h), trustedState, untrustedState)
+            WaitingForHeader(trustedState.bisectionHeight(h), targetHeight,trustedState, untrustedState)
       }
     }.ensuring {
       case state: WaitingForHeader =>
         state.untrustedState.pending.nonEmpty &&
-          untrustedState.pending.reverse.head.header.height == state.targetHeight() &&
+          untrustedState.pending.reverse.head.header.height == state.targetHeight &&
           trustedState.currentHeight() <= state.trustedState.currentHeight() &&
           (
             (trustedState.currentHeight() == state.trustedState.currentHeight() &&
-              state.height < state.untrustedState.pending.head.header.height &&
+              state.requestHeight < state.untrustedState.pending.head.header.height &&
               state.untrustedState.pending == untrustedState.pending) ||
               trustedState.currentHeight() < state.trustedState.currentHeight())
 
@@ -134,8 +136,8 @@ object LightClient {
   @pure
   def terminationMeasure(waitingForHeader: WaitingForHeader): (BigInt, BigInt) = {
     val res: (BigInt, BigInt) = (
-      waitingForHeader.targetHeight().value - waitingForHeader.trustedState.currentHeight().value,
-      waitingForHeader.height.value - waitingForHeader.trustedState.currentHeight().value
+      waitingForHeader.targetHeight.value - waitingForHeader.trustedState.currentHeight().value,
+      waitingForHeader.requestHeight.value - waitingForHeader.trustedState.currentHeight().value
     )
     res
   }.ensuring(res => res._1 >= BigInt(0) && res._2 >= BigInt(0))
@@ -156,9 +158,9 @@ object LightClient {
 
   @opaque
   def sameTrustedStateTerminationMeasure(previous: WaitingForHeader, current: WaitingForHeader): Unit = {
-    require(previous.targetHeight() == current.targetHeight() &&
-      previous.trustedState.currentHeight() == current.trustedState.currentHeight() &&
-      previous.height > current.height
+    require(previous.targetHeight == current.targetHeight &&
+      previous.trustedState.currentHeight() == current.trustedState.currentHeight &&
+      previous.requestHeight > current.requestHeight
     )
   }.ensuring { _ =>
     val previousTerminationMeasure = terminationMeasure(previous)
@@ -170,7 +172,7 @@ object LightClient {
 
   @opaque
   def improvedTrustedStateLemma(previous: WaitingForHeader, current: WaitingForHeader): Unit = {
-    require(previous.targetHeight() == current.targetHeight() &&
+    require(previous.targetHeight == current.targetHeight &&
       previous.trustedState.currentHeight() < current.trustedState.currentHeight()
     )
   }.ensuring { _ =>
