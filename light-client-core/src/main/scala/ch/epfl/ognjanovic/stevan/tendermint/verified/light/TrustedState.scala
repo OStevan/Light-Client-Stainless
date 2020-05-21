@@ -59,11 +59,11 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
       .checkSupport(intersection)
   }
 
-  @inline
+  @pure
   def bisectionHeight(signedHeader: SignedHeader): Height = {
     require(signedHeader.header.height > this.trustedSignedHeader.header.height + 1)
     (signedHeader.header.height + trustedSignedHeader.header.height) / 2
-  }
+  }.ensuring(res => res < signedHeader.header.height && currentHeight() < res)
 
   @pure
   def trusted(signedHeader: SignedHeader): Boolean = {
