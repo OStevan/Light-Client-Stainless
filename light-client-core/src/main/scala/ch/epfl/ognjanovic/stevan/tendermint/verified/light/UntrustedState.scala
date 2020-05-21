@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.SignedHeader
+import stainless.annotation.pure
 import stainless.collection._
 
 case class UntrustedState(pending: List[SignedHeader]) {
@@ -17,8 +18,10 @@ case class UntrustedState(pending: List[SignedHeader]) {
 }
 
 object UntrustedState {
+  @pure
   def empty: UntrustedState = UntrustedState(Nil[SignedHeader]())
 
+  @pure
   def apply(signedHeader: SignedHeader): UntrustedState = UntrustedState(Cons(signedHeader, Nil()))
 
   @scala.annotation.tailrec

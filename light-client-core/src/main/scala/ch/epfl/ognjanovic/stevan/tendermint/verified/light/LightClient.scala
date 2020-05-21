@@ -9,7 +9,7 @@ import stainless.lang._
 
 object LightClient {
   @inline
-  private def untrustedStateHeightInvariant(height: Height, untrustedState: UntrustedState): Boolean = {
+  def untrustedStateHeightInvariant(height: Height, untrustedState: UntrustedState): Boolean = {
     untrustedState.pending match {
       case list: Cons[SignedHeader] => height < list.head.header.height
       case _: Nil[SignedHeader] => true
@@ -17,7 +17,7 @@ object LightClient {
   }
 
   @inline
-  private def targetHeightInvariant(targetHeight: Height, untrustedState: List[SignedHeader]): Boolean = {
+  def targetHeightInvariant(targetHeight: Height, untrustedState: List[SignedHeader]): Boolean = {
     untrustedState.isEmpty || untrustedState.reverse.head.header.height == targetHeight
   }
 
@@ -57,8 +57,7 @@ object LightClient {
       require(signedHeader.header.height == requestHeight && trustedState.currentHeight() < signedHeader.header.height)
       val newUntrustedState = untrustedState.addSignedHeader(signedHeader)
       (trustedState, newUntrustedState)
-    }.ensuring(res => untrustedStateHeightInvariant(res._1.currentHeight(), res._2) &&
-      res._2.pending.reverse.head.header.height == targetHeight)
+    }.ensuring(res => untrustedStateHeightInvariant(res._1.currentHeight(), res._2))
   }
 
   case class VerifierStateMachine() {

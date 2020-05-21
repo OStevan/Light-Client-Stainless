@@ -21,6 +21,10 @@ private object ModelIntegration {
 
     val trustedState = TrustedState(trustedSignedHeader)
     assert(trustedState.currentHeight() < heightToVerify)
+    assert(heightToVerify <= heightToVerify)
+    assert(trustedState.currentHeight() < heightToVerify)
+    assert(LightClient.untrustedStateHeightInvariant(heightToVerify, UntrustedState.empty))
+    assert(targetHeightInvariant(heightToVerify, UntrustedState.empty.pending))
 
     val verifier = WaitingForHeader(
       heightToVerify,
