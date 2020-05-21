@@ -60,6 +60,7 @@ object LightClient {
 
     @pure
     def verifySingle(trustedState: TrustedState, signedHeader: SignedHeader): VerificationOutcome = {
+      require(trustedState.currentHeight() < signedHeader.header.height)
       if (trustedState.trusted(signedHeader))
         checkCommit(signedHeader)
       else if (trustedState.isAdjacent(signedHeader))
