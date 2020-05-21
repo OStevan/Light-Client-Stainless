@@ -9,35 +9,22 @@ import utils.ListMap
 object SignedHeaderStore {
 
   abstract class SignedHeaderStore {
-    def put(signedHeader: SignedHeader): SignedHeaderStore
+    def put(signedHeader: SignedHeader): SignedHeaderStore = {
+      (??? : SignedHeaderStore)
+    }.ensuring(res => res.contains(signedHeader.header.height))
 
     def get(height: Height): Option[SignedHeader]
 
     def contains(height: Height): Boolean
-
-    @law
-    def lawPutContains(signedHeader: SignedHeader): Boolean = {
-      put(signedHeader).contains(signedHeader.header.height)
-    }
-
-    @law
-    def lawPutGet(signedHeader: SignedHeader): Boolean = {
-      // this law requires timeout to be increased to 60 seconds
-      put(signedHeader).get(signedHeader.header.height).isDefined
-    }
-
-    @law
-    def lawContainsGet(height: Height): Boolean = {
-      contains(height) == get(height).isDefined
-    }
   }
 
   case class ListMapSignedHeaderStore(listMap: ListMap[Height, SignedHeader]) extends SignedHeaderStore {
-    override def put(signedHeader: SignedHeader): SignedHeaderStore =
+    override def put(signedHeader: SignedHeader): SignedHeaderStore = {
       ListMapSignedHeaderStore(listMap + (signedHeader.header.height, signedHeader))
+    }.ensuring(res => res.contains(signedHeader.header.height))
 
     override def get(height: Height): Option[SignedHeader] =
-      if (listMap.contains(height))
+      if (contains(height))
         Some(listMap(height))
       else
         None[SignedHeader]()
