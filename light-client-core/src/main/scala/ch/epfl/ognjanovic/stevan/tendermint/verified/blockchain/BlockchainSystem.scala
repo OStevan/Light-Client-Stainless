@@ -26,7 +26,7 @@ object BlockchainSystem {
 
     val noFaulty = Set.empty[Address]
 
-    val genesisBlock = BlockHeader(Height(1), initialCommit, validatorSet, nextValidatorSet)
+    val genesisBlock = BlockHeader(Blockchain.constructHeader(Height(1)), initialCommit, validatorSet, nextValidatorSet)
     val initialChain = Genesis(genesisBlock)
     val minTrustedHeight = Height(1)
 

@@ -11,7 +11,7 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
     * The height of the last block that we trust.
     */
   @pure
-  def currentHeight(): Height = trustedSignedHeader.header.height
+  def currentHeight(): Height = trustedSignedHeader.header.header.height
 
   /**
     * Tries to "improve" the current trusted state with addition of a new signed header of a greater height.
@@ -21,13 +21,13 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
     */
   @pure
   def increaseTrust(signedHeader: SignedHeader): TrustedState = {
-    require(signedHeader.header.height > this.trustedSignedHeader.header.height && trusted(signedHeader))
+    require(signedHeader.header.header.height > this.trustedSignedHeader.header.header.height && trusted(signedHeader))
     TrustedState(signedHeader)
-  }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == signedHeader.header.height)
+  }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == signedHeader.header.header.height)
 
   @pure
   def isAdjacent(signedHeader: SignedHeader): Boolean =
-    signedHeader.header.height == trustedSignedHeader.header.height + 1
+    signedHeader.header.header.height == trustedSignedHeader.header.header.height + 1
 
   @pure
   def adjacentHeaderTrust(signedHeader: SignedHeader): Boolean = {
@@ -43,13 +43,13 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
 
   @pure
   def nonAdjacentHeaderTrust(signedHeader: SignedHeader): Boolean = {
-    require(signedHeader.header.height > this.trustedSignedHeader.header.height && !isAdjacent(signedHeader))
+    require(signedHeader.header.header.height > this.trustedSignedHeader.header.header.height && !isAdjacent(signedHeader))
     internalNonAdjacentHeaderTrust(signedHeader)
   }.ensuring(res => res == trusted(signedHeader))
 
   @pure
   private def internalNonAdjacentHeaderTrust(signedHeader: SignedHeader): Boolean = {
-    require(signedHeader.header.height > this.trustedSignedHeader.header.height && !isAdjacent(signedHeader))
+    require(signedHeader.header.header.height > this.trustedSignedHeader.header.header.height && !isAdjacent(signedHeader))
 
     val intersection = SetInvariants.setIntersection(
       trustedSignedHeader.header.nextValidatorSet.keys,
@@ -63,13 +63,13 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
 
   @pure
   def bisectionHeight(height: Height): Height = {
-    require(height > this.trustedSignedHeader.header.height + 1)
-    (height + trustedSignedHeader.header.height) / 2
+    require(height > this.trustedSignedHeader.header.header.height + 1)
+    (height + trustedSignedHeader.header.header.height) / 2
   }.ensuring(res => res < height && currentHeight() < res)
 
   @pure
   def trusted(signedHeader: SignedHeader): Boolean = {
-    require(signedHeader.header.height > currentHeight())
+    require(signedHeader.header.header.height > currentHeight())
     if (isAdjacent(signedHeader))
       internalAdjacentHeaderTrust(signedHeader)
     else
