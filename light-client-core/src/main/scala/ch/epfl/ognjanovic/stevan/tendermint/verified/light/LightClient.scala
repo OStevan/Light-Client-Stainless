@@ -67,7 +67,7 @@ object LightClient {
         Failure
       else
         InsufficientTrust
-    }.ensuring(res => (res == Success) ==> trustedState.trusted(signedHeader) )
+    }.ensuring(res => (res == Success) ==> trustedState.trusted(signedHeader))
 
     def processHeader(
       waitingForHeader: WaitingForHeader,
@@ -155,9 +155,9 @@ object LightClient {
     }.ensuring {
       case waitingForHeader: WaitingForHeader =>
         waitingForHeader.targetHeight == targetHeight &&
-        waitingForHeader.trustedState.currentHeight() >= trustedState.currentHeight() &&
-        (waitingForHeader.trustedState.currentHeight() > trustedState.currentHeight() ||
-          waitingForHeader.requestHeight < signedHeader.header.height)
+          waitingForHeader.trustedState.currentHeight() >= trustedState.currentHeight() &&
+          (waitingForHeader.trustedState.currentHeight() > trustedState.currentHeight() ||
+            waitingForHeader.requestHeight < signedHeader.header.height)
       case _ => true
     }
   }
