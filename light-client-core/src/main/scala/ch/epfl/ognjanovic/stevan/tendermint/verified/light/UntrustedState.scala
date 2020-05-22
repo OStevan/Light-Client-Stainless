@@ -10,11 +10,11 @@ case class UntrustedState(pending: List[SignedHeader]) {
 
   @pure
   def addSignedHeader(signedHeader: SignedHeader): UntrustedState = {
-    require(pending.isEmpty || (signedHeader.header.height < pending.head.header.height))
+    require(pending.isEmpty || (signedHeader.header.header.height < pending.head.header.header.height))
     UntrustedState(signedHeader :: pending)
   }.ensuring(res =>
     (pending.isEmpty || pending.reverse.head == res.pending.reverse.head) &&
-      res.pending.head.header.height == signedHeader.header.height &&
+      res.pending.head.header.header.height == signedHeader.header.header.height &&
       res.pending.nonEmpty
   )
 
@@ -32,7 +32,7 @@ object UntrustedState {
   def pendingInvariant(pending: List[SignedHeader]): Boolean = {
     pending match {
       case Cons(first, tail) if tail.isInstanceOf[Cons[SignedHeader]] =>
-        first.header.height < tail.head.header.height && pendingInvariant(tail)
+        first.header.header.height < tail.head.header.header.height && pendingInvariant(tail)
       case _ => true
     }
   }

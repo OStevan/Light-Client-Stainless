@@ -4,7 +4,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.{DefaultSignedHeader, SignedHeader}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Chain => _, _}
-import stainless.annotation.{induct, opaque, pure}
+import stainless.annotation.{extern, induct, opaque, pure}
 import stainless.lang._
 
 case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain, faulty: Set[Address]) {
@@ -22,7 +22,7 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
 
   @pure
   def faultAssumption(): Boolean = {
-    chain.forAll(header => minTrustedHeight > header.height || header.nextValidatorSet.isCorrect(faulty))
+    chain.forAll(header => minTrustedHeight > header.header.height || header.nextValidatorSet.isCorrect(faulty))
   }
 
   @pure
@@ -31,7 +31,10 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
         !finished &&
         nextVS.isCorrect(faulty) &&
         faultAssumption())
-    val header = BlockHeader(chain.height + 1, lastCommit, chain.head.nextValidatorSet, nextVS)
+    val header = BlockHeader(
+      Blockchain.constructHeader(chain.height + 1),
+      lastCommit,
+      chain.head.nextValidatorSet, nextVS)
     val newChain = chain.appendBlock(header)
     Blockchain(maxHeight, minTrustedHeight, newChain, faulty)
   }.ensuring(res =>
@@ -60,7 +63,7 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
   def getHeader(height: Height): BlockHeader = {
     require(height <= chain.height)
     getHeaderInternal(height, chain)
-  }.ensuring(res => res.height == height)
+  }.ensuring(res => res.header.height == height)
 
   def getSignedHeader(height: Height): SignedHeader = {
     require(height < chain.height)
@@ -79,10 +82,17 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
         else
           getHeaderInternal(height, tail)
     }
-  }.ensuring(res => res.height == height)
+  }.ensuring(res => res.header.height == height)
 }
 
 object Blockchain {
+
+  // strictly for modeling purposes, anything which runs this will fail
+  @extern @pure
+  def constructHeader(height: Height): Header = {
+    ??? : Header
+  }.ensuring(res => res.height == height)
+
   @opaque
   def faultyChainDoesNotRecoverWithNewFault(
     minTrustedHeight: Height,
@@ -92,8 +102,8 @@ object Blockchain {
     require(faulty subsetOf newFaulty)
   }.ensuring { _ =>
     ValidatorSet.moreFaultyDoesNotHelp(faulty, newFaulty)
-    !chain.forAll(header => minTrustedHeight > header.height || header.nextValidatorSet.isCorrect(faulty)) ==>
-      !chain.forAll(header => minTrustedHeight > header.height || header.nextValidatorSet.isCorrect(newFaulty))
+    !chain.forAll(header => minTrustedHeight > header.header.height || header.nextValidatorSet.isCorrect(faulty)) ==>
+      !chain.forAll(header => minTrustedHeight > header.header.height || header.nextValidatorSet.isCorrect(newFaulty))
   }
 
   @opaque
@@ -104,7 +114,7 @@ object Blockchain {
     faulty: Set[Address]): Unit = {
     require(newMinTrustedState >= minTrustedHeight)
   }.ensuring { _ =>
-    chain.forAll(header => minTrustedHeight > header.height || header.nextValidatorSet.isCorrect(faulty)) ==>
-      chain.forAll(header => newMinTrustedState > header.height || header.nextValidatorSet.isCorrect(faulty))
+    chain.forAll(header => minTrustedHeight > header.header.height || header.nextValidatorSet.isCorrect(faulty)) ==>
+      chain.forAll(header => newMinTrustedState > header.header.height || header.nextValidatorSet.isCorrect(faulty))
   }
 }

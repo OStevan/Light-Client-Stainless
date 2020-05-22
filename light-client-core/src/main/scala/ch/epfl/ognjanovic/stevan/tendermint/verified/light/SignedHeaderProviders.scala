@@ -10,8 +10,8 @@ object SignedHeaderProviders {
     @pure
     def signedHeader(height: Height): SignedHeader = {
       require(height < currentHeight)
-      (??? : SignedHeader)
-    }.ensuring(res => res.header.height == height)
+      ??? : SignedHeader
+    }.ensuring(res => res.header.header.height == height)
 
     @pure
     def currentHeight: Height

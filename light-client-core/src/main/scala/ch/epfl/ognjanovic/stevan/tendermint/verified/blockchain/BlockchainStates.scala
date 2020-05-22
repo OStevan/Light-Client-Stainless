@@ -80,7 +80,7 @@ object BlockchainStates {
     def signedHeader(height: Height): SignedHeader = {
       require(height < currentHeight())
       blockchain.getSignedHeader(height)
-    }.ensuring(res => res.header.height == height)
+    }.ensuring(res => res.header.header.height == height)
   }
 
   @inlineInvariant

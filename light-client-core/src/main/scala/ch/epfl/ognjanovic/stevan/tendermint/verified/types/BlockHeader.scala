@@ -1,3 +1,3 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
-case class BlockHeader(height: Height, lastCommit: Commit, validatorSet: ValidatorSet, nextValidatorSet: ValidatorSet)
+case class BlockHeader(header: Header, lastCommit: Commit, validatorSet: ValidatorSet, nextValidatorSet: ValidatorSet)
