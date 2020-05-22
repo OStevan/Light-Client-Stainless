@@ -17,21 +17,24 @@ lazy val commonSettings: Seq[Setting[_]] = Seq(
   )
 )
 
-lazy val tendermintRpc = project
-  .in(file("tendermint-rpc"))
-  .settings(
-    name := "tendermint-rpc",
-    commonSettings
-  )
-
 val lightClientCoreName = "light-client-core"
 lazy val lightClientCore = project
   .in(file(lightClientCoreName))
   .enablePlugins(StainlessPlugin)
   .settings(
     name := lightClientCoreName,
-    stainlessEnabled := true
+    stainlessEnabled := false
 )
+
+lazy val tendermintRpc = project
+  .in(file("tendermint-rpc"))
+  .enablePlugins(StainlessPlugin)
+  .settings(
+    name := "tendermint-rpc",
+    stainlessEnabled := false,
+    commonSettings
+  )
+  .dependsOn(lightClientCore)
 
 val lightClientName = "light-client"
 lazy val lightClient = project

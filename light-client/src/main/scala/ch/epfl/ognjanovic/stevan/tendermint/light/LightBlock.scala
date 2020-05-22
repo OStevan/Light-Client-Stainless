@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.rpc.types.{Address, Deserializer, SignedHeader, ValidatorSet}
+import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Address, ValidatorSet}
 import io.circe.Decoder
 
 /**
@@ -13,13 +14,14 @@ case class LightBlock(
   peer: Address)
 
 object LightBlock {
-  def deserializer(peer: Address): Deserializer[LightBlock] = new Deserializer[LightBlock] {
-    override implicit val decoder: Decoder[LightBlock] = cursor => for {
-      signedHeader <- cursor.downField("signed_header").as[SignedHeader](SignedHeader.deserializer.decoder)
-      validatorSet <- cursor.downField("validator_set").as[ValidatorSet](ValidatorSet.deserializer.decoder)
-      nextValidatorSet <- cursor.downField("next_validator_set").as[ValidatorSet](ValidatorSet.deserializer.decoder)
-    } yield {
-      LightBlock(signedHeader, validatorSet, nextValidatorSet, peer)
-    }
+
+  import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDecoders._
+
+  def decoder(peer: Address): Decoder[LightBlock] = cursor => for {
+    signedHeader <- cursor.downField("signed_header").as[SignedHeader]
+    validatorSet <- cursor.downField("validator_set").as[ValidatorSet]
+    nextValidatorSet <- cursor.downField("next_validator_set").as[ValidatorSet]
+  } yield {
+    LightBlock(signedHeader, validatorSet, nextValidatorSet, peer)
   }
 }

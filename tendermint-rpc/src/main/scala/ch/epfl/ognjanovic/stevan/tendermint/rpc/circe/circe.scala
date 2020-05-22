@@ -1,11 +1,13 @@
-package ch.epfl.ognjanovic.stevan.tendermint.rpc
+package ch.epfl.ognjanovic.stevan.tendermint.rpc.circe
 
 import java.nio.ByteBuffer
 import java.time.Instant
 
 import io.circe.Decoder
+import stainless.annotation.ignore
 
-package object types {
+@ignore
+object circe {
   type ByteArray = ByteBuffer
 
   val hashDecoder: Decoder[ByteArray] = cursor => for {
