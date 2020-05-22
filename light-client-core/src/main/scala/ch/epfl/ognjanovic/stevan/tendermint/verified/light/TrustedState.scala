@@ -4,71 +4,71 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.pure
 import utils.SetInvariants
 
-case class TrustedState(trustedSignedHeader: LightBlock) {
+case class TrustedState(trustedLightBlock: LightBlock) {
 
   /**
     * The height of the last block that we trust.
     */
   @pure
-  def currentHeight(): Height = trustedSignedHeader.header.height
+  def currentHeight(): Height = trustedLightBlock.header.height
 
   /**
     * Tries to "improve" the current trusted state with addition of a new signed header of a greater height.
     *
-    * @param signedHeader which will be the new trusted header if it can be trusted
+    * @param lightBlock which will be the new trusted header if it can be trusted
     * @return new trusted state or the old one if the trust is not reachable
     */
   @pure
-  def increaseTrust(signedHeader: LightBlock): TrustedState = {
-    require(signedHeader.header.height > this.trustedSignedHeader.header.height && trusted(signedHeader))
-    TrustedState(signedHeader)
-  }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == signedHeader.header.height)
+  def increaseTrust(lightBlock: LightBlock): TrustedState = {
+    require(lightBlock.header.height > this.trustedLightBlock.header.height && trusted(lightBlock))
+    TrustedState(lightBlock)
+  }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
 
   @pure
-  def isAdjacent(signedHeader: LightBlock): Boolean =
-    signedHeader.header.height == trustedSignedHeader.header.height + 1
+  def isAdjacent(lightBlock: LightBlock): Boolean =
+    lightBlock.header.height == trustedLightBlock.header.height + 1
 
   @pure
-  def adjacentHeaderTrust(signedHeader: LightBlock): Boolean = {
-    require(isAdjacent(signedHeader))
-    internalAdjacentHeaderTrust(signedHeader)
-  }.ensuring(res => res == trusted(signedHeader))
+  def adjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
+    require(isAdjacent(lightBlock))
+    internalAdjacentHeaderTrust(lightBlock)
+  }.ensuring(res => res == trusted(lightBlock))
 
   @pure
-  private def internalAdjacentHeaderTrust(signedHeader: LightBlock): Boolean = {
-    require(isAdjacent(signedHeader))
-    trustedSignedHeader.nextValidatorSet == signedHeader.validatorSet
+  private def internalAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
+    require(isAdjacent(lightBlock))
+    trustedLightBlock.nextValidatorSet == lightBlock.validatorSet
   }
 
   @pure
-  def nonAdjacentHeaderTrust(signedHeader: LightBlock): Boolean = {
-    require(signedHeader.header.height > this.trustedSignedHeader.header.height && !isAdjacent(signedHeader))
-    internalNonAdjacentHeaderTrust(signedHeader)
-  }.ensuring(res => res == trusted(signedHeader))
+  def nonAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
+    require(lightBlock.header.height > this.trustedLightBlock.header.height && !isAdjacent(lightBlock))
+    internalNonAdjacentHeaderTrust(lightBlock)
+  }.ensuring(res => res == trusted(lightBlock))
 
   @pure
-  private def internalNonAdjacentHeaderTrust(signedHeader: LightBlock): Boolean = {
-    require(signedHeader.header.height > this.trustedSignedHeader.header.height && !isAdjacent(signedHeader))
+  private def internalNonAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
+    require(lightBlock.header.height > this.trustedLightBlock.header.height && !isAdjacent(lightBlock))
 
     val intersection = SetInvariants.setIntersection(
-      trustedSignedHeader.nextValidatorSet.keys,
-      signedHeader.commit.signers)
+      trustedLightBlock.nextValidatorSet.keys,
+      lightBlock.commit.signers)
 
-    trustedSignedHeader.nextValidatorSet.checkSupport(intersection)
+    trustedLightBlock.nextValidatorSet.checkSupport(intersection)
   }
 
   @pure
   def bisectionHeight(height: Height): Height = {
-    require(height > this.trustedSignedHeader.header.height + 1)
-    (height + trustedSignedHeader.header.height) / 2
+    require(height > this.trustedLightBlock.header.height + 1)
+    (height + trustedLightBlock.header.height) / 2
   }.ensuring(res => res < height && currentHeight() < res)
 
   @pure
-  def trusted(signedHeader: LightBlock): Boolean = {
-    require(signedHeader.header.height > currentHeight())
-    if (isAdjacent(signedHeader))
-      internalAdjacentHeaderTrust(signedHeader)
+  def trusted(lightBlock: LightBlock): Boolean = {
+    require(lightBlock.header.height > currentHeight())
+    if (isAdjacent(lightBlock))
+      internalAdjacentHeaderTrust(lightBlock)
     else
-      internalNonAdjacentHeaderTrust(signedHeader)
+      internalNonAdjacentHeaderTrust(lightBlock)
   }
 }

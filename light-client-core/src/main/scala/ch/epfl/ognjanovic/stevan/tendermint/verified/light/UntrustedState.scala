@@ -26,7 +26,7 @@ object UntrustedState {
   def empty: UntrustedState = UntrustedState(Nil[LightBlock]())
 
   @pure
-  def apply(signedHeader: LightBlock): UntrustedState = UntrustedState(Cons(signedHeader, Nil()))
+  def apply(lightBlock: LightBlock): UntrustedState = UntrustedState(Cons(lightBlock, Nil()))
 
   @scala.annotation.tailrec
   def pendingInvariant(pending: List[LightBlock]): Boolean = {

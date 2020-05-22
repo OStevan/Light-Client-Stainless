@@ -37,17 +37,17 @@ private object ModelIntegration {
   @scala.annotation.tailrec
   def verify(
     waitingForHeader: WaitingForHeader,
-    signedHeaderProvider: LightBlockProvider,
+    lightBlockProvider: LightBlockProvider,
     verifier: VerifierStateMachine): Finished = {
-    require(waitingForHeader.targetHeight < signedHeaderProvider.currentHeight)
+    require(waitingForHeader.targetHeight < lightBlockProvider.currentHeight)
     decreases(LightClient.terminationMeasure(waitingForHeader))
     Height.helperLemma(
       waitingForHeader.requestHeight,
       waitingForHeader.targetHeight,
-      signedHeaderProvider.currentHeight)
+      lightBlockProvider.currentHeight)
 
-    verifier.processHeader(waitingForHeader, signedHeaderProvider.lightBlock(waitingForHeader.requestHeight)) match {
-      case state: WaitingForHeader => verify(state, signedHeaderProvider, verifier)
+    verifier.processHeader(waitingForHeader, lightBlockProvider.lightBlock(waitingForHeader.requestHeight)) match {
+      case state: WaitingForHeader => verify(state, lightBlockProvider, verifier)
       case state: Finished => state
     }
   }
