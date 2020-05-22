@@ -16,7 +16,7 @@ sealed class DefaultProvider(private val requester: Requester) extends Provider 
     require(height >= 0)
     val signedHeader = requester.signedHeader(height)
     val validatorSet = requester.validatorSet(height)
-    val nextValidatorSet = requester.validatorSet(signedHeader.header.height + 1)
+    val nextValidatorSet = requester.validatorSet((signedHeader.header.height + 1).value.toLong)
     LightBlock(signedHeader, validatorSet, nextValidatorSet, requester.peer)
   }
 }

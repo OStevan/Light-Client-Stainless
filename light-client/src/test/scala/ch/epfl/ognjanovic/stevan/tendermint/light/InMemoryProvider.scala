@@ -1,6 +1,5 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.rpc.types.Deserializer
 import io.circe.Decoder
 
 class InMemoryProvider(private val map: Map[Long, LightBlock]) extends Provider {

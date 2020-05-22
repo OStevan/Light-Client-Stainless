@@ -1,4 +1,4 @@
-package ch.epfl.ognjanovic.stevan.tendermint.rpc.types
+package ch.epfl.ognjanovic.stevan.tendermint.rpc.circe
 
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -9,49 +9,49 @@ sealed class TypesDeserialization extends AnyFlatSpec {
   "Key serialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/key.json")
 
-    Key.deserializer(content)
+    new Deserializer(CirceDecoders.keyDecoder)(content)
   }
 
   "Validator deserialization" should "succeed" in {
     val content: String = TypesDeserialization.content("/types/validator.json")
 
-    Validator.deserializer(content)
+    new Deserializer(CirceDecoders.validatorDecoder)(content)
   }
 
   "PartSet deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/part.json")
 
-    PartSetHeader.deserializer(content)
+    new Deserializer(CirceDecoders.partSetDecoder)(content)
   }
 
   "Header deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/header.json")
 
-    Header.deserializer(content)
+    new Deserializer(CirceDecoders.headerDecoder)(content)
   }
 
   "Signature deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/signature.json")
 
-    Signature.deserializer(content)
+    new Deserializer(CirceDecoders.signatureDecoder)(content)
   }
 
   "Commit deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/commit.json")
 
-    Commit.deserializer(content)
+    new Deserializer(CirceDecoders.commitDecoder)(content)
   }
 
   "ValidatorSet deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/validator_set.json")
 
-    ValidatorSet.deserializer(content)
+    new Deserializer(CirceDecoders.validatorSetDecoder)(content)
   }
 
   "SignedHeader deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/signed_header.json")
 
-    SignedHeader.deserializer(content)
+    new Deserializer(CirceDecoders.signedHeaderDecoder)(content)
   }
 }
 

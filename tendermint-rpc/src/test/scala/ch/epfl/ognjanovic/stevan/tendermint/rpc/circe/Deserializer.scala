@@ -1,12 +1,11 @@
-package ch.epfl.ognjanovic.stevan.tendermint.rpc.types
+package ch.epfl.ognjanovic.stevan.tendermint.rpc.circe
 
 import io.circe.parser.parse
 import io.circe.{Decoder, Json}
 
-trait Deserializer[T] {
-  implicit val decoder: Decoder[T]
+class Deserializer[T](private val decoder: Decoder[T]) {
 
-  final def apply(json: Json): T = json.as[T] match {
+  final def apply(json: Json): T = json.as[T](decoder) match {
     case Left(error) => throw new IllegalArgumentException(error)
     case Right(value) => value
   }

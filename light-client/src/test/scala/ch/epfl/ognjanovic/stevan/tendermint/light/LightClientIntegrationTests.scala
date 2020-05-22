@@ -1,6 +1,5 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.rpc.types.Address
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.io.Source

@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.rpc
 
-import ch.epfl.ognjanovic.stevan.tendermint.rpc.types.Address
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Address
 
 /**
  * Manages `Requester`s for different full nodes identified by their network address.

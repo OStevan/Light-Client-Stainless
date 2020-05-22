@@ -5,7 +5,7 @@ import java.time.Instant
 
 import io.circe.Decoder
 
-package object types {
+package object circe {
   type ByteArray = ByteBuffer
 
   val hashDecoder: Decoder[ByteArray] = cursor => for {
