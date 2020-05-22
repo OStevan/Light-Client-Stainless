@@ -4,7 +4,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.{DefaultSignedHeader, SignedHeader}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height, Validators}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height, ValidatorSet}
 import stainless.annotation.{induct, opaque, pure}
 import stainless.lang._
 
@@ -27,7 +27,7 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
   }
 
   @pure
-  def appendBlock(lastCommit: Set[PeerId], nextVS: Validators): Blockchain = {
+  def appendBlock(lastCommit: Set[PeerId], nextVS: ValidatorSet): Blockchain = {
     require(
       lastCommit.nonEmpty &&
         !finished &&
@@ -93,7 +93,7 @@ object Blockchain {
     newFaulty: Set[PeerId]): Unit = {
     require(faulty subsetOf newFaulty)
   }.ensuring { _ =>
-    Validators.moreFaultyDoesNotHelp(faulty, newFaulty)
+    ValidatorSet.moreFaultyDoesNotHelp(faulty, newFaulty)
     !chain.forAll(header => minTrustedHeight > header.height || header.nextValidatorSet.isCorrect(faulty)) ==>
       !chain.forAll(header => minTrustedHeight > header.height || header.nextValidatorSet.isCorrect(newFaulty))
   }

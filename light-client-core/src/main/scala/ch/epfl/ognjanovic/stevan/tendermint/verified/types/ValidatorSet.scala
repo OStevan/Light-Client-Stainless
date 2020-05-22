@@ -8,10 +8,10 @@ import stainless.proof._
 import utils._
 import ListSetUtils._
 
-case class Validators(totalPower: VotingPower, powerAssignments: ListMap[PeerId, Validator]) {
+case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[PeerId, Validator], proposer: Validator) {
   require(
     powerAssignments.forall(value => value._2.votingPower.isPositive) &&
-      totalPower == Validators.sumVotingPower(powerAssignments.toList) &&
+      totalPower == ValidatorSet.sumVotingPower(powerAssignments.toList) &&
       !powerAssignments.isEmpty)
 
   @pure @extern
@@ -25,13 +25,13 @@ case class Validators(totalPower: VotingPower, powerAssignments: ListMap[PeerId,
 
   def nodesPower(nodes: List[PeerId]): VotingPower = {
     require(nodes.forall(powerAssignments.toList.map(_._1).contains))
-    Validators.sumVotingPower(powerAssignments.toList.filter(pair => nodes.contains(pair._1)))
+    ValidatorSet.sumVotingPower(powerAssignments.toList.filter(pair => nodes.contains(pair._1)))
   }
 
   @pure
   def obtainedByzantineQuorum(nodes: Set[PeerId]): Boolean = {
     require(nodes subsetOf keys)
-    val nodeList = Validators.nodeListContainment(nodes, this)
+    val nodeList = ValidatorSet.nodeListContainment(nodes, this)
     nodesPower(nodeList) * VotingPower(3) > totalPower * VotingPower(2)
   }
 
@@ -47,13 +47,13 @@ case class Validators(totalPower: VotingPower, powerAssignments: ListMap[PeerId,
 
   def checkSupport(nodes: Set[PeerId]): Boolean = {
     require(nodes subsetOf keys)
-    val nodeList = Validators.nodeListContainment(nodes, this)
+    val nodeList = ValidatorSet.nodeListContainment(nodes, this)
     ListSetUtils.selfContainment(powerAssignments.toList.map(_._1))
     VotingPower(3) * nodesPower(nodeList) > totalPower
   }
 }
 
-object Validators {
+object ValidatorSet {
 
   @pure
   def sumVotingPower(votingPowers: List[(PeerId, Validator)]): VotingPower = votingPowers match {
@@ -62,7 +62,7 @@ object Validators {
   }
 
   @extern
-  private def nodeListContainment(set: Set[PeerId], validators: Validators): List[PeerId] = {
+  private def nodeListContainment(set: Set[PeerId], validators: ValidatorSet): List[PeerId] = {
     require(set subsetOf validators.keys)
     set.toList
   }.ensuring(res => res.forall(validators.powerAssignments.toList.map(_._1).contains))
@@ -71,14 +71,14 @@ object Validators {
   def moreFaultyDoesNotHelp(current: Set[PeerId], next: Set[PeerId]): Unit = {
     require(current subsetOf next)
   }.ensuring(_ =>
-    forall((validator: Validators) => {
+    forall((validator: ValidatorSet) => {
       faultyExpansion(next, current, validator)
       !validator.isCorrect(current) ==> !validator.isCorrect(next)
     }))
 
   // TODO if isCorrect is inlined this lemma can be proved but calls to isCorrect at other locations fail
   @extern
-  def faultyExpansion(next: Set[PeerId], current: Set[PeerId], validators: Validators): Unit = {
+  def faultyExpansion(next: Set[PeerId], current: Set[PeerId], validators: ValidatorSet): Unit = {
     require(current subsetOf next)
     val keys = validators.powerAssignments.toList.map(_._1)
     val nextList = listSetSubsetEquivalence(next)
@@ -132,7 +132,7 @@ object Validators {
   }.ensuring(_ => !(firstCorrect > firstFaulty * VotingPower(2)) ==> !(secondCorrect > secondFaulty * VotingPower(2)))
 
   @opaque
-  def subsetPowerLemma(first: List[PeerId], second: List[PeerId], validators: Validators): Unit = {
+  def subsetPowerLemma(first: List[PeerId], second: List[PeerId], validators: ValidatorSet): Unit = {
     require(
       first.forall(second.contains) &&
         second.forall(validators.powerAssignments.toList.map(_._1).contains) &&

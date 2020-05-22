@@ -1,7 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Validators
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.ValidatorSet
 import stainless.lang._
 
 object SystemSteps {
@@ -35,7 +35,7 @@ object SystemSteps {
    * @param lastCommit       the set of nodes which agreed to commit the last block
    * @param nextValidatorSet an agreed set of validators for the next block
    */
-  case class AppendBlock(lastCommit: Set[PeerId], nextValidatorSet: Validators) extends SystemStep {
+  case class AppendBlock(lastCommit: Set[PeerId], nextValidatorSet: ValidatorSet) extends SystemStep {
     require(
       nextValidatorSet.values.forall(_.votingPower.value == 1) &&
         lastCommit.nonEmpty)

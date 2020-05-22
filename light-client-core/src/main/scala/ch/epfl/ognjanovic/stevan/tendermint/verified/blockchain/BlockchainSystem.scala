@@ -4,7 +4,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.SystemStep
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain.Genesis
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes.PeerId
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height, Validators, VotingPower}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height, ValidatorSet, VotingPower}
 import stainless.annotation._
 import stainless.lang._
 
@@ -13,10 +13,10 @@ object BlockchainSystem {
 
   @ghost
   def initialSystem(
-    validatorSet: Validators,
+    validatorSet: ValidatorSet,
     maxHeight: Height,
     maxPower: VotingPower,
-    nextValidatorSet: Validators
+    nextValidatorSet: ValidatorSet
   ): BlockchainState = {
     require(
       validatorSet.values.forall(_.votingPower.value == 1) &&
