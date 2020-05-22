@@ -21,8 +21,13 @@ private object ModelIntegration {
 
     val trustedState = TrustedState(trustedSignedHeader)
     assert(trustedState.currentHeight() < heightToVerify)
+    assert(heightToVerify <= heightToVerify)
+    assert(trustedState.currentHeight() < heightToVerify)
+    assert(LightClient.untrustedStateHeightInvariant(heightToVerify, UntrustedState.empty))
+    assert(targetHeightInvariant(heightToVerify, UntrustedState.empty.pending))
 
     val verifier = WaitingForHeader(
+      heightToVerify,
       heightToVerify,
       trustedState,
       UntrustedState.empty)
@@ -35,15 +40,14 @@ private object ModelIntegration {
     waitingForHeader: WaitingForHeader,
     signedHeaderProvider: SignedHeaderProvider,
     verifier: VerifierStateMachine): Finished = {
-    require(waitingForHeader.targetHeight() < signedHeaderProvider.currentHeight)
-    decreases(LightClient.terminationMeasure(waitingForHeader)._1, LightClient.terminationMeasure(waitingForHeader)._2)
-
+    require(waitingForHeader.targetHeight < signedHeaderProvider.currentHeight)
+    decreases(LightClient.terminationMeasure(waitingForHeader))
     Height.helperLemma(
-      waitingForHeader.height,
-      waitingForHeader.targetHeight(),
+      waitingForHeader.requestHeight,
+      waitingForHeader.targetHeight,
       signedHeaderProvider.currentHeight)
 
-    verifier.processHeader(waitingForHeader, signedHeaderProvider.signedHeader(waitingForHeader.height)) match {
+    verifier.processHeader(waitingForHeader, signedHeaderProvider.signedHeader(waitingForHeader.requestHeight)) match {
       case state: WaitingForHeader => verify(state, signedHeaderProvider, verifier)
       case state: Finished => state
     }
