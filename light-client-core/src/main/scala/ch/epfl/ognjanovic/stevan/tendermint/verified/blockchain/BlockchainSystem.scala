@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.SystemStep
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain.Genesis
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes.Node
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes.PeerId
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height, Validators, VotingPower}
 import stainless.annotation._
 import stainless.lang._
@@ -19,12 +19,12 @@ object BlockchainSystem {
     nextValidatorSet: Validators
   ): BlockchainState = {
     require(
-      validatorSet.values.forall(value => value.power == 1) &&
+      validatorSet.values.forall(_.votingPower.value == 1) &&
         maxPower.isPositive &&
         (nextValidatorSet.keys subsetOf validatorSet.keys) &&
         nextValidatorSet.isCorrect(Set.empty))
 
-    val noFaulty = Set.empty[Node]
+    val noFaulty = Set.empty[PeerId]
 
     val genesisBlock = BlockHeader(Height(1), Set.empty, validatorSet, nextValidatorSet)
     val initialChain = Genesis(genesisBlock)

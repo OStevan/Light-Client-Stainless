@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes.Node
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes.PeerId
 import stainless.annotation.pure
 import stainless.lang._
 
@@ -11,12 +11,12 @@ object SignedHeaders {
         def header: BlockHeader
 
         @pure
-        def commit: Set[Node]
+        def commit: Set[PeerId]
 
         def isExpired(): Boolean
     }
 
-    case class DefaultSignedHeader(header: BlockHeader, commit: Set[Node]) extends SignedHeader {
+    case class DefaultSignedHeader(header: BlockHeader, commit: Set[PeerId]) extends SignedHeader {
         def isExpired(): Boolean = false
     }
 

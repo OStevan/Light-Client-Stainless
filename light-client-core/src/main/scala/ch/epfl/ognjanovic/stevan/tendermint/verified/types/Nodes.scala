@@ -5,10 +5,8 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.types
  */
 object Nodes {
 
-  sealed abstract class Node
+  sealed abstract class PeerId
 
-  case class SimpleNode(id: Int) extends Node {
-    require(id > 0)
-  }
+  case class SimplePeerId(publicKey: Key) extends PeerId
 
 }

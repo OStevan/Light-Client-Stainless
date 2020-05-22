@@ -27,7 +27,7 @@ object SystemSteps {
    *
    * @param node which is faulty
    */
-  case class Fault(node: Node) extends SystemStep
+  case class Fault(node: PeerId) extends SystemStep
 
   /**
    * Models a new block event of the blockchain.
@@ -35,9 +35,9 @@ object SystemSteps {
    * @param lastCommit       the set of nodes which agreed to commit the last block
    * @param nextValidatorSet an agreed set of validators for the next block
    */
-  case class AppendBlock(lastCommit: Set[Node], nextValidatorSet: Validators) extends SystemStep {
+  case class AppendBlock(lastCommit: Set[PeerId], nextValidatorSet: Validators) extends SystemStep {
     require(
-      nextValidatorSet.values.forall(value => value.power == 1) &&
+      nextValidatorSet.values.forall(_.votingPower.value == 1) &&
         lastCommit.nonEmpty)
   }
 
