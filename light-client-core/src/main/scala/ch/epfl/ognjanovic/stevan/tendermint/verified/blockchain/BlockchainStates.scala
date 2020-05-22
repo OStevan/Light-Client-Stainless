@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.{SystemStep, _}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.SignedHeader
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height, Validators, VotingPower}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height, ValidatorSet, VotingPower}
 import stainless.annotation._
 import stainless.lang.StaticChecks.assert
 import stainless.lang._
@@ -113,7 +113,7 @@ object BlockchainStates {
           Running(allNodes, faulty, maxVotingPower, updated)
 
         // ignores append messages which do not preserve guarantees of the system
-        case AppendBlock(lastCommit, nextValidatorSet: Validators)
+        case AppendBlock(lastCommit, nextValidatorSet: ValidatorSet)
           if lastCommit.subsetOf(blockchain.chain.head.validatorSet.keys) &&
             nextValidatorSet.values.forall(_.votingPower <= maxVotingPower) &&
             nextValidatorSet.keys.subsetOf(allNodes) &&
