@@ -118,8 +118,7 @@ object BlockchainStates {
             nextValidatorSet.values.forall(_.votingPower <= maxVotingPower) &&
             nextValidatorSet.keys.subsetOf(allNodes) &&
             lastCommit.subsetOf(allNodes) &&
-            lastCommit.nonEmpty /*obvious from AppendBlock adt invariant times-out*/=>
-//          assert(lastCommit.nonEmpty)
+            lastCommit.nonEmpty /* obvious from AppendBlock adt invariant times-out */=>
 
           val lastBlock = blockchain.chain.head
           if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit) && nextValidatorSet.isCorrect(faulty)) {
