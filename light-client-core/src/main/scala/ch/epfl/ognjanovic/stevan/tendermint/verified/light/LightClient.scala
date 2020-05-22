@@ -98,9 +98,9 @@ object LightClient {
 
     @pure
     private def checkCommit(header: SignedHeader): VerificationOutcome = {
-      if (header.commit.nonEmpty &&
-        (header.commit subsetOf header.header.validatorSet.keys) &&
-        header.header.validatorSet.obtainedByzantineQuorum(header.commit))
+      if (header.commit.signers.nonEmpty &&
+        (header.commit.signers subsetOf header.header.validatorSet.keys) &&
+        header.header.validatorSet.obtainedByzantineQuorum(header.commit.signers))
         Success
       else
         InvalidCommit
