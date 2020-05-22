@@ -1,7 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.{inlineInvariant, opaque, pure}
 import stainless.collection._
 import stainless.lang.StaticChecks.Ensuring
@@ -11,14 +10,14 @@ object LightClient {
   @inline
   def untrustedStateHeightInvariant(height: Height, untrustedState: UntrustedState): Boolean = {
     untrustedState.pending match {
-      case list: Cons[SignedHeader] => height < list.head.header.header.height
-      case _: Nil[SignedHeader] => true
+      case list: Cons[LightBlock] => height < list.head.header.height
+      case _: Nil[LightBlock] => true
     }
   }
 
   @inline
-  def targetHeightInvariant(targetHeight: Height, untrustedState: List[SignedHeader]): Boolean = {
-    untrustedState.forall(_.header.header.height <= targetHeight)
+  def targetHeightInvariant(targetHeight: Height, untrustedState: List[LightBlock]): Boolean = {
+    untrustedState.forall(_.header.height <= targetHeight)
   }
 
   sealed abstract class VerificationOutcome
@@ -59,23 +58,23 @@ object LightClient {
   case class VerifierStateMachine() {
 
     @pure
-    def verifySingle(trustedState: TrustedState, signedHeader: SignedHeader): VerificationOutcome = {
-      require(trustedState.currentHeight() < signedHeader.header.header.height)
-      if (trustedState.trusted(signedHeader))
-        checkCommit(signedHeader)
-      else if (trustedState.isAdjacent(signedHeader))
+    def verifySingle(trustedState: TrustedState, lightBlock: LightBlock): VerificationOutcome = {
+      require(trustedState.currentHeight() < lightBlock.header.height)
+      if (trustedState.trusted(lightBlock))
+        checkCommit(lightBlock)
+      else if (trustedState.isAdjacent(lightBlock))
         Failure
       else
         InsufficientTrust
-    }.ensuring(res => (res == Success) ==> trustedState.trusted(signedHeader))
+    }.ensuring(res => (res == Success) ==> trustedState.trusted(lightBlock))
 
     def processHeader(
       waitingForHeader: WaitingForHeader,
-      signedHeader: SignedHeader): VerifierState = {
-      require(signedHeader.header.header.height == waitingForHeader.requestHeight)
+      lightBlock: LightBlock): VerifierState = {
+      require(lightBlock.header.height == waitingForHeader.requestHeight)
       stepByStepVerification(
         waitingForHeader.targetHeight,
-        signedHeader,
+        lightBlock,
         waitingForHeader.trustedState,
         waitingForHeader.untrustedState)
     }.ensuring {
@@ -97,10 +96,10 @@ object LightClient {
     }
 
     @pure
-    private def checkCommit(header: SignedHeader): VerificationOutcome = {
+    private def checkCommit(header: LightBlock): VerificationOutcome = {
       if (header.commit.signers.nonEmpty &&
-        (header.commit.signers subsetOf header.header.validatorSet.keys) &&
-        header.header.validatorSet.obtainedByzantineQuorum(header.commit.signers))
+        (header.commit.signers subsetOf header.validatorSet.keys) &&
+        header.validatorSet.obtainedByzantineQuorum(header.commit.signers))
         Success
       else
         InvalidCommit
@@ -108,22 +107,22 @@ object LightClient {
 
     private def stepByStepVerification(
       targetHeight: Height,
-      signedHeader: SignedHeader,
+      lightBlock: LightBlock,
       trustedState: TrustedState,
       untrustedState: UntrustedState): VerifierState = {
       require(
-        signedHeader.header.header.height <= targetHeight &&
-          trustedState.currentHeight() < signedHeader.header.header.height &&
+        lightBlock.header.height <= targetHeight &&
+          trustedState.currentHeight() < lightBlock.header.height &&
           targetHeightInvariant(targetHeight, untrustedState.pending) &&
-          untrustedStateHeightInvariant(signedHeader.header.header.height, untrustedState))
-      verifySingle(trustedState, signedHeader) match {
+          untrustedStateHeightInvariant(lightBlock.header.height, untrustedState))
+      verifySingle(trustedState, lightBlock) match {
         case Success =>
           untrustedState.pending match {
             case Cons(h, t) =>
-              stepByStepVerification(targetHeight, h, trustedState.increaseTrust(signedHeader), UntrustedState(t))
+              stepByStepVerification(targetHeight, h, trustedState.increaseTrust(lightBlock), UntrustedState(t))
 
             case Nil() =>
-              val newTrustedState = trustedState.increaseTrust(signedHeader)
+              val newTrustedState = trustedState.increaseTrust(lightBlock)
               if (newTrustedState.currentHeight() == targetHeight)
                 Finished(Success, newTrustedState, untrustedState)
               else if (newTrustedState.currentHeight() + 1 == targetHeight)
@@ -142,22 +141,22 @@ object LightClient {
 
         case InsufficientTrust =>
           WaitingForHeader(
-            trustedState.bisectionHeight(signedHeader.header.header.height),
+            trustedState.bisectionHeight(lightBlock.header.height),
             targetHeight,
             trustedState,
-            untrustedState.addSignedHeader(signedHeader))
+            untrustedState.addSignedHeader(lightBlock))
 
         case InvalidCommit =>
-          Finished(InvalidCommit, trustedState, untrustedState.addSignedHeader(signedHeader))
+          Finished(InvalidCommit, trustedState, untrustedState.addSignedHeader(lightBlock))
         case Failure =>
-          Finished(Failure, trustedState, untrustedState.addSignedHeader(signedHeader))
+          Finished(Failure, trustedState, untrustedState.addSignedHeader(lightBlock))
       }
     }.ensuring {
       case waitingForHeader: WaitingForHeader =>
         waitingForHeader.targetHeight == targetHeight &&
           waitingForHeader.trustedState.currentHeight() >= trustedState.currentHeight() &&
           (waitingForHeader.trustedState.currentHeight() > trustedState.currentHeight() ||
-            waitingForHeader.requestHeight < signedHeader.header.header.height)
+            waitingForHeader.requestHeight < lightBlock.header.height)
       case _ => true
     }
   }
@@ -169,7 +168,7 @@ object LightClient {
       case Nil() => ()
       case Cons(_, t) => transitivityOfTargetHeight(targetHeight, UntrustedState(t))
     }
-  }.ensuring(_ => untrustedState.pending.forall(_.header.header.height <= targetHeight))
+  }.ensuring(_ => untrustedState.pending.forall(_.header.height <= targetHeight))
 
   @pure
   def terminationMeasure(waitingForHeader: WaitingForHeader): (BigInt, BigInt) = {
