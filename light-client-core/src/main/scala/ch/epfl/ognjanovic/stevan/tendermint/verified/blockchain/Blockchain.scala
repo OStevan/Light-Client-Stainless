@@ -8,12 +8,12 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockHeader, Height,
 import stainless.annotation.{induct, opaque, pure}
 import stainless.lang._
 
-case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain, faulty: Set[Node]) {
+case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain, faulty: Set[PeerId]) {
   require(
     minTrustedHeight <= min(chain.height + 1, maxHeight) &&
       chain.height <= maxHeight)
 
-  @inline
+  @pure
   def increaseMinTrustedHeight(step: BigInt): Blockchain = {
     require(step > BigInt(0))
     val newMinTrustedHeight = min(min(maxHeight, chain.height + 1), minTrustedHeight + step)
@@ -27,7 +27,7 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
   }
 
   @pure
-  def appendBlock(lastCommit: Set[Node], nextVS: Validators): Blockchain = {
+  def appendBlock(lastCommit: Set[PeerId], nextVS: Validators): Blockchain = {
     require(
       lastCommit.nonEmpty &&
         !finished &&
@@ -53,7 +53,7 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
   def height: Height = chain.height
 
   @inline
-  def setFaulty(newFaulty: Set[Node]): Blockchain = {
+  def setFaulty(newFaulty: Set[PeerId]): Blockchain = {
     require(faulty subsetOf newFaulty)
     Blockchain.faultyChainDoesNotRecoverWithNewFault(minTrustedHeight, chain, faulty, newFaulty)
     Blockchain(maxHeight, minTrustedHeight, chain, newFaulty)
@@ -89,8 +89,8 @@ object Blockchain {
   def faultyChainDoesNotRecoverWithNewFault(
     minTrustedHeight: Height,
     @induct chain: Chain,
-    faulty: Set[Node],
-    newFaulty: Set[Node]): Unit = {
+    faulty: Set[PeerId],
+    newFaulty: Set[PeerId]): Unit = {
     require(faulty subsetOf newFaulty)
   }.ensuring { _ =>
     Validators.moreFaultyDoesNotHelp(faulty, newFaulty)
@@ -103,7 +103,7 @@ object Blockchain {
     newMinTrustedState: Height,
     minTrustedHeight: Height,
     @induct chain: Chain,
-    faulty: Set[Node]): Unit = {
+    faulty: Set[PeerId]): Unit = {
     require(newMinTrustedState >= minTrustedHeight)
   }.ensuring { _ =>
     chain.forAll(header => minTrustedHeight > header.height || header.nextValidatorSet.isCorrect(faulty)) ==>
