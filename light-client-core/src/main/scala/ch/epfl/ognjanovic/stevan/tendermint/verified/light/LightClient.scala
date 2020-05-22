@@ -2,7 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.SignedHeader
-import stainless.annotation.{ghost, inlineInvariant, opaque, pure}
+import stainless.annotation.{inlineInvariant, opaque, pure}
 import stainless.collection._
 import stainless.lang.StaticChecks.Ensuring
 import stainless.lang._
@@ -78,23 +78,23 @@ object LightClient {
         signedHeader,
         waitingForHeader.trustedState,
         waitingForHeader.untrustedState)
+    }.ensuring {
+      case state: WaitingForHeader =>
+
+        if (waitingForHeader.trustedState.currentHeight() == state.trustedState.currentHeight())
+          sameTrustedStateTerminationMeasure(waitingForHeader, state)
+        else
+          improvedTrustedStateLemma(waitingForHeader, state)
+
+        val previousTerminationMeasure = terminationMeasure(waitingForHeader)
+        val currentTerminationMeasure = terminationMeasure(state)
+        ((previousTerminationMeasure._1 > currentTerminationMeasure._1) ||
+          (previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
+            previousTerminationMeasure._2 > currentTerminationMeasure._2)) &&
+          state.targetHeight == waitingForHeader.targetHeight
+
+      case _: Finished => true
     }
-//      .ensuring {
-//      case state: WaitingForHeader =>
-//        if (waitingForHeader.trustedState.currentHeight() == state.trustedState.currentHeight())
-//          sameTrustedStateTerminationMeasure(waitingForHeader, state)
-//        else
-//          improvedTrustedStateLemma(waitingForHeader, state)
-//
-//        val previousTerminationMeasure = terminationMeasure(waitingForHeader)
-//        val currentTerminationMeasure = terminationMeasure(state)
-//        ((previousTerminationMeasure._1 > currentTerminationMeasure._1) ||
-//          (previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
-//            previousTerminationMeasure._2 > currentTerminationMeasure._2)) &&
-//          state.targetHeight == waitingForHeader.targetHeight
-//
-//      case _: Finished => true
-//    }
 
     @pure
     private def checkCommit(header: SignedHeader): VerificationOutcome = {
@@ -106,7 +106,6 @@ object LightClient {
         InvalidCommit
     }
 
-    @scala.annotation.tailrec
     private def stepByStepVerification(
       targetHeight: Height,
       signedHeader: SignedHeader,
@@ -120,13 +119,8 @@ object LightClient {
       verifySingle(trustedState, signedHeader) match {
         case Success =>
           untrustedState.pending match {
-            case Cons(h, t) => {
-              assert(verifySingle(trustedState, signedHeader) == Success)
-              assert(trustedState.trusted(signedHeader))
-              assert(signedHeader.header.height < h.header.height)
-              assert(h.header.height <= targetHeight)
+            case Cons(h, t) =>
               stepByStepVerification(targetHeight, h, trustedState.increaseTrust(signedHeader), UntrustedState(t))
-            }
 
             case Nil() =>
               val newTrustedState = trustedState.increaseTrust(signedHeader)
@@ -158,18 +152,14 @@ object LightClient {
         case Failure =>
           Finished(Failure, trustedState, untrustedState.addSignedHeader(signedHeader))
       }
+    }.ensuring {
+      case waitingForHeader: WaitingForHeader =>
+        waitingForHeader.targetHeight == targetHeight &&
+        waitingForHeader.trustedState.currentHeight() >= trustedState.currentHeight() &&
+        (waitingForHeader.trustedState.currentHeight() > trustedState.currentHeight() ||
+          waitingForHeader.requestHeight < signedHeader.header.height)
+      case _ => true
     }
-//      .ensuring {
-//      case state: WaitingForHeader =>
-//          trustedState.currentHeight() <= state.trustedState.currentHeight() &&
-//          (
-//            (trustedState.currentHeight() == state.trustedState.currentHeight() &&
-//              state.requestHeight < state.untrustedState.pending.head.header.height &&
-//              state.untrustedState.pending == untrustedState.pending) ||
-//              trustedState.currentHeight() < state.trustedState.currentHeight())
-//
-//      case _: Finished => true
-//    }
   }
 
   @opaque

@@ -41,8 +41,7 @@ private object ModelIntegration {
     signedHeaderProvider: SignedHeaderProvider,
     verifier: VerifierStateMachine): Finished = {
     require(waitingForHeader.targetHeight < signedHeaderProvider.currentHeight)
-    decreases(LightClient.terminationMeasure(waitingForHeader)._1, LightClient.terminationMeasure(waitingForHeader)._2)
-
+    decreases(LightClient.terminationMeasure(waitingForHeader))
     Height.helperLemma(
       waitingForHeader.requestHeight,
       waitingForHeader.targetHeight,
