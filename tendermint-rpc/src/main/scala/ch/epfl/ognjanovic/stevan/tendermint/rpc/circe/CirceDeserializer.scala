@@ -1,9 +1,12 @@
 package ch.epfl.ognjanovic.stevan.tendermint.rpc.circe
 
+import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import io.circe.parser.parse
 import io.circe.{Decoder, Json}
+import stainless.annotation.ignore
 
-class Deserializer[T](private val decoder: Decoder[T]) {
+@ignore
+class CirceDeserializer[T](private val decoder: Decoder[T]) extends Deserializer[T] {
 
   final def apply(json: Json): T = json.as[T](decoder) match {
     case Left(error) => throw new IllegalArgumentException(error)

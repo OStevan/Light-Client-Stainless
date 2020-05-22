@@ -6,9 +6,13 @@ import java.time.Instant
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import io.circe.Decoder
+import stainless.annotation.ignore
 import utils.ListMap
 
+@ignore
 object CirceDecoders {
+
+  import circe._
 
   implicit val addressDecoder: Decoder[Address] = cursor => for {
     value <- cursor.as[String]

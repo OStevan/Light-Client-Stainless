@@ -1,60 +1,63 @@
 package ch.epfl.ognjanovic.stevan.tendermint.rpc.circe
 
 import org.scalatest.flatspec.AnyFlatSpec
+import stainless.annotation.ignore
 
 import scala.io.Source
 
+@ignore
 sealed class TypesDeserialization extends AnyFlatSpec {
 
   "Key serialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/key.json")
 
-    new Deserializer(CirceDecoders.keyDecoder)(content)
+    new CirceDeserializer(CirceDecoders.keyDecoder)(content)
   }
 
   "Validator deserialization" should "succeed" in {
     val content: String = TypesDeserialization.content("/types/validator.json")
 
-    new Deserializer(CirceDecoders.validatorDecoder)(content)
+    new CirceDeserializer(CirceDecoders.validatorDecoder)(content)
   }
 
   "PartSet deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/part.json")
 
-    new Deserializer(CirceDecoders.partSetDecoder)(content)
+    new CirceDeserializer(CirceDecoders.partSetDecoder)(content)
   }
 
   "Header deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/header.json")
 
-    new Deserializer(CirceDecoders.headerDecoder)(content)
+    new CirceDeserializer(CirceDecoders.headerDecoder)(content)
   }
 
   "Signature deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/signature.json")
 
-    new Deserializer(CirceDecoders.signatureDecoder)(content)
+    new CirceDeserializer(CirceDecoders.signatureDecoder)(content)
   }
 
   "Commit deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/commit.json")
 
-    new Deserializer(CirceDecoders.commitDecoder)(content)
+    new CirceDeserializer(CirceDecoders.commitDecoder)(content)
   }
 
   "ValidatorSet deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/validator_set.json")
 
-    new Deserializer(CirceDecoders.validatorSetDecoder)(content)
+    new CirceDeserializer(CirceDecoders.validatorSetDecoder)(content)
   }
 
   "SignedHeader deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/signed_header.json")
 
-    new Deserializer(CirceDecoders.signedHeaderDecoder)(content)
+    new CirceDeserializer(CirceDecoders.signedHeaderDecoder)(content)
   }
 }
 
+@ignore
 object TypesDeserialization {
   def content(path: String): String = {
     val source = Source.fromURL(getClass.getResource(path))
