@@ -1,42 +1,41 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Nodes.PeerId
 import stainless.annotation._
 import stainless.collection._
 import stainless.lang._
 import stainless.proof._
+import utils.ListSetUtils._
 import utils._
-import ListSetUtils._
 
-case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[PeerId, Validator], proposer: Validator) {
+case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Address, Validator], proposer: Validator) {
   require(
     powerAssignments.forall(value => value._2.votingPower.isPositive) &&
       totalPower == ValidatorSet.sumVotingPower(powerAssignments.toList) &&
       !powerAssignments.isEmpty)
 
   @pure @extern
-  def keys: Set[PeerId] = {
+  def keys: Set[Address] = {
     powerAssignments.toList.map(_._1).content
   }.ensuring(res => res.nonEmpty)
 
   def values: List[Validator] = powerAssignments.toList.map(_._2)
 
-  def contains(node: PeerId): Boolean = keys.contains(node)
+  def contains(node: Address): Boolean = keys.contains(node)
 
-  def nodesPower(nodes: List[PeerId]): VotingPower = {
+  def nodesPower(nodes: List[Address]): VotingPower = {
     require(nodes.forall(powerAssignments.toList.map(_._1).contains))
     ValidatorSet.sumVotingPower(powerAssignments.toList.filter(pair => nodes.contains(pair._1)))
   }
 
   @pure
-  def obtainedByzantineQuorum(nodes: Set[PeerId]): Boolean = {
+  def obtainedByzantineQuorum(nodes: Set[Address]): Boolean = {
     require(nodes subsetOf keys)
     val nodeList = ValidatorSet.nodeListContainment(nodes, this)
     nodesPower(nodeList) * VotingPower(3) > totalPower * VotingPower(2)
   }
 
   @pure
-  def isCorrect(faultyNodes: Set[PeerId]): Boolean = {
+  def isCorrect(faultyNodes: Set[Address]): Boolean = {
     val keySet = powerAssignments.toList.map(_._1)
     val faultyNodesSet = faultyNodes.toList
     val difference = removingFromSet(keySet, faultyNodesSet)
@@ -45,7 +44,7 @@ case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[PeerI
     nodesPower(difference) > nodesPower(intersection) * VotingPower(2)
   }
 
-  def checkSupport(nodes: Set[PeerId]): Boolean = {
+  def checkSupport(nodes: Set[Address]): Boolean = {
     require(nodes subsetOf keys)
     val nodeList = ValidatorSet.nodeListContainment(nodes, this)
     ListSetUtils.selfContainment(powerAssignments.toList.map(_._1))
@@ -56,19 +55,19 @@ case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[PeerI
 object ValidatorSet {
 
   @pure
-  def sumVotingPower(votingPowers: List[(PeerId, Validator)]): VotingPower = votingPowers match {
+  def sumVotingPower(votingPowers: List[(Address, Validator)]): VotingPower = votingPowers match {
     case Nil() => VotingPower(0)
     case Cons(head, tail) => head._2.votingPower + sumVotingPower(tail)
   }
 
   @extern
-  private def nodeListContainment(set: Set[PeerId], validators: ValidatorSet): List[PeerId] = {
+  private def nodeListContainment(set: Set[Address], validators: ValidatorSet): List[Address] = {
     require(set subsetOf validators.keys)
     set.toList
   }.ensuring(res => res.forall(validators.powerAssignments.toList.map(_._1).contains))
 
   @opaque
-  def moreFaultyDoesNotHelp(current: Set[PeerId], next: Set[PeerId]): Unit = {
+  def moreFaultyDoesNotHelp(current: Set[Address], next: Set[Address]): Unit = {
     require(current subsetOf next)
   }.ensuring(_ =>
     forall((validator: ValidatorSet) => {
@@ -78,7 +77,7 @@ object ValidatorSet {
 
   // TODO if isCorrect is inlined this lemma can be proved but calls to isCorrect at other locations fail
   @extern
-  def faultyExpansion(next: Set[PeerId], current: Set[PeerId], validators: ValidatorSet): Unit = {
+  def faultyExpansion(next: Set[Address], current: Set[Address], validators: ValidatorSet): Unit = {
     require(current subsetOf next)
     val keys = validators.powerAssignments.toList.map(_._1)
     val nextList = listSetSubsetEquivalence(next)
@@ -132,7 +131,7 @@ object ValidatorSet {
   }.ensuring(_ => !(firstCorrect > firstFaulty * VotingPower(2)) ==> !(secondCorrect > secondFaulty * VotingPower(2)))
 
   @opaque
-  def subsetPowerLemma(first: List[PeerId], second: List[PeerId], validators: ValidatorSet): Unit = {
+  def subsetPowerLemma(first: List[Address], second: List[Address], validators: ValidatorSet): Unit = {
     require(
       first.forall(second.contains) &&
         second.forall(validators.powerAssignments.toList.map(_._1).contains) &&
@@ -153,7 +152,7 @@ object ValidatorSet {
   }.ensuring(_ => validators.nodesPower(first) <= validators.nodesPower(second))
 
   @opaque
-  def subsetSumLessEq(@induct first: List[(PeerId, Validator)], second: List[(PeerId, Validator)]): Unit = {
+  def subsetSumLessEq(@induct first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
     require(first.forall(second.contains) && ListUtils.noDuplicate(first) && ListUtils.noDuplicate(second))
     val difference = removingFromSet(second, first)
     sumWithDifferenceIsEqual(first, second)
@@ -162,7 +161,7 @@ object ValidatorSet {
   }.ensuring(_ => sumVotingPower(first) <= sumVotingPower(second))
 
   @opaque
-  def sumWithDifferenceIsEqual(first: List[(PeerId, Validator)], second: List[(PeerId, Validator)]): Unit = {
+  def sumWithDifferenceIsEqual(first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
     require(first.forall(second.contains) && ListUtils.noDuplicate(first) && ListUtils.noDuplicate(second))
     second match {
       case Nil() => ()
@@ -182,7 +181,7 @@ object ValidatorSet {
   }.ensuring(_ => sumVotingPower(first) + sumVotingPower(second -- first) == sumVotingPower(second))
 
   @opaque
-  def removeOne(elem: (PeerId, Validator), list: List[(PeerId, Validator)]): Unit = {
+  def removeOne(elem: (Address, Validator), list: List[(Address, Validator)]): Unit = {
     require(ListUtils.noDuplicate(list) && list.contains(elem) && list.nonEmpty)
     list match {
       case Cons(_, Nil()) => ()
@@ -193,16 +192,16 @@ object ValidatorSet {
     sumVotingPower(list) == elem._2.votingPower + sumVotingPower(list - elem) && ListUtils.noDuplicate(list - elem))
 
   @opaque
-  def appendIncreases(first: List[(PeerId, Validator)], second: List[(PeerId, Validator)]): Unit = {
+  def appendIncreases(first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
     additionLemma(first, second)
     appendSameAsAddition(first, second)
   }.ensuring(_ => sumVotingPower(first) <= sumVotingPower(first ++ second))
 
   @opaque
-  def appendSameAsAddition(@induct first: List[(PeerId, Validator)], second: List[(PeerId, Validator)]): Unit = {
+  def appendSameAsAddition(@induct first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
   }.ensuring(_ => sumVotingPower(first ++ second) == sumVotingPower(first) + sumVotingPower(second))
 
   @opaque
-  def additionLemma(first: List[(PeerId, Validator)], @induct second: List[(PeerId, Validator)]): Unit = {
+  def additionLemma(first: List[(Address, Validator)], @induct second: List[(Address, Validator)]): Unit = {
   }.ensuring(_ => sumVotingPower(first) <= sumVotingPower(first) + sumVotingPower(second))
 }

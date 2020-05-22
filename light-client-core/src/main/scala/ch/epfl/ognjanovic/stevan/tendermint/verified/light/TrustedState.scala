@@ -53,7 +53,7 @@ case class TrustedState(trustedSignedHeader: SignedHeader) {
 
     val intersection = SetInvariants.setIntersection(
       trustedSignedHeader.header.nextValidatorSet.keys,
-      signedHeader.commit)
+      signedHeader.commit.signers)
 
     trustedSignedHeader
       .header
