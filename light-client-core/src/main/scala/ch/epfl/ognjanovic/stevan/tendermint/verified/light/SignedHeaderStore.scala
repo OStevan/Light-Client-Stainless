@@ -1,32 +1,31 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.lang._
 import utils.ListMap
 
 object SignedHeaderStore {
 
-  abstract class SignedHeaderStore {
-    def put(signedHeader: SignedHeader): SignedHeaderStore = {
-      ??? : SignedHeaderStore
-    }.ensuring(res => res.contains(signedHeader.header.header.height))
+  abstract class LightBlockStore {
+    def put(lightBlock: LightBlock): LightBlockStore = {
+      ??? : LightBlockStore
+    }.ensuring(res => res.contains(lightBlock.header.height))
 
-    def get(height: Height): Option[SignedHeader]
+    def get(height: Height): Option[LightBlock]
 
     def contains(height: Height): Boolean
   }
 
-  case class ListMapSignedHeaderStore(listMap: ListMap[Height, SignedHeader]) extends SignedHeaderStore {
-    override def put(signedHeader: SignedHeader): SignedHeaderStore = {
-      ListMapSignedHeaderStore(listMap + (signedHeader.header.header.height, signedHeader))
-    }.ensuring(res => res.contains(signedHeader.header.header.height))
+  case class ListMapLightBlockStore(listMap: ListMap[Height, LightBlock]) extends LightBlockStore {
+    override def put(lightBLock: LightBlock): LightBlockStore = {
+      ListMapLightBlockStore(listMap + (lightBLock.header.height, lightBLock))
+    }.ensuring(res => res.contains(lightBLock.header.height))
 
-    override def get(height: Height): Option[SignedHeader] =
+    override def get(height: Height): Option[LightBlock] =
       if (contains(height))
         Some(listMap(height))
       else
-        None[SignedHeader]()
+        None[LightBlock]()
 
     override def contains(height: Height): Boolean = listMap.contains(height)
   }

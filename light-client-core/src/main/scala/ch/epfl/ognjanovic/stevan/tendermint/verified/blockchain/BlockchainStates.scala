@@ -1,7 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.{SystemStep, _}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.SignedHeader
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation._
 import stainless.lang.StaticChecks.assert
@@ -77,10 +76,10 @@ object BlockchainStates {
     }
 
     @pure
-    def signedHeader(height: Height): SignedHeader = {
+    def lightBlock(height: Height): LightBlock = {
       require(height < currentHeight())
-      blockchain.getSignedHeader(height)
-    }.ensuring(res => res.header.header.height == height)
+      blockchain.getLightBlock(height)
+    }.ensuring(res => res.header.height == height)
   }
 
   @inlineInvariant

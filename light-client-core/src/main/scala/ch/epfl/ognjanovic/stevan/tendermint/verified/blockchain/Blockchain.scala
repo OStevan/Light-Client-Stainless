@@ -2,7 +2,6 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.SignedHeaders.{DefaultSignedHeader, SignedHeader}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Chain => _, _}
 import stainless.annotation.{extern, induct, opaque, pure}
 import stainless.lang._
@@ -65,11 +64,11 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
     getHeaderInternal(height, chain)
   }.ensuring(res => res.header.height == height)
 
-  def getSignedHeader(height: Height): SignedHeader = {
+  def getLightBlock(height: Height): LightBlock = {
     require(height < chain.height)
     val headerCommit = getHeader(height + 1).lastCommit
     val blockHeader = getHeader(height)
-    DefaultSignedHeader(blockHeader, headerCommit)
+    LightBlock(blockHeader.header, headerCommit, blockHeader.validatorSet, blockHeader.nextValidatorSet)
   }
 
   private def getHeaderInternal(height: Height, chain: Chain): BlockHeader = {
