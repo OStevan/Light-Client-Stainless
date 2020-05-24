@@ -1,5 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
+
 trait Provider {
   /**
    * For a given height gives back the `LightBlock` of that height.

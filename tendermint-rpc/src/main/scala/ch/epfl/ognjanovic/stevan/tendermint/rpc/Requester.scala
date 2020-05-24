@@ -1,7 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.rpc
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Requester.{SignedHeaderNotFoundException, ValidatorSetNotFoundException}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Address, ValidatorSet}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Address, PeerId, ValidatorSet}
 import stainless.annotation.ignore
 
 /**
@@ -43,6 +43,13 @@ trait Requester {
    * @return address of the peer
    */
   def peer: Address
+
+  /**
+   * PeerId of the full node.
+   *
+   * @return PeerId of the node
+   */
+  def peerId: PeerId
 }
 
 @ignore

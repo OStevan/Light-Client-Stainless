@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Requester
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
 
 /**
  * Only does the fetching and of the necessary data using a requester of a specified peer. Doesn't validate hashes, etc.
@@ -17,6 +18,6 @@ sealed class DefaultProvider(private val requester: Requester) extends Provider 
     val signedHeader = requester.signedHeader(height)
     val validatorSet = requester.validatorSet(height)
     val nextValidatorSet = requester.validatorSet((signedHeader.header.height + 1).value.toLong)
-    LightBlock(signedHeader, validatorSet, nextValidatorSet, requester.peer)
+    LightBlock(signedHeader.header, signedHeader.commit, validatorSet, nextValidatorSet, requester.peerId)
   }
 }
