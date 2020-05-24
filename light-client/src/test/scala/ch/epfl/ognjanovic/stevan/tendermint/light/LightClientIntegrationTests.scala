@@ -10,17 +10,18 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.io.Source
 
 class LightClientIntegrationTests extends AnyFlatSpec {
-  implicit val lightBlockDecoder: Decoder[LightBlock] =
-    LightBlockDecoder.decoder(LightClientIntegrationTests.defaultProvider)
 
   "Parsing json array of LightBlocks" should "construct an in memory provider" in {
     val content = LightClientIntegrationTests.content("/light_blocks/light_blocks_1.json")
 
-    new CirceDeserializer(InMemoryProvider.decoder)(content)
+    new CirceDeserializer(InMemoryProvider.decoder(LightClientIntegrationTests.lightBlockDecoder))(content)
   }
 }
 
 object LightClientIntegrationTests {
+  implicit val lightBlockDecoder: Decoder[LightBlock] =
+    LightBlockDecoder.decoder(LightClientIntegrationTests.defaultProvider)
+
   val defaultProvider: PeerId =
     PeerId(
       Key(
