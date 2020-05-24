@@ -68,7 +68,12 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
     require(height < chain.height)
     val headerCommit = getHeader(height + 1).lastCommit
     val blockHeader = getHeader(height)
-    LightBlock(blockHeader.header, headerCommit, blockHeader.validatorSet, blockHeader.nextValidatorSet)
+    LightBlock(
+      blockHeader.header,
+      headerCommit,
+      blockHeader.validatorSet,
+      blockHeader.nextValidatorSet,
+      Blockchain.peer())
   }
 
   private def getHeaderInternal(height: Height, chain: Chain): BlockHeader = {
@@ -91,6 +96,12 @@ object Blockchain {
   def constructHeader(height: Height): Header = {
     ??? : Header
   }.ensuring(res => res.height == height)
+
+  // models an ID of a peer the light client is connected to, strictly for modeling purposes
+  @extern @pure
+  def peer(): PeerId = {
+    ??? : PeerId
+  }
 
   @opaque
   def faultyChainDoesNotRecoverWithNewFault(
