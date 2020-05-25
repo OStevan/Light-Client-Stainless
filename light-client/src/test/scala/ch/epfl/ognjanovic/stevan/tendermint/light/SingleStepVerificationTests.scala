@@ -25,6 +25,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     val result = verifier.processHeader(
       WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
       provider.lightBlock(requestHeight))
+
     assert(result.isInstanceOf[Finished])
     assert(result.asInstanceOf[Finished].outcome == Success)
   }
@@ -41,8 +42,44 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     val result = verifier.processHeader(
       WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
       provider.lightBlock(requestHeight))
+
     assert(result.isInstanceOf[Finished])
     assert(result.asInstanceOf[Finished].outcome == Success)
+  }
+
+  "Verifying a block with sufficient overlap in validator sets" should "succeed for height 7" in {
+    val content = LightClientIntegrationTests.content(
+      "/single-step-verification/validator-sets/sufficient_overlap.json")
+    val (trustedHeader, trustingPeriod, now, provider) =
+      new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
+
+    val verifier = VerifierStateMachine()
+
+    val requestHeight = Height(7)
+    val result = verifier.processHeader(
+      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      provider.lightBlock(requestHeight))
+
+    assert(result.isInstanceOf[Finished])
+    assert(result.asInstanceOf[Finished].outcome == Success)
+  }
+
+  "Verifying a block with insufficient overlap in validator sets" should "request an intermediate for height 7" in {
+    val content = LightClientIntegrationTests.content(
+      "/single-step-verification/validator-sets/insufficient_overlap.json")
+    val (trustedHeader, trustingPeriod, now, provider) =
+      new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
+
+    val verifier = VerifierStateMachine()
+
+    val requestHeight = Height(7)
+    val result = verifier.processHeader(
+      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      provider.lightBlock(requestHeight))
+
+    assert(result.isInstanceOf[WaitingForHeader])
+    assert(result.asInstanceOf[WaitingForHeader].requestHeight == Height(4))
+    assert(result.asInstanceOf[WaitingForHeader].targetHeight == Height(7))
   }
 
 }
