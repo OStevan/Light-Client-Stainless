@@ -12,4 +12,6 @@ object VerificationOutcomes {
 
   case object InsufficientTrust extends VerificationOutcome
 
+  case object ExpiredTrustedState extends VerificationOutcome
+
 }
