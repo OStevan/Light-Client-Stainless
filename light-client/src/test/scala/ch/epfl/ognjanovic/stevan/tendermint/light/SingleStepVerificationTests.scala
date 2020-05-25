@@ -82,6 +82,22 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     assert(result.asInstanceOf[WaitingForHeader].targetHeight == Height(7))
   }
 
+  "Verifying a block with sufficient commit power" should "succeed for height 3" in {
+    val content = LightClientIntegrationTests.content(
+      "/single-step/skipping/commit/more_than_two_third_vals_sign.json")
+    val (trustedHeader, trustingPeriod, now, provider) =
+      new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
+
+    val verifier = VerifierStateMachine()
+
+    val requestHeight = Height(3)
+    val result = verifier.processHeader(
+      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      provider.lightBlock(requestHeight))
+
+    assert(result.isInstanceOf[Finished])
+    assert(result.asInstanceOf[Finished].outcome == Success)
+  }
 }
 
 object SingleStepVerificationTests {

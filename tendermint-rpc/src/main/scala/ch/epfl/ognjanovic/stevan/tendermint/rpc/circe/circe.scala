@@ -26,4 +26,11 @@ object circe {
   } yield {
     Instant.parse(value)
   }
+
+  private[rpc] def toStainlessOption[T](option: Option[T]): stainless.lang.Option[T] = {
+    if (option.isDefined)
+      stainless.lang.Some(option.get)
+    else
+      stainless.lang.None()
+  }
 }

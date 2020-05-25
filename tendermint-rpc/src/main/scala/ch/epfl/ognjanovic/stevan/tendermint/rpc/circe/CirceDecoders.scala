@@ -36,7 +36,7 @@ object CirceDecoders {
     height <- cursor.downField("height").as[Long]
     round <- cursor.downField("round").as[Long]
     blockId <- cursor.downField("block_id").as[BlockId]
-    signatures <- cursor.downField("signatures").as[List[Signature]]
+    signatures <- cursor.downField("signatures").as[List[CommitSignature]]
   } yield {
     Commit(Height(height), round, blockId, stainless.collection.List.fromScala(signatures))
   }
@@ -55,17 +55,19 @@ object CirceDecoders {
     Key(tpe, ByteBuffer.wrap(stringValue.map(_.toByte).toArray).asReadOnlyBuffer())
   }
 
-  implicit val signatureDecoder: Decoder[Signature] = cursor => for {
+  implicit val signatureDecoder: Decoder[CommitSignature] = cursor => for {
     blockFlagId <- cursor.downField("block_id_flag").as[Byte]
-    validatorAddress <- cursor.downField("validator_address").as[Address]
+    validatorAddress <- cursor.downField("validator_address").as[Option[Address]]
     timestamp <- cursor.downField("timestamp").as[Instant]
-    signature <- cursor.downField("signature").as[String]
+    signature <- cursor.downField("signature").as[Option[String]]
   } yield {
-    Signature(
-      blockFlagId,
-      validatorAddress,
+    val signatureOption = toStainlessOption(signature)
+      .map(value => ByteBuffer.wrap(value.map(_.toByte).toArray).asReadOnlyBuffer())
+    CommitSignature(
+      BlockIdFlags(blockFlagId),
+      toStainlessOption(validatorAddress),
       timestamp,
-      ByteBuffer.wrap(signature.map(_.toByte).toArray).asReadOnlyBuffer())
+      signatureOption)
   }
 
   implicit val validatorDecoder: Decoder[Validator] = cursor => for {

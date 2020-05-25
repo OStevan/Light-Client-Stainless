@@ -47,7 +47,7 @@ object BlockchainStates {
       (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
       faulty == blockchain.faulty &&
       blockchain.chain.forAll(_.nextValidatorSet.keys.subsetOf(allNodes)) &&
-      blockchain.chain.forAll(_.lastCommit.signers.subsetOf(allNodes)) &&
+      blockchain.chain.forAll(_.lastCommit.committingSigners.subsetOf(allNodes)) &&
       blockchain.chain.forAll(_.validatorSet.keys.subsetOf(allNodes))
   }
 
@@ -112,14 +112,14 @@ object BlockchainStates {
 
         // ignores append messages which do not preserve guarantees of the system
         case AppendBlock(lastCommit, nextValidatorSet: ValidatorSet)
-          if lastCommit.signers.subsetOf(blockchain.chain.head.validatorSet.keys) &&
+          if lastCommit.committingSigners.subsetOf(blockchain.chain.head.validatorSet.keys) &&
             nextValidatorSet.values.forall(_.votingPower <= maxVotingPower) &&
             nextValidatorSet.keys.subsetOf(allNodes) &&
-            lastCommit.signers.subsetOf(allNodes) &&
-            lastCommit.signers.nonEmpty /* obvious from AppendBlock adt invariant times-out */=>
+            lastCommit.committingSigners.subsetOf(allNodes) &&
+            lastCommit.committingSigners.nonEmpty /* obvious from AppendBlock adt invariant times-out */=>
 
           val lastBlock = blockchain.chain.head
-          if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit.signers) && nextValidatorSet.isCorrect(faulty)) {
+          if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit.committingSigners) && nextValidatorSet.isCorrect(faulty)) {
             val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
             assert(newBlockchain.chain.head.validatorSet.keys.subsetOf(allNodes))
             assert(globalStateInvariant(allNodes, faulty, newBlockchain))
