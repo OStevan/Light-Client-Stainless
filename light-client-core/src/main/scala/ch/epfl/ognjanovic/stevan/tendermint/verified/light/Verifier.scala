@@ -9,7 +9,7 @@ import stainless.collection.{Cons, Nil}
 import stainless.lang.StaticChecks.Ensuring
 import stainless.lang._
 
-case class Verifier() {
+case class Verifier(expirationChecker: ExpirationChecker) {
 
   @pure
   def verifySingle(trustedState: TrustedState, lightBlock: LightBlock): VerificationOutcome = {

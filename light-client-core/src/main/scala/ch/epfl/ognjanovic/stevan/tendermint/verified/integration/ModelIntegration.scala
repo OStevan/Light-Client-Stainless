@@ -31,7 +31,10 @@ object ModelIntegration {
       trustedState,
       UntrustedState.empty)
 
-    verify(verifier, soundSignedHeaderProvider, Verifier())
+    verify(
+      verifier,
+      soundSignedHeaderProvider,
+      Verifier(HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight)))
   }
 
   @scala.annotation.tailrec
@@ -50,6 +53,10 @@ object ModelIntegration {
       case state: WaitingForHeader => verify(state, lightBlockProvider, verifier)
       case state: Finished => state
     }
+  }
+
+  private [integration] case class HeightBasedExpirationChecker(height: Height) extends ExpirationChecker {
+    override def isExpired(lightBlock: LightBlock): Boolean = height > lightBlock.header.height
   }
 
   private[integration] case class BlockchainLightBlockProviders(
