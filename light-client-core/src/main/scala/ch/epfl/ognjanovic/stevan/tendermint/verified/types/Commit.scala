@@ -6,6 +6,7 @@ import stainless.collection._
 import stainless.lang._
 
 case class Commit(height: Height, round: Long, blockId: BlockId, signatures: List[CommitSignature]) {
+  require(signatures.nonEmpty)
 
   @pure
   def committingSigners: Set[Address] =
