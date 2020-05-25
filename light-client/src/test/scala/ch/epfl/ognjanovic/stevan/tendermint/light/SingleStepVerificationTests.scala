@@ -15,7 +15,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
 
   "Verifying a block with the same validator sets" should "succeed" in {
     val content = LightClientIntegrationTests.content(
-      "/single-step-verification/validator-sets/same_validator_sets_1.json")
+      "/single-step/skipping/validator_set/skip_one_block.json")
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
@@ -32,7 +32,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
 
   "Verifying a block with the same validator sets" should "succeed for height 7" in {
     val content = LightClientIntegrationTests.content(
-      "/single-step-verification/validator-sets/same_validator_sets_2.json")
+      "/single-step/skipping/validator_set/skip_five_blocks.json")
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
@@ -49,7 +49,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
 
   "Verifying a block with sufficient overlap in validator sets" should "succeed for height 7" in {
     val content = LightClientIntegrationTests.content(
-      "/single-step-verification/validator-sets/sufficient_overlap.json")
+      "/single-step/skipping/validator_set/valset_changes_less_than_trust_level.json")
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
@@ -66,7 +66,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
 
   "Verifying a block with insufficient overlap in validator sets" should "request an intermediate for height 7" in {
     val content = LightClientIntegrationTests.content(
-      "/single-step-verification/validator-sets/insufficient_overlap.json")
+      "/single-step/skipping/validator_set/valset_changes_more_than_trust_level.json")
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
