@@ -115,6 +115,23 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     assert(result.isInstanceOf[Finished])
     assert(result.asInstanceOf[Finished].outcome == InvalidCommit)
   }
+
+  "Verification with an expired trusted header" should "fail" in {
+    val content = LightClientIntegrationTests.content(
+      "/single-step/skipping/header/out_of_trusting_period.json")
+    val (trustedHeader, trustingPeriod, now, provider) =
+      new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
+
+    val verifier = VerifierStateMachine()
+
+    val requestHeight = Height(5)
+    val result = verifier.processHeader(
+      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      provider.lightBlock(requestHeight))
+
+    assert(result.isInstanceOf[Finished])
+    assert(result.asInstanceOf[Finished].outcome != Success)
+  }
 }
 
 object SingleStepVerificationTests {
