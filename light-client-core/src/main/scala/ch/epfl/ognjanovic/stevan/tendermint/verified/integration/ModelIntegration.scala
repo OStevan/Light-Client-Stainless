@@ -2,9 +2,9 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.integration
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates.BlockchainState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClient._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{LightClient, TrustedState, UntrustedState}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation.pure
 import stainless.lang._
 
@@ -22,7 +22,7 @@ object ModelIntegration {
     assert(trustedState.currentHeight() < heightToVerify)
     assert(heightToVerify <= heightToVerify)
     assert(trustedState.currentHeight() < heightToVerify)
-    assert(LightClient.untrustedStateHeightInvariant(heightToVerify, UntrustedState.empty))
+    assert(untrustedStateHeightInvariant(heightToVerify, UntrustedState.empty))
     assert(targetHeightInvariant(heightToVerify, UntrustedState.empty.pending))
 
     val verifier = WaitingForHeader(
@@ -31,16 +31,19 @@ object ModelIntegration {
       trustedState,
       UntrustedState.empty)
 
-    verify(verifier, soundSignedHeaderProvider, VerifierStateMachine())
+    verify(
+      verifier,
+      soundSignedHeaderProvider,
+      Verifier(HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight)))
   }
 
   @scala.annotation.tailrec
   def verify(
     waitingForHeader: WaitingForHeader,
     lightBlockProvider: LightBlockProvider,
-    verifier: VerifierStateMachine): Finished = {
+    verifier: Verifier): Finished = {
     require(waitingForHeader.targetHeight < lightBlockProvider.currentHeight)
-    decreases(LightClient.terminationMeasure(waitingForHeader))
+    decreases(LightClientLemmas.terminationMeasure(waitingForHeader))
     Height.helperLemma(
       waitingForHeader.requestHeight,
       waitingForHeader.targetHeight,
@@ -50,6 +53,10 @@ object ModelIntegration {
       case state: WaitingForHeader => verify(state, lightBlockProvider, verifier)
       case state: Finished => state
     }
+  }
+
+  private [integration] case class HeightBasedExpirationChecker(height: Height) extends ExpirationChecker {
+    override def isExpired(lightBlock: LightBlock): Boolean = height > lightBlock.header.height
   }
 
   private[integration] case class BlockchainLightBlockProviders(
