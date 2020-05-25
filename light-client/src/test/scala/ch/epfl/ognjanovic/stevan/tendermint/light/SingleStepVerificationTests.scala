@@ -5,7 +5,7 @@ import java.time.Instant
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.{CirceDecoders, CirceDeserializer, circe}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClient.{Finished, Success, VerifierStateMachine, WaitingForHeader}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClient._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{TrustedState, UntrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, ValidatorSet}
 import io.circe.Decoder
@@ -82,6 +82,39 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     assert(result.asInstanceOf[WaitingForHeader].targetHeight == Height(7))
   }
 
+  "Verifying a block with sufficient commit power" should "succeed for height 3" in {
+    val content = LightClientIntegrationTests.content(
+      "/single-step/skipping/commit/more_than_two_third_vals_sign.json")
+    val (trustedHeader, trustingPeriod, now, provider) =
+      new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
+
+    val verifier = VerifierStateMachine()
+
+    val requestHeight = Height(3)
+    val result = verifier.processHeader(
+      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      provider.lightBlock(requestHeight))
+
+    assert(result.isInstanceOf[Finished])
+    assert(result.asInstanceOf[Finished].outcome == Success)
+  }
+
+  "Verifying a block with insufficient commit power" should "recognize an invalid commit for height 3" in {
+    val content = LightClientIntegrationTests.content(
+      "/single-step/skipping/commit/one_third_vals_dont_sign.json")
+    val (trustedHeader, trustingPeriod, now, provider) =
+      new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
+
+    val verifier = VerifierStateMachine()
+
+    val requestHeight = Height(3)
+    val result = verifier.processHeader(
+      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      provider.lightBlock(requestHeight))
+
+    assert(result.isInstanceOf[Finished])
+    assert(result.asInstanceOf[Finished].outcome == InvalidCommit)
+  }
 }
 
 object SingleStepVerificationTests {

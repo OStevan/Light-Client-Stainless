@@ -4,6 +4,7 @@ import java.nio.ByteBuffer
 import java.time.Instant
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.CommitSignatures._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import io.circe.Decoder
 import stainless.annotation.ignore
@@ -36,7 +37,7 @@ object CirceDecoders {
     height <- cursor.downField("height").as[Long]
     round <- cursor.downField("round").as[Long]
     blockId <- cursor.downField("block_id").as[BlockId]
-    signatures <- cursor.downField("signatures").as[List[Signature]]
+    signatures <- cursor.downField("signatures").as[List[CommitSignature]]
   } yield {
     Commit(Height(height), round, blockId, stainless.collection.List.fromScala(signatures))
   }
@@ -55,17 +56,20 @@ object CirceDecoders {
     Key(tpe, ByteBuffer.wrap(stringValue.map(_.toByte).toArray).asReadOnlyBuffer())
   }
 
-  implicit val signatureDecoder: Decoder[Signature] = cursor => for {
-    blockFlagId <- cursor.downField("block_id_flag").as[Byte]
-    validatorAddress <- cursor.downField("validator_address").as[Address]
+  implicit val signatureDecoder: Decoder[CommitSignature] = cursor => for {
+    blockFlagId <- cursor.downField("block_id_flag").as[Int]
+    validatorAddress <- cursor.downField("validator_address").as[Option[Address]]
     timestamp <- cursor.downField("timestamp").as[Instant]
-    signature <- cursor.downField("signature").as[String]
+    signature <- cursor.downField("signature").as[Option[String]]
   } yield {
-    Signature(
-      blockFlagId,
-      validatorAddress,
-      timestamp,
-      ByteBuffer.wrap(signature.map(_.toByte).toArray).asReadOnlyBuffer())
+    val signatureOption = toStainlessOption(signature)
+      .map(value => ByteBuffer.wrap(value.map(_.toByte).toArray).asReadOnlyBuffer())
+    blockFlagId match {
+      case 1 => BlockIDFlagAbsent
+      case 2 => BlockIDFlagCommit(validatorAddress.get, timestamp, signatureOption.get)
+      case 3 => BlockIdFlagNil(validatorAddress.get, timestamp, signatureOption.get)
+      case _ => throw new IllegalArgumentException("Unknown \"block_id_flag\": " + blockFlagId)
+    }
   }
 
   implicit val validatorDecoder: Decoder[Validator] = cursor => for {
