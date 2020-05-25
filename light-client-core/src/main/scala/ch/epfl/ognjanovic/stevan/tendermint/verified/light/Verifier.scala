@@ -14,7 +14,9 @@ case class Verifier(expirationChecker: ExpirationChecker) {
   @pure
   def verifySingle(trustedState: TrustedState, lightBlock: LightBlock): VerificationOutcome = {
     require(trustedState.currentHeight() < lightBlock.header.height)
-    if (trustedState.trusted(lightBlock))
+    if (expirationChecker.isExpired(trustedState.trustedLightBlock))
+      ExpiredTrustedState
+    else if (trustedState.trusted(lightBlock))
       checkCommit(lightBlock)
     else if (trustedState.isAdjacent(lightBlock))
       Failure
@@ -100,6 +102,8 @@ case class Verifier(expirationChecker: ExpirationChecker) {
           trustedState,
           untrustedState.addSignedHeader(lightBlock))
 
+      case ExpiredTrustedState =>
+        Finished(ExpiredTrustedState, trustedState, untrustedState.addSignedHeader(lightBlock))
       case InvalidCommit =>
         Finished(InvalidCommit, trustedState, untrustedState.addSignedHeader(lightBlock))
       case Failure =>
