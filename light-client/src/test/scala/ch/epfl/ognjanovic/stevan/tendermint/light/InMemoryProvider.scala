@@ -1,17 +1,21 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import io.circe.Decoder
 
-class InMemoryProvider(private val map: Map[Long, LightBlock]) extends Provider {
-  override def lightBlock(height: Long): LightBlock = map(height)
+class InMemoryProvider(private val map: Map[Height, LightBlock]) extends LightBlockProvider {
+  override def lightBlock(height: Height): LightBlock = map(height)
+
+  override def currentHeight: Height =
+    map.keys.max((x: Height, y: Height) => math.signum((x.value - y.value).toLong).toInt)
 }
 
 object InMemoryProvider {
-  def decoder(implicit lightBlockDeserializer: Decoder[LightBlock]): Decoder[Provider] = cursor => for {
+  def decoder(implicit lightBlockDeserializer: Decoder[LightBlock]): Decoder[LightBlockProvider] = cursor => for {
     lightBlocks <- cursor.as[Array[LightBlock]]
   } yield {
-    val zipped: Array[(Long, LightBlock)] = lightBlocks.zip(1L to (lightBlocks.length + 1)).map(a => (a._2, a._1))
+    val zipped: Array[(Height, LightBlock)] = lightBlocks.map(block => (block.header.height, block))
     new InMemoryProvider(zipped.toMap)
   }
 }

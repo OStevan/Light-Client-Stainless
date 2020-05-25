@@ -8,7 +8,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.pure
 import stainless.lang._
 
-private object ModelIntegration {
+object ModelIntegration {
   def snapshotExecution(
     blockchainState: BlockchainState,
     trustedHeight: Height,
