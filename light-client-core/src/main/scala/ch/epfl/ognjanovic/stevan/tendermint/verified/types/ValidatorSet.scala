@@ -10,7 +10,7 @@ import utils._
 case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Address, Validator], proposer: Validator) {
   require(
     powerAssignments.forall(value => value._2.votingPower.isPositive) &&
-      totalPower == ValidatorSet.sumVotingPower(powerAssignments.toList) &&
+      totalPower == powerAssignments.toList.foldLeft(VotingPower(0))((acc, value) => acc + value._2.votingPower) &&
       !powerAssignments.isEmpty)
 
   @pure @extern
