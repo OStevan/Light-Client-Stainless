@@ -2,9 +2,9 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.integration
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates.BlockchainState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClient._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{LightClient, TrustedState, UntrustedState}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation.pure
 import stainless.lang._
 
@@ -22,7 +22,7 @@ object ModelIntegration {
     assert(trustedState.currentHeight() < heightToVerify)
     assert(heightToVerify <= heightToVerify)
     assert(trustedState.currentHeight() < heightToVerify)
-    assert(LightClient.untrustedStateHeightInvariant(heightToVerify, UntrustedState.empty))
+    assert(untrustedStateHeightInvariant(heightToVerify, UntrustedState.empty))
     assert(targetHeightInvariant(heightToVerify, UntrustedState.empty.pending))
 
     val verifier = WaitingForHeader(
@@ -40,7 +40,7 @@ object ModelIntegration {
     lightBlockProvider: LightBlockProvider,
     verifier: VerifierStateMachine): Finished = {
     require(waitingForHeader.targetHeight < lightBlockProvider.currentHeight)
-    decreases(LightClient.terminationMeasure(waitingForHeader))
+    decreases(LightClientLemmas.terminationMeasure(waitingForHeader))
     Height.helperLemma(
       waitingForHeader.requestHeight,
       waitingForHeader.targetHeight,

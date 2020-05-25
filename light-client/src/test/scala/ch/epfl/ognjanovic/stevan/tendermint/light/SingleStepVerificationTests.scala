@@ -5,9 +5,10 @@ import java.time.Instant
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.{CirceDecoders, CirceDeserializer, circe}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClient._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{TrustedState, UntrustedState}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, ValidatorSet}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import io.circe.Decoder
 import org.scalatest.flatspec.AnyFlatSpec
 
