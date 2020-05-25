@@ -29,6 +29,22 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     assert(result.asInstanceOf[Finished].outcome == Success)
   }
 
+  "Verifying a block with the same validator sets" should "succeed for height 7" in {
+    val content = LightClientIntegrationTests.content(
+      "/single-step-verification/validator-sets/same_validator_sets_2.json")
+    val (trustedHeader, trustingPeriod, now, provider) =
+      new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
+
+    val verifier = VerifierStateMachine()
+
+    val requestHeight = Height(7)
+    val result = verifier.processHeader(
+      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      provider.lightBlock(requestHeight))
+    assert(result.isInstanceOf[Finished])
+    assert(result.asInstanceOf[Finished].outcome == Success)
+  }
+
 }
 
 object SingleStepVerificationTests {
