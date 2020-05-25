@@ -31,14 +31,14 @@ object ModelIntegration {
       trustedState,
       UntrustedState.empty)
 
-    verify(verifier, soundSignedHeaderProvider, VerifierStateMachine())
+    verify(verifier, soundSignedHeaderProvider, Verifier())
   }
 
   @scala.annotation.tailrec
   def verify(
     waitingForHeader: WaitingForHeader,
     lightBlockProvider: LightBlockProvider,
-    verifier: VerifierStateMachine): Finished = {
+    verifier: Verifier): Finished = {
     require(waitingForHeader.targetHeight < lightBlockProvider.currentHeight)
     decreases(LightClientLemmas.terminationMeasure(waitingForHeader))
     Height.helperLemma(

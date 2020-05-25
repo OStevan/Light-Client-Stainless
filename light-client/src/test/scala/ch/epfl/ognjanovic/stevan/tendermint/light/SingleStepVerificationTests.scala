@@ -20,7 +20,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
-    val verifier = VerifierStateMachine()
+    val verifier = Verifier()
 
     val requestHeight = Height(3)
     val result = verifier.processHeader(
@@ -37,7 +37,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
-    val verifier = VerifierStateMachine()
+    val verifier = Verifier()
 
     val requestHeight = Height(7)
     val result = verifier.processHeader(
@@ -54,7 +54,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
-    val verifier = VerifierStateMachine()
+    val verifier = Verifier()
 
     val requestHeight = Height(7)
     val result = verifier.processHeader(
@@ -71,7 +71,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
-    val verifier = VerifierStateMachine()
+    val verifier = Verifier()
 
     val requestHeight = Height(7)
     val result = verifier.processHeader(
@@ -89,7 +89,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
-    val verifier = VerifierStateMachine()
+    val verifier = Verifier()
 
     val requestHeight = Height(3)
     val result = verifier.processHeader(
@@ -106,7 +106,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
-    val verifier = VerifierStateMachine()
+    val verifier = Verifier()
 
     val requestHeight = Height(3)
     val result = verifier.processHeader(
@@ -123,7 +123,7 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
-    val verifier = VerifierStateMachine()
+    val verifier = Verifier()
 
     val requestHeight = Height(5)
     val result = verifier.processHeader(
