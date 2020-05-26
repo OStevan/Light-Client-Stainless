@@ -22,17 +22,8 @@ case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Addre
 
   def contains(node: Address): Boolean = keys.contains(node)
 
-  def nodesPower(nodes: List[Address]): VotingPower = {
-    require(nodes.forall(powerAssignments.toList.map(_._1).contains))
+  def nodesPower(nodes: List[Address]): VotingPower =
     ValidatorSet.sumVotingPower(powerAssignments.toList.filter(pair => nodes.contains(pair._1)))
-  }
-
-  @pure
-  def obtainedByzantineQuorum(nodes: Set[Address]): Boolean = {
-    require(nodes subsetOf keys)
-    val nodeList = ValidatorSet.nodeListContainment(nodes, this)
-    nodesPower(nodeList) * VotingPower(3) > totalPower * VotingPower(2)
-  }
 
   @pure
   def isCorrect(faultyNodes: Set[Address]): Boolean = {
@@ -42,13 +33,6 @@ case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Addre
     val intersection = keySet & faultyNodesSet
     setIntersectionLemma(keySet, faultyNodesSet)
     nodesPower(difference) > nodesPower(intersection) * VotingPower(2)
-  }
-
-  def checkSupport(nodes: Set[Address]): Boolean = {
-    require(nodes subsetOf keys)
-    val nodeList = ValidatorSet.nodeListContainment(nodes, this)
-    ListSetUtils.selfContainment(powerAssignments.toList.map(_._1))
-    VotingPower(3) * nodesPower(nodeList) > totalPower
   }
 }
 
@@ -61,7 +45,7 @@ object ValidatorSet {
   }
 
   @extern
-  private def nodeListContainment(set: Set[Address], validators: ValidatorSet): List[Address] = {
+  def nodeListContainment(set: Set[Address], validators: ValidatorSet): List[Address] = {
     require(set subsetOf validators.keys)
     set.toList
   }.ensuring(res => res.forall(validators.powerAssignments.toList.map(_._1).contains))

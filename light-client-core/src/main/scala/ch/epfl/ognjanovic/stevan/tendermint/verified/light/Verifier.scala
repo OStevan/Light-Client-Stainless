@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClientLemmas._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
@@ -9,7 +10,7 @@ import stainless.collection.{Cons, Nil}
 import stainless.lang.StaticChecks.Ensuring
 import stainless.lang._
 
-case class Verifier(expirationChecker: ExpirationChecker) {
+case class Verifier(expirationChecker: ExpirationChecker, trustVerifier: TrustVerifier) {
 
   @pure
   def verifySingle(trustedState: TrustedState, lightBlock: LightBlock): VerificationOutcome = {
@@ -55,7 +56,7 @@ case class Verifier(expirationChecker: ExpirationChecker) {
   private def checkCommit(header: LightBlock): VerificationOutcome = {
     if (header.commit.forBlock.nonEmpty &&
       (header.commit.forBlock subsetOf header.validatorSet.keys) &&
-      header.validatorSet.obtainedByzantineQuorum(header.commit.forBlock))
+      trustVerifier.consensusObtained(header.validatorSet, header.commit))
       Success
     else
       InvalidCommit
