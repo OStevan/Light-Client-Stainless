@@ -12,6 +12,7 @@ object BlockchainSystem {
 
   @ghost
   def initialSystem(
+    faultChecker: FaultChecker,
     validatorSet: ValidatorSet,
     maxHeight: Height,
     maxPower: VotingPower,
@@ -22,7 +23,7 @@ object BlockchainSystem {
       validatorSet.values.forall(_.votingPower.value == 1) &&
         maxPower.isPositive &&
         (nextValidatorSet.keys subsetOf validatorSet.keys) &&
-        nextValidatorSet.isCorrect(Set.empty) && initialCommit.committingSigners.isEmpty)
+        faultChecker.isCorrect(nextValidatorSet, Set.empty) && initialCommit.forBlock.isEmpty)
 
     val noFaulty = Set.empty[Address]
 
@@ -30,7 +31,7 @@ object BlockchainSystem {
     val initialChain = Genesis(genesisBlock)
     val minTrustedHeight = Height(1)
 
-    val startingBlockchain: Blockchain = Blockchain(maxHeight, minTrustedHeight, initialChain, Set.empty)
+    val startingBlockchain: Blockchain = Blockchain(maxHeight, minTrustedHeight, initialChain, Set.empty, faultChecker)
 
     if (maxHeight.value == BigInt(1))
       Finished(validatorSet.keys, noFaulty, startingBlockchain)

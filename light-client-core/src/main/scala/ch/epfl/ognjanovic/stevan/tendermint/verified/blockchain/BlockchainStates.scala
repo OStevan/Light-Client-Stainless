@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.{SystemStep, _}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation._
 import stainless.lang.StaticChecks.assert
@@ -8,6 +9,8 @@ import stainless.lang._
 import utils.SetInvariants
 
 object BlockchainStates {
+
+  private val trustVerifier = TrustVerifiers.defaultTrustVerifier
 
   @inline
   private def runningStateInvariant(
@@ -47,7 +50,7 @@ object BlockchainStates {
       (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
       faulty == blockchain.faulty &&
       blockchain.chain.forAll(_.nextValidatorSet.keys.subsetOf(allNodes)) &&
-      blockchain.chain.forAll(_.lastCommit.committingSigners.subsetOf(allNodes)) &&
+      blockchain.chain.forAll(_.lastCommit.forBlock.subsetOf(allNodes)) &&
       blockchain.chain.forAll(_.validatorSet.keys.subsetOf(allNodes))
   }
 
@@ -112,14 +115,16 @@ object BlockchainStates {
 
         // ignores append messages which do not preserve guarantees of the system
         case AppendBlock(lastCommit, nextValidatorSet: ValidatorSet)
-          if lastCommit.committingSigners.subsetOf(blockchain.chain.head.validatorSet.keys) &&
+          if lastCommit.forBlock.subsetOf(blockchain.chain.head.validatorSet.keys) &&
             nextValidatorSet.values.forall(_.votingPower <= maxVotingPower) &&
             nextValidatorSet.keys.subsetOf(allNodes) &&
-            lastCommit.committingSigners.subsetOf(allNodes) &&
-            lastCommit.committingSigners.nonEmpty /* obvious from AppendBlock adt invariant times-out */=>
+            lastCommit.forBlock.subsetOf(allNodes) &&
+            lastCommit.forBlock.nonEmpty /* obvious from AppendBlock adt invariant times-out */ =>
 
           val lastBlock = blockchain.chain.head
-          if (lastBlock.validatorSet.obtainedByzantineQuorum(lastCommit.committingSigners) && nextValidatorSet.isCorrect(faulty)) {
+          if (
+            trustVerifier.consensusObtained(lastBlock.validatorSet, lastCommit) &&
+              blockchain.faultChecker.isCorrect(nextValidatorSet, faulty)) {
             val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
             assert(newBlockchain.chain.head.validatorSet.keys.subsetOf(allNodes))
             assert(globalStateInvariant(allNodes, faulty, newBlockchain))

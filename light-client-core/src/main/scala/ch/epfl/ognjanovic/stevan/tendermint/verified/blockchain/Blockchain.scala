@@ -6,7 +6,12 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Chain => _, _}
 import stainless.annotation.{extern, induct, opaque, pure}
 import stainless.lang._
 
-case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain, faulty: Set[Address]) {
+case class Blockchain(
+  maxHeight: Height,
+  minTrustedHeight: Height,
+  chain: Chain,
+  faulty: Set[Address],
+  faultChecker: FaultChecker) {
   require(
     minTrustedHeight <= min(chain.height + 1, maxHeight) &&
       chain.height <= maxHeight)
@@ -15,27 +20,33 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
   def increaseMinTrustedHeight(step: BigInt): Blockchain = {
     require(step > BigInt(0))
     val newMinTrustedHeight = min(min(maxHeight, chain.height + 1), minTrustedHeight + step)
-    Blockchain.timeProgressDoesNotDeteriorateTheState(newMinTrustedHeight, minTrustedHeight, chain, faulty)
-    Blockchain(maxHeight, newMinTrustedHeight, chain, faulty)
+    Blockchain.timeProgressDoesNotDeteriorateTheState(
+      faultChecker,
+      newMinTrustedHeight,
+      minTrustedHeight,
+      chain,
+      faulty)
+    Blockchain(maxHeight, newMinTrustedHeight, chain, faulty, faultChecker)
   }.ensuring(res => faultAssumption() ==> res.faultAssumption())
 
   @pure
   def faultAssumption(): Boolean = {
-    chain.forAll(header => minTrustedHeight > header.header.height || header.nextValidatorSet.isCorrect(faulty))
+    chain.forAll(header =>
+      minTrustedHeight > header.header.height || faultChecker.isCorrect(header.nextValidatorSet, faulty))
   }
 
   @pure
   def appendBlock(lastCommit: Commit, nextVS: ValidatorSet): Blockchain = {
     require(
         !finished &&
-        nextVS.isCorrect(faulty) &&
+        faultChecker.isCorrect(nextVS, faulty) &&
         faultAssumption())
     val header = BlockHeader(
       Blockchain.constructHeader(chain.height + 1),
       lastCommit,
       chain.head.nextValidatorSet, nextVS)
     val newChain = chain.appendBlock(header)
-    Blockchain(maxHeight, minTrustedHeight, newChain, faulty)
+    Blockchain(maxHeight, minTrustedHeight, newChain, faulty, faultChecker)
   }.ensuring(res =>
     res.faultAssumption() &&
       res.height == height + 1 &&
@@ -55,8 +66,8 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
   @inline
   def setFaulty(newFaulty: Set[Address]): Blockchain = {
     require(faulty subsetOf newFaulty)
-    Blockchain.faultyChainDoesNotRecoverWithNewFault(minTrustedHeight, chain, faulty, newFaulty)
-    Blockchain(maxHeight, minTrustedHeight, chain, newFaulty)
+    Blockchain.faultyChainDoesNotRecoverWithNewFault(faultChecker, minTrustedHeight, chain, faulty, newFaulty)
+    Blockchain(maxHeight, minTrustedHeight, chain, newFaulty, faultChecker)
   }.ensuring(res => !faultAssumption() ==> !res.faultAssumption())
 
   def getHeader(height: Height): BlockHeader = {
@@ -91,40 +102,48 @@ case class Blockchain(maxHeight: Height, minTrustedHeight: Height, chain: Chain,
 
 object Blockchain {
 
+  import StaticChecks.Ensuring
+
   // strictly for modeling purposes, anything which runs this will fail
-  @extern @pure
+  @extern
+  @pure
   def constructHeader(height: Height): Header = {
     ??? : Header
   }.ensuring(res => res.height == height)
 
   // models an ID of a peer the light client is connected to, strictly for modeling purposes
-  @extern @pure
+  @extern
+  @pure
   def peer(): PeerId = {
     ??? : PeerId
   }
 
   @opaque
   def faultyChainDoesNotRecoverWithNewFault(
+    faultChecker: FaultChecker,
     minTrustedHeight: Height,
     @induct chain: Chain,
     faulty: Set[Address],
     newFaulty: Set[Address]): Unit = {
     require(faulty subsetOf newFaulty)
   }.ensuring { _ =>
-    ValidatorSet.moreFaultyDoesNotHelp(faulty, newFaulty)
-    !chain.forAll(header => minTrustedHeight > header.header.height || header.nextValidatorSet.isCorrect(faulty)) ==>
-      !chain.forAll(header => minTrustedHeight > header.header.height || header.nextValidatorSet.isCorrect(newFaulty))
+    FaultChecker.moreFaultyDoesNotHelp(faultChecker, faulty, newFaulty)
+    !chain.forAll(
+      header => minTrustedHeight > header.header.height || faultChecker.isCorrect(header.nextValidatorSet, faulty)) ==>
+      !chain.forAll(
+        header => minTrustedHeight > header.header.height || faultChecker.isCorrect(header.nextValidatorSet, newFaulty))
   }
 
   @opaque
   def timeProgressDoesNotDeteriorateTheState(
+    faultChecker: FaultChecker,
     newMinTrustedState: Height,
     minTrustedHeight: Height,
     @induct chain: Chain,
     faulty: Set[Address]): Unit = {
     require(newMinTrustedState >= minTrustedHeight)
   }.ensuring { _ =>
-    chain.forAll(header => minTrustedHeight > header.header.height || header.nextValidatorSet.isCorrect(faulty)) ==>
-      chain.forAll(header => newMinTrustedState > header.header.height || header.nextValidatorSet.isCorrect(faulty))
+    chain.forAll(header => minTrustedHeight > header.header.height || faultChecker.isCorrect(header.nextValidatorSet, faulty)) ==>
+      chain.forAll(header => newMinTrustedState > header.header.height || faultChecker.isCorrect(header.nextValidatorSet, faulty))
   }
 }

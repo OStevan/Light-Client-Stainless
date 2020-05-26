@@ -18,7 +18,7 @@ object ModelIntegration {
     val soundSignedHeaderProvider = BlockchainLightBlockProviders(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
 
-    val trustedState = TrustedState(trustedSignedHeader)
+    val trustedState = TrustedState(trustedSignedHeader, TrustVerifiers.defaultTrustVerifier)
     assert(trustedState.currentHeight() < heightToVerify)
     assert(heightToVerify <= heightToVerify)
     assert(trustedState.currentHeight() < heightToVerify)
@@ -34,7 +34,9 @@ object ModelIntegration {
     verify(
       verifier,
       soundSignedHeaderProvider,
-      Verifier(HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight)))
+      Verifier(
+        HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight),
+        TrustVerifiers.defaultTrustVerifier))
   }
 
   @scala.annotation.tailrec

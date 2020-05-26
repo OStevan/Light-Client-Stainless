@@ -1,10 +1,10 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.pure
-import utils.SetInvariants
 
-case class TrustedState(trustedLightBlock: LightBlock) {
+case class TrustedState(trustedLightBlock: LightBlock, trustVerifier: TrustVerifier) {
 
   /**
     * The height of the last block that we trust.
@@ -21,7 +21,7 @@ case class TrustedState(trustedLightBlock: LightBlock) {
   @pure
   def increaseTrust(lightBlock: LightBlock): TrustedState = {
     require(lightBlock.header.height > this.trustedLightBlock.header.height && trusted(lightBlock))
-    TrustedState(lightBlock)
+    TrustedState(lightBlock, trustVerifier)
   }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
 
   @pure
@@ -50,11 +50,7 @@ case class TrustedState(trustedLightBlock: LightBlock) {
   private def internalNonAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
     require(lightBlock.header.height > this.trustedLightBlock.header.height && !isAdjacent(lightBlock))
 
-    val intersection = SetInvariants.setIntersection(
-      trustedLightBlock.nextValidatorSet.keys,
-      lightBlock.commit.committingSigners)
-
-    trustedLightBlock.nextValidatorSet.checkSupport(intersection)
+    trustVerifier.trustedCommit(trustedLightBlock.nextValidatorSet, lightBlock.commit)
   }
 
   @pure
