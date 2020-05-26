@@ -18,4 +18,11 @@ object NextHeightCalculators {
     }.ensuring(res => res > bottom && res < top)
   }
 
+  case object SequentialHeightCalculator extends NextHeightCalculator {
+    override def nextHeight(bottom: Height, top: Height): Height = {
+      require(bottom + 1 < top)
+      bottom + 1
+    }.ensuring(res => res > bottom && res < top)
+  }
+
 }
