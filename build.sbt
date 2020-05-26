@@ -12,8 +12,9 @@ lazy val circeDependencies = Seq(
 
 lazy val commonSettings: Seq[Setting[_]] = Seq(
   libraryDependencies ++= circeDependencies ++ Seq(
+    "org.scalamock" %% "scalamock" % "4.4.0" % Test,
     "org.scalactic" %% "scalactic" % "3.1.1",
-    "org.scalatest" %% "scalatest" % "3.1.1" % "test"
+    "org.scalatest" %% "scalatest" % "3.1.1" % Test
   )
 )
 
