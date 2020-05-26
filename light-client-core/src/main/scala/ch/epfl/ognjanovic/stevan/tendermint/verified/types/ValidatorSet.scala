@@ -33,13 +33,8 @@ object ValidatorSet {
     case Cons(head, tail) => head._2.votingPower + sumVotingPower(tail)
   }
 
-//  @extern
-//  def nodeListContainment(set: Set[Address], validatorSet: ValidatorSet): List[Address] = {
-//    require(set subsetOf validatorSet.keys)
-//    set.toList
-//  }.ensuring(res => res.forall(validatorSet.powerAssignments.toList.map(_._1).contains))
-
-  @opaque @ghost
+  @opaque
+  @ghost
   def correctLemma(
     firstCorrect: VotingPower,
     firstFaulty: VotingPower,
@@ -48,7 +43,8 @@ object ValidatorSet {
     require(firstCorrect >= secondCorrect && firstFaulty <= secondFaulty)
   }.ensuring(_ => !(firstCorrect > firstFaulty * VotingPower(2)) ==> !(secondCorrect > secondFaulty * VotingPower(2)))
 
-  @opaque @ghost
+  @opaque
+  @ghost
   def subsetPowerLemma(first: List[Address], second: List[Address], validatorSet: ValidatorSet): Unit = {
     require(
       first.forall(second.contains) &&
@@ -69,7 +65,8 @@ object ValidatorSet {
     subsetSumLessEq(firstFiltered, secondFiltered)
   }.ensuring(_ => validatorSet.nodesPower(first) <= validatorSet.nodesPower(second))
 
-  @opaque @ghost
+  @opaque
+  @ghost
   def subsetSumLessEq(@induct first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
     require(first.forall(second.contains) && ListUtils.noDuplicate(first) && ListUtils.noDuplicate(second))
     val difference = removingFromSet(second, first)
@@ -78,7 +75,8 @@ object ValidatorSet {
     appendIncreases(first, difference)
   }.ensuring(_ => sumVotingPower(first) <= sumVotingPower(second))
 
-  @opaque @ghost
+  @opaque
+  @ghost
   def sumWithDifferenceIsEqual(first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
     require(first.forall(second.contains) && ListUtils.noDuplicate(first) && ListUtils.noDuplicate(second))
     second match {
@@ -98,7 +96,8 @@ object ValidatorSet {
     }
   }.ensuring(_ => sumVotingPower(first) + sumVotingPower(second -- first) == sumVotingPower(second))
 
-  @opaque @ghost
+  @opaque
+  @ghost
   def removeOne(elem: (Address, Validator), list: List[(Address, Validator)]): Unit = {
     require(ListUtils.noDuplicate(list) && list.contains(elem) && list.nonEmpty)
     list match {
@@ -109,17 +108,20 @@ object ValidatorSet {
   }.ensuring(_ =>
     sumVotingPower(list) == elem._2.votingPower + sumVotingPower(list - elem) && ListUtils.noDuplicate(list - elem))
 
-  @opaque @ghost
+  @opaque
+  @ghost
   def appendIncreases(first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
     additionLemma(first, second)
     appendSameAsAddition(first, second)
   }.ensuring(_ => sumVotingPower(first) <= sumVotingPower(first ++ second))
 
-  @opaque @ghost
+  @opaque
+  @ghost
   def appendSameAsAddition(@induct first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
   }.ensuring(_ => sumVotingPower(first ++ second) == sumVotingPower(first) + sumVotingPower(second))
 
-  @opaque @ghost
+  @opaque
+  @ghost
   def additionLemma(first: List[(Address, Validator)], @induct second: List[(Address, Validator)]): Unit = {
   }.ensuring(_ => sumVotingPower(first) <= sumVotingPower(first) + sumVotingPower(second))
 }
