@@ -1,7 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.{SystemStep, _}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation._
 import stainless.lang.StaticChecks.assert
@@ -10,7 +10,7 @@ import utils.SetInvariants
 
 object BlockchainStates {
 
-  private val trustVerifier = DefaultTrustVerifier
+  private val trustVerifier = TrustVerifiers.defaultTrustVerifier
 
   @inline
   private def runningStateInvariant(

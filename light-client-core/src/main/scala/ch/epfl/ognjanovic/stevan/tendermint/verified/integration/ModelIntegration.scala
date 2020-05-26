@@ -2,7 +2,6 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.integration
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates.BlockchainState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
@@ -19,7 +18,7 @@ object ModelIntegration {
     val soundSignedHeaderProvider = BlockchainLightBlockProviders(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
 
-    val trustedState = TrustedState(trustedSignedHeader, DefaultTrustVerifier)
+    val trustedState = TrustedState(trustedSignedHeader, TrustVerifiers.defaultTrustVerifier)
     assert(trustedState.currentHeight() < heightToVerify)
     assert(heightToVerify <= heightToVerify)
     assert(trustedState.currentHeight() < heightToVerify)
@@ -35,7 +34,9 @@ object ModelIntegration {
     verify(
       verifier,
       soundSignedHeaderProvider,
-      Verifier(HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight), DefaultTrustVerifier))
+      Verifier(
+        HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight),
+        TrustVerifiers.defaultTrustVerifier))
   }
 
   @scala.annotation.tailrec

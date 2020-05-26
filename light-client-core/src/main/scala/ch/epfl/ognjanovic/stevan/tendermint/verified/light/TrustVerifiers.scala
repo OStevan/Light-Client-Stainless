@@ -4,19 +4,22 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Commit, ValidatorSet
 
 object TrustVerifiers {
 
+  val defaultTrustVerifier: TrustVerifier = ParameterizedTrustVerifier(TrustLevel.default)
+
   abstract class TrustVerifier {
     def consensusObtained(validatorSet: ValidatorSet, commit: Commit): Boolean
 
     def trustedCommit(validatorSet: ValidatorSet, commit: Commit): Boolean
   }
 
-  case object DefaultTrustVerifier extends TrustVerifier {
+  case class ParameterizedTrustVerifier(trustLevel: TrustLevel) extends TrustVerifier {
     override def consensusObtained(validatorSet: ValidatorSet, commit: Commit): Boolean = {
       validatorSet.nodesPower(commit.forBlock.toList) * VotingPower(3) > validatorSet.totalPower * VotingPower(2)
     }
 
     override def trustedCommit(validatorSet: ValidatorSet, commit: Commit): Boolean = {
-      VotingPower(3) * validatorSet.nodesPower(commit.forBlock.toList) > validatorSet.totalPower
+      trustLevel.denominator * validatorSet.nodesPower(commit.forBlock.toList).power() >
+        validatorSet.totalPower.power() * trustLevel.numerator
     }
   }
 
