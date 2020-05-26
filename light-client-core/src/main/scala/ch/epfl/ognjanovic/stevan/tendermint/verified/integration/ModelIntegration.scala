@@ -2,6 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.integration
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates.BlockchainState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
@@ -36,7 +37,8 @@ object ModelIntegration {
       soundSignedHeaderProvider,
       Verifier(
         HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight),
-        TrustVerifiers.defaultTrustVerifier))
+        TrustVerifiers.defaultTrustVerifier,
+        BisectionHeightCalculator()))
   }
 
   @scala.annotation.tailrec

@@ -7,17 +7,17 @@ import stainless.annotation.pure
 case class TrustedState(trustedLightBlock: LightBlock, trustVerifier: TrustVerifier) {
 
   /**
-    * The height of the last block that we trust.
-    */
+   * The height of the last block that we trust.
+   */
   @pure
   def currentHeight(): Height = trustedLightBlock.header.height
 
   /**
-    * Tries to "improve" the current trusted state with addition of a new signed header of a greater height.
-    *
-    * @param lightBlock which will be the new trusted header if it can be trusted
-    * @return new trusted state or the old one if the trust is not reachable
-    */
+   * Tries to "improve" the current trusted state with addition of a new signed header of a greater height.
+   *
+   * @param lightBlock which will be the new trusted header if it can be trusted
+   * @return new trusted state or the old one if the trust is not reachable
+   */
   @pure
   def increaseTrust(lightBlock: LightBlock): TrustedState = {
     require(lightBlock.header.height > this.trustedLightBlock.header.height && trusted(lightBlock))
@@ -52,12 +52,6 @@ case class TrustedState(trustedLightBlock: LightBlock, trustVerifier: TrustVerif
 
     trustVerifier.trustedCommit(trustedLightBlock.nextValidatorSet, lightBlock.commit)
   }
-
-  @pure
-  def bisectionHeight(height: Height): Height = {
-    require(height > this.trustedLightBlock.header.height + 1)
-    (height + trustedLightBlock.header.height) / 2
-  }.ensuring(res => res < height && currentHeight() < res)
 
   @pure
   def trusted(lightBlock: LightBlock): Boolean = {

@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClientLemmas._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
@@ -10,7 +11,10 @@ import stainless.collection.{Cons, Nil}
 import stainless.lang.StaticChecks.Ensuring
 import stainless.lang._
 
-case class Verifier(expirationChecker: ExpirationChecker, trustVerifier: TrustVerifier) {
+case class Verifier(
+  expirationChecker: ExpirationChecker,
+  trustVerifier: TrustVerifier,
+  heightCalculator: NextHeightCalculator) {
 
   @pure
   def verifySingle(trustedState: TrustedState, lightBlock: LightBlock): VerificationOutcome = {
@@ -90,7 +94,7 @@ case class Verifier(expirationChecker: ExpirationChecker, trustVerifier: TrustVe
                 untrustedState)
             else
               WaitingForHeader(
-                newTrustedState.bisectionHeight(targetHeight),
+                heightCalculator.nextHeight(newTrustedState.currentHeight(), targetHeight),
                 targetHeight,
                 newTrustedState,
                 untrustedState)
@@ -98,7 +102,7 @@ case class Verifier(expirationChecker: ExpirationChecker, trustVerifier: TrustVe
 
       case InsufficientTrust =>
         WaitingForHeader(
-          trustedState.bisectionHeight(lightBlock.header.height),
+          heightCalculator.nextHeight(trustedState.currentHeight(), lightBlock.header.height),
           targetHeight,
           trustedState,
           untrustedState.addSignedHeader(lightBlock))
