@@ -11,7 +11,7 @@ object NextHeightCalculators {
     }.ensuring(res => res > bottom && res < top)
   }
 
-  case class BisectionHeightCalculator() extends NextHeightCalculator {
+  case object BisectionHeightCalculator extends NextHeightCalculator {
     override def nextHeight(bottom: Height, top: Height): Height = {
       require(bottom + 1 < top)
       (bottom + top) / 2

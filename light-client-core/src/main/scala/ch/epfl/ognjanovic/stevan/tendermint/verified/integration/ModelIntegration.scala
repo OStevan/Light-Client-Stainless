@@ -38,7 +38,7 @@ object ModelIntegration {
       Verifier(
         HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight),
         TrustVerifiers.defaultTrustVerifier,
-        BisectionHeightCalculator()))
+        BisectionHeightCalculator))
   }
 
   @scala.annotation.tailrec
