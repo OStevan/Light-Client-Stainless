@@ -2,15 +2,12 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import java.time.Instant
 
-import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
-import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.{CirceDecoders, CirceDeserializer, circe}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
+import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
-import io.circe.Decoder
 import org.scalatest.flatspec.AnyFlatSpec
 
 sealed class SingleStepBisectionVerificationTests extends AnyFlatSpec {
@@ -19,7 +16,7 @@ sealed class SingleStepBisectionVerificationTests extends AnyFlatSpec {
     val content = LightClientIntegrationTests.content(
       "/single-step/skipping/validator_set/skip_one_block.json")
     val (trustedHeader, trustingPeriod, now, provider) =
-      new CirceDeserializer(SingleStepBisectionVerificationTests.singleStepTestCaseDecoder)(content)
+      new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
     val verifier = SingleStepBisectionVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
@@ -41,7 +38,7 @@ sealed class SingleStepBisectionVerificationTests extends AnyFlatSpec {
     val content = LightClientIntegrationTests.content(
     "/single-step/skipping/validator_set/skip_five_blocks.json")
     val (trustedHeader, trustingPeriod, now, provider) =
-    new CirceDeserializer(SingleStepBisectionVerificationTests.singleStepTestCaseDecoder)(content)
+    new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
     val verifier = SingleStepBisectionVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
@@ -62,7 +59,7 @@ sealed class SingleStepBisectionVerificationTests extends AnyFlatSpec {
     val content = LightClientIntegrationTests.content(
     "/single-step/skipping/validator_set/valset_changes_less_than_trust_level.json")
     val (trustedHeader, trustingPeriod, now, provider) =
-    new CirceDeserializer(SingleStepBisectionVerificationTests.singleStepTestCaseDecoder)(content)
+    new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
     val verifier = SingleStepBisectionVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
@@ -83,7 +80,7 @@ sealed class SingleStepBisectionVerificationTests extends AnyFlatSpec {
     val content = LightClientIntegrationTests.content(
     "/single-step/skipping/validator_set/valset_changes_more_than_trust_level.json")
     val (trustedHeader, trustingPeriod, now, provider) =
-    new CirceDeserializer(SingleStepBisectionVerificationTests.singleStepTestCaseDecoder)(content)
+    new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
     val verifier = SingleStepBisectionVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
@@ -105,7 +102,7 @@ sealed class SingleStepBisectionVerificationTests extends AnyFlatSpec {
     val content = LightClientIntegrationTests.content(
     "/single-step/skipping/commit/more_than_two_third_vals_sign.json")
     val (trustedHeader, trustingPeriod, now, provider) =
-    new CirceDeserializer(SingleStepBisectionVerificationTests.singleStepTestCaseDecoder)(content)
+    new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
     val verifier = SingleStepBisectionVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
@@ -126,7 +123,7 @@ sealed class SingleStepBisectionVerificationTests extends AnyFlatSpec {
     val content = LightClientIntegrationTests.content(
     "/single-step/skipping/commit/one_third_vals_dont_sign.json")
     val (trustedHeader, trustingPeriod, now, provider) =
-    new CirceDeserializer(SingleStepBisectionVerificationTests.singleStepTestCaseDecoder)(content)
+    new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
     val verifier = SingleStepBisectionVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
@@ -147,7 +144,7 @@ sealed class SingleStepBisectionVerificationTests extends AnyFlatSpec {
     val content = LightClientIntegrationTests.content(
     "/single-step/skipping/header/out_of_trusting_period.json")
     val (trustedHeader, trustingPeriod, now, provider) =
-    new CirceDeserializer(SingleStepBisectionVerificationTests.singleStepTestCaseDecoder)(content)
+    new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
     val verifier = SingleStepBisectionVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
@@ -173,33 +170,5 @@ object SingleStepBisectionVerificationTests {
       TrustVerifiers.defaultTrustVerifier,
       BisectionHeightCalculator)
     verifier
-  }
-
-  implicit val singleStepTestCaseDecoder: Decoder[(LightBlock, Long, Instant, LightBlockProvider)] = cursor => for {
-  signedHeader <- cursor.downField("initial")
-  .downField("signed_header")
-  .as[SignedHeader](CirceDecoders.signedHeaderDecoder)
-  nextValidatorSet <- cursor.downField("initial")
-  .downField("next_validator_set")
-  .as[ValidatorSet](CirceDecoders.validatorSetDecoder)
-  now <- cursor.downField("initial")
-  .downField("now")
-  .as[Instant](circe.instantDecoder)
-  trustingPeriod <- cursor.downField("initial")
-  .downField("trusting_period")
-  .as[Long]
-  provider <- cursor.downField("input")
-  .as[LightBlockProvider](InMemoryProvider.decoder(LightClientIntegrationTests.lightBlockDecoder))
-  } yield {
-    (
-    LightBlock(
-    signedHeader.header,
-    signedHeader.commit,
-    nextValidatorSet,
-    nextValidatorSet,
-    LightClientIntegrationTests.defaultProvider),
-    trustingPeriod,
-    now,
-    provider)
   }
 }
