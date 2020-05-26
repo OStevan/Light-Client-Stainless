@@ -35,7 +35,7 @@ object SystemSteps {
    * @param nextValidatorSet an agreed set of validators for the next block
    */
   case class AppendBlock(lastCommit: Commit, nextValidatorSet: ValidatorSet) extends SystemStep {
-    require(nextValidatorSet.values.forall(_.votingPower.value == 1) && lastCommit.committingSigners.nonEmpty)
+    require(nextValidatorSet.values.forall(_.votingPower.value == 1) && lastCommit.forBlock.nonEmpty)
   }
 
 }

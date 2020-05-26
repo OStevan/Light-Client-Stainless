@@ -9,10 +9,10 @@ case class Commit(height: Height, round: Long, blockId: BlockId, signatures: Lis
   require(signatures.nonEmpty)
 
   @pure
-  def committingSigners: Set[Address] =
+  def forBlock: Set[Address] =
     signatures.flatMap {
       case BlockIDFlagAbsent => List.empty[Address]
       case value: BlockIDFlagCommit => List(value.validator)
-      case value: BlockIdFlagNil => List(value.validator)
+      case _: BlockIdFlagNil => List.empty[Address]
     }.toSet
 }

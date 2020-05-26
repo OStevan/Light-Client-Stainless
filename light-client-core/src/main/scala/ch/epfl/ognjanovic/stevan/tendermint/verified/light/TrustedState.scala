@@ -52,7 +52,7 @@ case class TrustedState(trustedLightBlock: LightBlock) {
 
     val intersection = SetInvariants.setIntersection(
       trustedLightBlock.nextValidatorSet.keys,
-      lightBlock.commit.committingSigners)
+      lightBlock.commit.forBlock)
 
     trustedLightBlock.nextValidatorSet.checkSupport(intersection)
   }

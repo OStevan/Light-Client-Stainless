@@ -53,9 +53,9 @@ case class Verifier(expirationChecker: ExpirationChecker) {
 
   @pure
   private def checkCommit(header: LightBlock): VerificationOutcome = {
-    if (header.commit.committingSigners.nonEmpty &&
-      (header.commit.committingSigners subsetOf header.validatorSet.keys) &&
-      header.validatorSet.obtainedByzantineQuorum(header.commit.committingSigners))
+    if (header.commit.forBlock.nonEmpty &&
+      (header.commit.forBlock subsetOf header.validatorSet.keys) &&
+      header.validatorSet.obtainedByzantineQuorum(header.commit.forBlock))
       Success
     else
       InvalidCommit
