@@ -10,7 +10,7 @@ import utils.SetInvariants
 
 object BlockchainStates {
 
-  private val trustVerifier = DefaultTrustVerifier()
+  private val trustVerifier = DefaultTrustVerifier
 
   @inline
   private def runningStateInvariant(

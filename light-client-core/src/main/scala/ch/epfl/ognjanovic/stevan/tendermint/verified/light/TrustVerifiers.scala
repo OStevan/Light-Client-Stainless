@@ -10,7 +10,7 @@ object TrustVerifiers {
     def trustedCommit(validatorSet: ValidatorSet, commit: Commit): Boolean
   }
 
-  case class DefaultTrustVerifier() extends TrustVerifier {
+  case object DefaultTrustVerifier extends TrustVerifier {
     override def consensusObtained(validatorSet: ValidatorSet, commit: Commit): Boolean = {
       validatorSet.nodesPower(commit.forBlock.toList) * VotingPower(3) > validatorSet.totalPower * VotingPower(2)
     }

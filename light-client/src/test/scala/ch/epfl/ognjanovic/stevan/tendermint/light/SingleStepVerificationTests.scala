@@ -5,6 +5,7 @@ import java.time.Instant
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.{CirceDecoders, CirceDeserializer, circe}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
@@ -21,11 +22,15 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
     val verifier = Verifier(
-      new TimeBasedExpirationChecker(() => now, trustingPeriod))
+      new TimeBasedExpirationChecker(() => now, trustingPeriod), DefaultTrustVerifier)
 
     val requestHeight = Height(3)
     val result = verifier.processHeader(
-      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      WaitingForHeader(
+        requestHeight,
+        requestHeight,
+        TrustedState(trustedHeader, DefaultTrustVerifier),
+        UntrustedState.empty),
       provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[Finished])
@@ -39,11 +44,15 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
     val verifier = Verifier(
-      new TimeBasedExpirationChecker(() => now, trustingPeriod))
+      new TimeBasedExpirationChecker(() => now, trustingPeriod), DefaultTrustVerifier)
 
     val requestHeight = Height(7)
     val result = verifier.processHeader(
-      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      WaitingForHeader(
+        requestHeight,
+        requestHeight,
+        TrustedState(trustedHeader, DefaultTrustVerifier),
+        UntrustedState.empty),
       provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[Finished])
@@ -57,11 +66,15 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
     val verifier = Verifier(
-      new TimeBasedExpirationChecker(() => now, trustingPeriod))
+      new TimeBasedExpirationChecker(() => now, trustingPeriod), DefaultTrustVerifier)
 
     val requestHeight = Height(7)
     val result = verifier.processHeader(
-      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      WaitingForHeader(
+        requestHeight,
+        requestHeight,
+        TrustedState(trustedHeader, DefaultTrustVerifier),
+        UntrustedState.empty),
       provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[Finished])
@@ -75,11 +88,15 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
     val verifier = Verifier(
-      new TimeBasedExpirationChecker(() => now, trustingPeriod))
+      new TimeBasedExpirationChecker(() => now, trustingPeriod), DefaultTrustVerifier)
 
     val requestHeight = Height(7)
     val result = verifier.processHeader(
-      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      WaitingForHeader(
+        requestHeight,
+        requestHeight,
+        TrustedState(trustedHeader, DefaultTrustVerifier),
+        UntrustedState.empty),
       provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[WaitingForHeader])
@@ -94,11 +111,15 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
     val verifier = Verifier(
-      new TimeBasedExpirationChecker(() => now, trustingPeriod))
+      new TimeBasedExpirationChecker(() => now, trustingPeriod), DefaultTrustVerifier)
 
     val requestHeight = Height(3)
     val result = verifier.processHeader(
-      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      WaitingForHeader(
+        requestHeight,
+        requestHeight,
+        TrustedState(trustedHeader, DefaultTrustVerifier),
+        UntrustedState.empty),
       provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[Finished])
@@ -112,11 +133,15 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
     val verifier = Verifier(
-      new TimeBasedExpirationChecker(() => now, trustingPeriod))
+      new TimeBasedExpirationChecker(() => now, trustingPeriod), DefaultTrustVerifier)
 
     val requestHeight = Height(3)
     val result = verifier.processHeader(
-      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      WaitingForHeader(
+        requestHeight,
+        requestHeight,
+        TrustedState(trustedHeader, DefaultTrustVerifier),
+        UntrustedState.empty),
       provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[Finished])
@@ -130,11 +155,15 @@ sealed class SingleStepVerificationTests extends AnyFlatSpec {
       new CirceDeserializer(SingleStepVerificationTests.singleStepTestCaseDecoder)(content)
 
     val verifier = Verifier(
-      new TimeBasedExpirationChecker(() => now, trustingPeriod))
+      new TimeBasedExpirationChecker(() => now, trustingPeriod), DefaultTrustVerifier)
 
     val requestHeight = Height(5)
     val result = verifier.processHeader(
-      WaitingForHeader(requestHeight, requestHeight, TrustedState(trustedHeader), UntrustedState.empty),
+      WaitingForHeader(
+        requestHeight,
+        requestHeight,
+        TrustedState(trustedHeader, DefaultTrustVerifier),
+        UntrustedState.empty),
       provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[Finished])
