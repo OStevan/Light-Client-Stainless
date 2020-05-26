@@ -124,7 +124,7 @@ object BlockchainStates {
           val lastBlock = blockchain.chain.head
           if (
             trustVerifier.consensusObtained(lastBlock.validatorSet, lastCommit) &&
-              nextValidatorSet.isCorrect(faulty)) {
+              blockchain.faultChecker.isCorrect(nextValidatorSet, faulty)) {
             val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
             assert(newBlockchain.chain.head.validatorSet.keys.subsetOf(allNodes))
             assert(globalStateInvariant(allNodes, faulty, newBlockchain))
