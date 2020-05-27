@@ -10,7 +10,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{TrustVerifiers, Trus
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import org.scalatest.flatspec.AnyFlatSpec
 
-sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
+sealed class SingleStepSequentialValidatorsTests extends AnyFlatSpec {
 
   "Single step sequential with one validator" should "succeed for height 2" in {
     val content = LightClientIntegrationTests.content(
@@ -18,7 +18,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -39,7 +39,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -60,7 +60,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -81,7 +81,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -102,7 +102,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -123,7 +123,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -144,7 +144,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -165,7 +165,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -186,7 +186,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -207,7 +207,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -228,7 +228,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -249,7 +249,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -270,7 +270,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     val (trustedHeader, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
-    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+    val verifier = SingleStepSequentialValidatorsTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
 
     val requestHeight = Height(2)
     val result = verifier.processHeader(
@@ -286,7 +286,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
   }
 }
 
-object SingleStepSequentialVerificationTests {
+object SingleStepSequentialValidatorsTests {
   private def createVerifierWithDefaultTrustLevel(trustingPeriod: Long, now: Instant) = {
     val verifier = Verifier(
       new TimeBasedExpirationChecker(() => now, trustingPeriod),
