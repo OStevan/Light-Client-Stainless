@@ -10,11 +10,11 @@ import stainless.lang._
 object LightClientLemmas {
 
   @opaque
-  def transitivityOfTargetHeight(targetHeight: Height, untrustedState: UntrustedState): Unit = {
+  def transitivityOfTargetHeight(targetHeight: Height, untrustedState: HelperUntrustedState): Unit = {
     require(targetHeightInvariant(targetHeight, untrustedState.pending))
     untrustedState.pending match {
       case Nil() => ()
-      case Cons(_, t) => transitivityOfTargetHeight(targetHeight, UntrustedState(t))
+      case Cons(_, t) => transitivityOfTargetHeight(targetHeight, HelperUntrustedState(t))
     }
   }.ensuring(_ => untrustedState.pending.forall(_.header.height <= targetHeight))
 

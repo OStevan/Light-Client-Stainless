@@ -9,7 +9,7 @@ import stainless.collection._
 object VerifierStates {
 
   @inline
-  def untrustedStateHeightInvariant(height: Height, untrustedState: UntrustedState): Boolean = {
+  def untrustedStateHeightInvariant(height: Height, untrustedState: HelperUntrustedState): Boolean = {
     untrustedState.pending match {
       case list: Cons[LightBlock] => height < list.head.header.height
       case _: Nil[LightBlock] => true
@@ -27,7 +27,7 @@ object VerifierStates {
   case class Finished(
     outcome: VerificationOutcome,
     trustedState: TrustedState,
-    untrustedState: UntrustedState) extends VerifierState {
+    untrustedState: HelperUntrustedState) extends VerifierState {
     require(
       (outcome == Success && untrustedState.pending.isEmpty) ||
         (outcome != Success && untrustedState.pending.nonEmpty))
@@ -38,7 +38,7 @@ object VerifierStates {
     requestHeight: Height,
     targetHeight: Height,
     trustedState: TrustedState,
-    untrustedState: UntrustedState) extends VerifierState {
+    untrustedState: HelperUntrustedState) extends VerifierState {
     require(
       requestHeight <= targetHeight &&
         trustedState.currentHeight() < requestHeight &&

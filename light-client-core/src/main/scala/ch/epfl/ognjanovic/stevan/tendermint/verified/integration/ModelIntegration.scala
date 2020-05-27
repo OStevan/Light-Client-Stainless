@@ -26,14 +26,14 @@ object ModelIntegration {
     assert(trustedState.currentHeight() < heightToVerify)
     assert(heightToVerify <= heightToVerify)
     assert(trustedState.currentHeight() < heightToVerify)
-    assert(untrustedStateHeightInvariant(heightToVerify, UntrustedState.empty))
-    assert(targetHeightInvariant(heightToVerify, UntrustedState.empty.pending))
+    assert(untrustedStateHeightInvariant(heightToVerify, HelperUntrustedState.empty))
+    assert(targetHeightInvariant(heightToVerify, HelperUntrustedState.empty.pending))
 
     val verifier = WaitingForHeader(
       heightToVerify,
       heightToVerify,
       trustedState,
-      UntrustedState.empty)
+      HelperUntrustedState.empty)
 
     verify(
       verifier,

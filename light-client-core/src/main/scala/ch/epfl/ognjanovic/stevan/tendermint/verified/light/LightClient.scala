@@ -46,7 +46,7 @@ case class LightClient(
     targetHeight: Height,
     lightBlock: LightBlock,
     trustedState: TrustedState,
-    untrustedState: UntrustedState): VerifierState = {
+    untrustedState: HelperUntrustedState): VerifierState = {
     require(
       lightBlock.header.height <= targetHeight &&
         trustedState.currentHeight() < lightBlock.header.height &&
@@ -56,7 +56,7 @@ case class LightClient(
       case Success =>
         untrustedState.pending match {
           case Cons(h, t) =>
-            stepByStepVerification(targetHeight, h, trustedState.increaseTrust(lightBlock), UntrustedState(t))
+            stepByStepVerification(targetHeight, h, trustedState.increaseTrust(lightBlock), HelperUntrustedState(t))
 
           case Nil() =>
             val newTrustedState = trustedState.increaseTrust(lightBlock)

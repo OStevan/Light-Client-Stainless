@@ -5,13 +5,13 @@ import stainless.annotation.pure
 import stainless.collection._
 import stainless.lang.StaticChecks.Ensuring
 
-case class UntrustedState(pending: List[LightBlock]) {
-  require(UntrustedState.pendingInvariant(pending))
+case class HelperUntrustedState(pending: List[LightBlock]) {
+  require(HelperUntrustedState.pendingInvariant(pending))
 
   @pure
-  def addSignedHeader(lightBlock: LightBlock): UntrustedState = {
+  def addSignedHeader(lightBlock: LightBlock): HelperUntrustedState = {
     require(pending.isEmpty || (lightBlock.header.height < pending.head.header.height))
-    UntrustedState(lightBlock :: pending)
+    HelperUntrustedState(lightBlock :: pending)
   }.ensuring(res =>
     (pending.isEmpty || pending.reverse.head == res.pending.reverse.head) &&
       res.pending.head.header.height == lightBlock.header.height &&
@@ -21,12 +21,12 @@ case class UntrustedState(pending: List[LightBlock]) {
   def size: BigInt = pending.size
 }
 
-object UntrustedState {
+object HelperUntrustedState {
   @pure
-  def empty: UntrustedState = UntrustedState(Nil[LightBlock]())
+  def empty: HelperUntrustedState = HelperUntrustedState(Nil[LightBlock]())
 
   @pure
-  def apply(lightBlock: LightBlock): UntrustedState = UntrustedState(Cons(lightBlock, Nil()))
+  def apply(lightBlock: LightBlock): HelperUntrustedState = HelperUntrustedState(Cons(lightBlock, Nil()))
 
   @scala.annotation.tailrec
   def pendingInvariant(pending: List[LightBlock]): Boolean = {
