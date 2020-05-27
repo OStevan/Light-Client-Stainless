@@ -37,7 +37,7 @@ case class TrustedState(trustedLightBlock: LightBlock, trustVerifier: TrustVerif
   @pure
   private def internalAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
     require(isAdjacent(lightBlock))
-    trustedLightBlock.nextValidatorSet == lightBlock.validatorSet
+    trustedLightBlock.nextValidatorSet.toInfoHashable == lightBlock.validatorSet.toInfoHashable
   }
 
   @pure

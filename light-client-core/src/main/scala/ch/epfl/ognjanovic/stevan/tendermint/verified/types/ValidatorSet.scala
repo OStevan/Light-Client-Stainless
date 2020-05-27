@@ -1,5 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Validators.{InfoHashable, Validator}
 import stainless.annotation._
 import stainless.collection._
 import stainless.lang._
@@ -12,7 +13,8 @@ case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Addre
       totalPower == powerAssignments.toList.foldLeft(VotingPower(0))((acc, value) => acc + value._2.votingPower) &&
       !powerAssignments.isEmpty)
 
-  @pure @extern
+  @pure
+  @extern
   def keys: Set[Address] = {
     powerAssignments.toList.map(_._1).content
   }.ensuring(res => res.nonEmpty)
@@ -23,6 +25,8 @@ case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Addre
 
   def nodesPower(nodes: List[Address]): VotingPower =
     ValidatorSet.sumVotingPower(powerAssignments.toList.filter(pair => nodes.contains(pair._1)))
+
+  def toInfoHashable: List[InfoHashable] = values.map(p => p.toInfoHashable)
 }
 
 object ValidatorSet {
