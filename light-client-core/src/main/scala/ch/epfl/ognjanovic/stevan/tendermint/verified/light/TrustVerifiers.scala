@@ -7,7 +7,10 @@ object TrustVerifiers {
   val defaultTrustVerifier: TrustVerifier = ParameterizedTrustVerifier(TrustLevel.default)
 
   abstract class TrustVerifier {
-    def consensusObtained(validatorSet: ValidatorSet, commit: Commit): Boolean
+    def consensusObtained(validatorSet: ValidatorSet, commit: Commit): Boolean = {
+      require(commit.forBlock subsetOf validatorSet.keys)
+      ??? : Boolean
+    }
 
     def trustedCommit(validatorSet: ValidatorSet, commit: Commit): Boolean
   }

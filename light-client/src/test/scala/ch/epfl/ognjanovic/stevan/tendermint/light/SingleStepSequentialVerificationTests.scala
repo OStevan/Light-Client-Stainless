@@ -4,7 +4,7 @@ import java.time.Instant
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.SequentialHeightCalculator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.Success
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.{InvalidCommit, Success}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates.{Finished, WaitingForHeader}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{TrustVerifiers, TrustedState, UntrustedState, Verifier}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
@@ -73,6 +73,27 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
 
     assert(result.isInstanceOf[Finished])
     assert(result.asInstanceOf[Finished].outcome == Success)
+  }
+
+  "A missing validator in an adjacent block" should "fail verification" in {
+    val content = LightClientIntegrationTests.content(
+      "/single-step/sequential/validator_set/faulty_signer.json")
+    val (trustedHeader, trustingPeriod, now, provider) =
+      new CirceDeserializer(singleStepTestCaseDecoder)(content)
+
+    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+
+    val requestHeight = Height(2)
+    val result = verifier.processHeader(
+      WaitingForHeader(
+        requestHeight,
+        requestHeight,
+        TrustedState(trustedHeader, TrustVerifiers.defaultTrustVerifier),
+        UntrustedState.empty),
+      provider.lightBlock(requestHeight))
+
+    assert(result.isInstanceOf[Finished])
+    assert(result.asInstanceOf[Finished].outcome == InvalidCommit)
   }
 }
 
