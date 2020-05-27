@@ -9,22 +9,28 @@ import stainless.lang._
 object Verifiers {
 
   abstract class Verifier {
-    def verify(trustedState: TrustedState, untrustedLightBlock: LightBlock): VerificationOutcome
+    @pure
+    def verify(trustedState: TrustedState, untrustedLightBlock: LightBlock): VerificationOutcome = {
+      require(trustedState.currentHeight() < untrustedLightBlock.header.height)
+      ??? : VerificationOutcome
+    }.ensuring(res => ((res == Success) ==> trustedState.trusted(untrustedLightBlock)) &&
+      ((res == InsufficientTrust) ==> (trustedState.currentHeight() + 1  < untrustedLightBlock.header.height)))
   }
 
   case class DefaultVerifier(expirationChecker: ExpirationChecker, trustVerifier: TrustVerifier) extends Verifier {
     @pure
-    override def verify(trustedState: TrustedState, lightBlock: LightBlock): VerificationOutcome = {
-      require(trustedState.currentHeight() < lightBlock.header.height)
+    override def verify(trustedState: TrustedState, untrustedLightBlock: LightBlock): VerificationOutcome = {
+      require(trustedState.currentHeight() < untrustedLightBlock.header.height)
       if (expirationChecker.isExpired(trustedState.trustedLightBlock))
         ExpiredTrustedState
-      else if (trustedState.trusted(lightBlock))
-        checkCommit(lightBlock)
-      else if (trustedState.isAdjacent(lightBlock))
+      else if (trustedState.trusted(untrustedLightBlock))
+        checkCommit(untrustedLightBlock)
+      else if (trustedState.isAdjacent(untrustedLightBlock))
         Failure
       else
         InsufficientTrust
-    }.ensuring(res => (res == Success) ==> trustedState.trusted(lightBlock))
+    }.ensuring(res => ((res == Success) ==> trustedState.trusted(untrustedLightBlock)) &&
+      ((res == InsufficientTrust) ==> (trustedState.currentHeight() + 1  < untrustedLightBlock.header.height)))
 
     @pure
     def checkCommit(header: LightBlock): VerificationOutcome = {
