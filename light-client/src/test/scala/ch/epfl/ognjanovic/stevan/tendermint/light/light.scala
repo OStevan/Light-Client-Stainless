@@ -5,8 +5,9 @@ import java.time.Instant
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.{CirceDecoders, circe}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{TrustVerifiers, TrustedState}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{LightBlock, ValidatorSet}
 import io.circe.Decoder
 
@@ -31,7 +32,7 @@ package object light {
     } yield {
       val trustVerifier = TrustVerifiers.defaultTrustVerifier
 
-      (TrustedState(
+      (SimpleTrustedState(
         LightBlock(
           signedHeader.header,
           signedHeader.commit,
