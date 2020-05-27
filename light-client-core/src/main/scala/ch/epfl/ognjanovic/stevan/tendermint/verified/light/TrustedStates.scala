@@ -31,7 +31,8 @@ object TrustedStates {
     def isAdjacent(lightBlock: LightBlock): Boolean = {
       require(currentHeight() < lightBlock.header.height)
       ??? : Boolean
-    }.ensuring(res => (res && currentHeight() + 1 == lightBlock.header.height) || (!res && currentHeight() + 1 < lightBlock.header.height))
+    }.ensuring(res => (res && currentHeight() + 1 == lightBlock.header.height) ||
+      (!res && currentHeight() + 1 < lightBlock.header.height))
 
     @pure
     def trusted(lightBlock: LightBlock): Boolean = {
