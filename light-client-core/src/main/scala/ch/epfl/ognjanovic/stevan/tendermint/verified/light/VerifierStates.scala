@@ -1,5 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.inlineInvariant

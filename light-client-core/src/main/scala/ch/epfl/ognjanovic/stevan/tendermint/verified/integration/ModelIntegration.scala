@@ -3,6 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.integration
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates.BlockchainState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifiers.DefaultVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
@@ -21,7 +22,7 @@ object ModelIntegration {
     val soundSignedHeaderProvider = BlockchainLightBlockProviders(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
 
-    val trustedState = TrustedState(trustedSignedHeader, TrustVerifiers.defaultTrustVerifier)
+    val trustedState: TrustedState = SimpleTrustedState(trustedSignedHeader, TrustVerifiers.defaultTrustVerifier)
     assert(trustedState.currentHeight() < heightToVerify)
     assert(heightToVerify <= heightToVerify)
     assert(trustedState.currentHeight() < heightToVerify)

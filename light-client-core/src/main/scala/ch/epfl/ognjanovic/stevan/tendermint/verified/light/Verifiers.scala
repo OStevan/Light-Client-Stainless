@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustVerifier
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
 import stainless.annotation.pure
