@@ -32,6 +32,7 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     assert(result.isInstanceOf[Finished])
     assert(result.asInstanceOf[Finished].outcome == Success)
   }
+
   "Single step sequential with 8 validators" should "succeed for height 2" in {
     val content = LightClientIntegrationTests.content(
       "/single-step/sequential/validator_set/8_validators.json")
@@ -53,7 +54,26 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     assert(result.asInstanceOf[Finished].outcome == Success)
   }
 
+  "Single step sequential with 128 validators" should "succeed for height 2" in {
+    val content = LightClientIntegrationTests.content(
+      "/single-step/sequential/validator_set/128_validators.json")
+    val (trustedHeader, trustingPeriod, now, provider) =
+      new CirceDeserializer(singleStepTestCaseDecoder)(content)
 
+    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+
+    val requestHeight = Height(2)
+    val result = verifier.processHeader(
+      WaitingForHeader(
+        requestHeight,
+        requestHeight,
+        TrustedState(trustedHeader, TrustVerifiers.defaultTrustVerifier),
+        UntrustedState.empty),
+      provider.lightBlock(requestHeight))
+
+    assert(result.isInstanceOf[Finished])
+    assert(result.asInstanceOf[Finished].outcome == Success)
+  }
 }
 
 object SingleStepSequentialVerificationTests {
