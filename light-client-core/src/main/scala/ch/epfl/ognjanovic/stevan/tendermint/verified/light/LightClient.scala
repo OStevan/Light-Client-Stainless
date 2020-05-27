@@ -2,32 +2,17 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClientLemmas._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifiers.Verifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
-import stainless.annotation.pure
 import stainless.collection.{Cons, Nil}
 import stainless.lang.StaticChecks.Ensuring
-import stainless.lang._
 
-case class Verifier(
-  expirationChecker: ExpirationChecker,
-  trustVerifier: TrustVerifier,
+case class LightClient(
+  verifier: Verifier,
   heightCalculator: NextHeightCalculator) {
 
-  @pure
-  def verifySingle(trustedState: TrustedState, lightBlock: LightBlock): VerificationOutcome = {
-    require(trustedState.currentHeight() < lightBlock.header.height)
-    if (expirationChecker.isExpired(trustedState.trustedLightBlock))
-      ExpiredTrustedState
-    else if (trustedState.trusted(lightBlock))
-      checkCommit(lightBlock)
-    else if (trustedState.isAdjacent(lightBlock))
-      Failure
-    else
-      InsufficientTrust
-  }.ensuring(res => (res == Success) ==> trustedState.trusted(lightBlock))
 
   def processHeader(
     waitingForHeader: WaitingForHeader,
@@ -56,16 +41,6 @@ case class Verifier(
     case _: Finished => true
   }
 
-  @pure
-  private def checkCommit(header: LightBlock): VerificationOutcome = {
-    if (header.commit.forBlock.nonEmpty &&
-      (header.commit.forBlock subsetOf header.validatorSet.keys) &&
-      trustVerifier.consensusObtained(header.validatorSet, header.commit))
-      Success
-    else
-      InvalidCommit
-  }
-
   private def stepByStepVerification(
     targetHeight: Height,
     lightBlock: LightBlock,
@@ -76,7 +51,7 @@ case class Verifier(
         trustedState.currentHeight() < lightBlock.header.height &&
         targetHeightInvariant(targetHeight, untrustedState.pending) &&
         untrustedStateHeightInvariant(lightBlock.header.height, untrustedState))
-    verifySingle(trustedState, lightBlock) match {
+    verifier.verify(trustedState, lightBlock) match {
       case Success =>
         untrustedState.pending match {
           case Cons(h, t) =>

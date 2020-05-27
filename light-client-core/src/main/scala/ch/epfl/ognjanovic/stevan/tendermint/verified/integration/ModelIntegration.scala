@@ -4,6 +4,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifiers.DefaultVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation.pure
@@ -36,9 +37,10 @@ object ModelIntegration {
     verify(
       verifier,
       soundSignedHeaderProvider,
-      Verifier(
-        HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight),
-        TrustVerifiers.defaultTrustVerifier,
+      LightClient(
+        DefaultVerifier(
+          HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight),
+          TrustVerifiers.defaultTrustVerifier),
         nextHeightCalculator))
   }
 
@@ -46,7 +48,7 @@ object ModelIntegration {
   def verify(
     waitingForHeader: WaitingForHeader,
     lightBlockProvider: LightBlockProvider,
-    verifier: Verifier): Finished = {
+    verifier: LightClient): Finished = {
     require(waitingForHeader.targetHeight < lightBlockProvider.currentHeight)
     decreases(LightClientLemmas.terminationMeasure(waitingForHeader))
     Height.helperLemma(
