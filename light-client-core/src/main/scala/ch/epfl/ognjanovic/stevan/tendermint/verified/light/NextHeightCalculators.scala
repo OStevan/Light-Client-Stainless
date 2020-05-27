@@ -1,10 +1,12 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
+import stainless.annotation.pure
 
 object NextHeightCalculators {
 
   sealed abstract class NextHeightCalculator {
+    @pure
     def nextHeight(bottom: Height, top: Height): Height = {
       require(bottom + 1 < top)
       ??? : Height
@@ -12,6 +14,7 @@ object NextHeightCalculators {
   }
 
   case object BisectionHeightCalculator extends NextHeightCalculator {
+    @pure
     override def nextHeight(bottom: Height, top: Height): Height = {
       require(bottom + 1 < top)
       (bottom + top) / 2
@@ -19,6 +22,7 @@ object NextHeightCalculators {
   }
 
   case object SequentialHeightCalculator extends NextHeightCalculator {
+    @pure
     override def nextHeight(bottom: Height, top: Height): Height = {
       require(bottom + 1 < top)
       bottom + 1
