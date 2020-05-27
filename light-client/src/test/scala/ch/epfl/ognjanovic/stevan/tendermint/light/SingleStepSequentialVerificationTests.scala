@@ -95,6 +95,27 @@ sealed class SingleStepSequentialVerificationTests extends AnyFlatSpec {
     assert(result.isInstanceOf[Finished])
     assert(result.asInstanceOf[Finished].outcome == InvalidCommit)
   }
+
+  "Changes in validator sets of adjacent blocks" should "not influence verification" in {
+    val content = LightClientIntegrationTests.content(
+      "/single-step/sequential/validator_set/half_valset_changes.json")
+    val (trustedHeader, trustingPeriod, now, provider) =
+      new CirceDeserializer(singleStepTestCaseDecoder)(content)
+
+    val verifier = SingleStepSequentialVerificationTests.createVerifierWithDefaultTrustLevel(trustingPeriod, now)
+
+    val requestHeight = Height(2)
+    val result = verifier.processHeader(
+      WaitingForHeader(
+        requestHeight,
+        requestHeight,
+        TrustedState(trustedHeader, TrustVerifiers.defaultTrustVerifier),
+        UntrustedState.empty),
+      provider.lightBlock(requestHeight))
+
+    assert(result.isInstanceOf[Finished])
+    assert(result.asInstanceOf[Finished].outcome == Success)
+  }
 }
 
 object SingleStepSequentialVerificationTests {
