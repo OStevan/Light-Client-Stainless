@@ -23,17 +23,17 @@ object ModelIntegration {
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
 
     val trustedState: TrustedState = SimpleTrustedState(trustedSignedHeader, TrustVerifiers.defaultTrustVerifier)
-    assert(trustedState.currentHeight() < heightToVerify)
+    val startingState = UntrustedStates.empty(heightToVerify)
     assert(heightToVerify <= heightToVerify)
     assert(trustedState.currentHeight() < heightToVerify)
-    assert(untrustedStateHeightInvariant(heightToVerify, HelperUntrustedState.empty))
-    assert(targetHeightInvariant(heightToVerify, HelperUntrustedState.empty.pending))
+    assert(startingState.bottomHeight().map(heightToVerify < _).getOrElse(true))
+    assert(startingState.targetLimit == heightToVerify)
 
     val verifier = WaitingForHeader(
       heightToVerify,
       heightToVerify,
       trustedState,
-      HelperUntrustedState.empty)
+      UntrustedStates.empty(heightToVerify))
 
     verify(
       verifier,

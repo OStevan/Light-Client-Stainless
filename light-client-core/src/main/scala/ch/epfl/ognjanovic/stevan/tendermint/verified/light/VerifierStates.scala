@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.AbstractUntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.inlineInvariant
@@ -27,10 +28,10 @@ object VerifierStates {
   case class Finished(
     outcome: VerificationOutcome,
     trustedState: TrustedState,
-    untrustedState: HelperUntrustedState) extends VerifierState {
+    untrustedState: AbstractUntrustedState) extends VerifierState {
     require(
-      (outcome == Success && untrustedState.pending.isEmpty) ||
-        (outcome != Success && untrustedState.pending.nonEmpty))
+      (outcome == Success && trustedState.currentHeight() == untrustedState.targetLimit) ||
+        (outcome != Success && trustedState.currentHeight() < untrustedState.targetLimit))
   }
 
   @inlineInvariant
@@ -38,12 +39,12 @@ object VerifierStates {
     requestHeight: Height,
     targetHeight: Height,
     trustedState: TrustedState,
-    untrustedState: HelperUntrustedState) extends VerifierState {
+    untrustedState: AbstractUntrustedState) extends VerifierState {
     require(
       requestHeight <= targetHeight &&
         trustedState.currentHeight() < requestHeight &&
-        untrustedStateHeightInvariant(requestHeight, untrustedState) &&
-        targetHeightInvariant(targetHeight, untrustedState.pending))
+        untrustedState.bottomHeight().map(requestHeight < _).getOrElse(true) &&
+        untrustedState.targetLimit == targetHeight)
   }
 
 }

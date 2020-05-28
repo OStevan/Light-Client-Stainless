@@ -7,16 +7,21 @@ import stainless.lang._
 
 object UntrustedStates {
 
+  @pure
+  def empty(targetHeight: Height): AbstractUntrustedState = {
+    UntrustedState(targetHeight, List.empty)
+  }.ensuring(res => res.bottomHeight().isEmpty && targetHeight == res.targetLimit)
+
   abstract class AbstractUntrustedState {
     val targetLimit: Height
 
     @pure
     def isIntermediateFetched(bottom: Height, top: Height): Boolean = {
-      require(bottom + 1 < top && bottomHeight().map(bottom < _).getOrElse(true) && top <= targetLimit)
+      require(bottom < top && bottomHeight().map(bottom < _).getOrElse(true) && top <= targetLimit)
       ??? : Boolean
     }.ensuring(res =>
       (res && bottomHeight().isDefined && bottom < bottomHeight().get && bottomHeight().get < top) ||
-        (!res && bottomHeight().map(top <= _).getOrElse(true)))
+        (!res && bottomHeight().map(top < _).getOrElse(true) && (top == targetLimit) ==> bottomHeight().isEmpty))
 
     @pure
     def removeBottom(): (LightBlock, AbstractUntrustedState) = {
@@ -44,12 +49,13 @@ object UntrustedStates {
       ??? : Option[Height]
     }.ensuring(res => res.map(_ <= targetLimit).getOrElse(true))
   }
+
   case class UntrustedState(targetLimit: Height, pending: List[LightBlock]) extends AbstractUntrustedState {
     require(HelperUntrustedState.pendingInvariant(pending) && pending.forall(_.header.height <= targetLimit))
 
     @pure
     override def isIntermediateFetched(bottom: Height, top: Height): Boolean = {
-      require(bottom + 1 < top && bottomHeight().map(bottom < _).getOrElse(true) && top <= targetLimit)
+      require(bottom < top && bottomHeight().map(bottom < _).getOrElse(true) && top <= targetLimit)
       if (bottomHeight().isEmpty)
         false
       else {
@@ -83,6 +89,5 @@ object UntrustedStates {
         None[Height]()
     }
   }
-
 
 }
