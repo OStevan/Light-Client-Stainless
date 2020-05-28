@@ -1,22 +1,11 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import stainless.annotation.{opaque, pure}
-import stainless.collection._
 import stainless.lang.StaticChecks.Ensuring
 import stainless.lang._
 
 object LightClientLemmas {
-
-  @opaque
-  def transitivityOfTargetHeight(targetHeight: Height, untrustedState: HelperUntrustedState): Unit = {
-    require(targetHeightInvariant(targetHeight, untrustedState.pending))
-    untrustedState.pending match {
-      case Nil() => ()
-      case Cons(_, t) => transitivityOfTargetHeight(targetHeight, HelperUntrustedState(t))
-    }
-  }.ensuring(_ => untrustedState.pending.forall(_.header.height <= targetHeight))
 
   @pure
   def terminationMeasure(waitingForHeader: WaitingForHeader): (BigInt, BigInt) = {

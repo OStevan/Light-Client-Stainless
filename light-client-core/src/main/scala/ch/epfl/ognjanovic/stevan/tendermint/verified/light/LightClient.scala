@@ -3,12 +3,13 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClientLemmas._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.AbstractUntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifiers.Verifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.lang.StaticChecks.Ensuring
+import stainless.lang._
 
 case class LightClient(
   verifier: Verifier,
@@ -50,24 +51,23 @@ case class LightClient(
     targetHeight: Height,
     lightBlock: LightBlock,
     trustedState: TrustedState,
-    untrustedState: AbstractUntrustedState): VerifierState = {
+    untrustedState: UntrustedState): VerifierState = {
     require(
       lightBlock.header.height <= targetHeight &&
         trustedState.currentHeight() < lightBlock.header.height &&
         targetHeight == untrustedState.targetLimit &&
         untrustedState.bottomHeight().map(lightBlock.header.height < _).getOrElse(true))
+    decreases(untrustedState.targetLimit.value - trustedState.currentHeight().value)
     verifier.verify(trustedState, lightBlock) match {
       case Success =>
         val newTrustedState = trustedState.increaseTrust(lightBlock)
         if (newTrustedState.currentHeight() == targetHeight) {
           assert(newTrustedState.currentHeight() == untrustedState.targetLimit)
           Finished(Success, newTrustedState, untrustedState)
-        } else if (untrustedState.isIntermediateFetched(newTrustedState.currentHeight(), targetHeight)) {
+        } else if (untrustedState.hasNextHeader(newTrustedState.currentHeight(), targetHeight)) {
           val (nextLightBlock, nextUntrustedState) = untrustedState.removeBottom()
           stepByStepVerification(targetHeight, nextLightBlock, newTrustedState, nextUntrustedState)
-        } else if (newTrustedState.currentHeight() + 1 == targetHeight){
-          assert(untrustedState.bottomHeight().isEmpty)
-
+        } else if (newTrustedState.currentHeight() + 1 == targetHeight) {
           WaitingForHeader(targetHeight, targetHeight, newTrustedState, untrustedState)
         } else {
           assert(newTrustedState.currentHeight() + 1 < targetHeight)
