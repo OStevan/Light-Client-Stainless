@@ -61,17 +61,14 @@ case class LightClient(
     verifier.verify(trustedState, lightBlock) match {
       case Success =>
         val newTrustedState = trustedState.increaseTrust(lightBlock)
-        if (newTrustedState.currentHeight() == targetHeight) {
-          assert(newTrustedState.currentHeight() == untrustedState.targetLimit)
+        if (newTrustedState.currentHeight() == targetHeight)
           Finished(Success, newTrustedState, untrustedState)
-        } else if (untrustedState.hasNextHeader(newTrustedState.currentHeight(), targetHeight)) {
+        else if (untrustedState.hasNextHeader(newTrustedState.currentHeight(), targetHeight)) {
           val (nextLightBlock, nextUntrustedState) = untrustedState.removeBottom()
           stepByStepVerification(targetHeight, nextLightBlock, newTrustedState, nextUntrustedState)
-        } else if (newTrustedState.currentHeight() + 1 == targetHeight) {
+        } else if (newTrustedState.currentHeight() + 1 == targetHeight)
           WaitingForHeader(targetHeight, targetHeight, newTrustedState, untrustedState)
-        } else {
-          assert(newTrustedState.currentHeight() + 1 < targetHeight)
-          assert(newTrustedState.currentHeight() + 1 < untrustedState.bottomHeight().getOrElse(targetHeight))
+        else
           WaitingForHeader(
             heightCalculator.nextHeight(
               newTrustedState.currentHeight(),
@@ -79,7 +76,6 @@ case class LightClient(
             targetHeight,
             newTrustedState,
             untrustedState)
-        }
 
       case InsufficientTrust =>
         WaitingForHeader(
