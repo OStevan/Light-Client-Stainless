@@ -42,7 +42,6 @@ case class MultiStepVerifier(
     require(waitingForHeader.untrustedState.targetLimit < lightBlockProvider.currentHeight)
     decreases(LightClientLemmas.terminationMeasure(waitingForHeader))
 
-    assert(waitingForHeader.requestHeight < lightBlockProvider.currentHeight)
     processHeader(waitingForHeader, lightBlockProvider.lightBlock(waitingForHeader.requestHeight)) match {
       case state: WaitingForHeader => verify(state)
       case state: Finished => state
@@ -53,9 +52,7 @@ case class MultiStepVerifier(
     waitingForHeader: WaitingForHeader,
     lightBlock: LightBlock): VerifierState = {
     require(lightBlock.header.height == waitingForHeader.requestHeight)
-    assert(lightBlock.header.height <= waitingForHeader.untrustedState.targetLimit)
-    assert(waitingForHeader.trustedState.currentHeight() < lightBlock.header.height)
-    assert(waitingForHeader.untrustedState.bottomHeight().map(lightBlock.header.height < _).getOrElse(true))
+
     stepByStepVerification(
       lightBlock,
       waitingForHeader.trustedState,
@@ -87,6 +84,7 @@ case class MultiStepVerifier(
         trustedState.currentHeight() < lightBlock.header.height &&
         untrustedState.bottomHeight().map(lightBlock.header.height < _).getOrElse(true))
     decreases(untrustedState.targetLimit.value - trustedState.currentHeight().value)
+
     verifier.verify(trustedState, lightBlock) match {
       case Success =>
         val newTrustedState = trustedState.increaseTrust(lightBlock)
@@ -101,10 +99,6 @@ case class MultiStepVerifier(
           val newTargetHeight = heightCalculator.nextHeight(
             newTrustedState.currentHeight(),
             untrustedState.bottomHeight().getOrElse(untrustedState.targetLimit))
-
-          assert(untrustedState.bottomHeight().map(newTargetHeight < _).getOrElse(true))
-          assert(trustedState.currentHeight() < newTargetHeight)
-          assert(newTargetHeight <= untrustedState.targetLimit)
           WaitingForHeader(
             newTargetHeight,
             newTrustedState,
@@ -114,17 +108,12 @@ case class MultiStepVerifier(
       case InsufficientTrust =>
         val nextHeight = heightCalculator.nextHeight(trustedState.currentHeight(), lightBlock.header.height)
         val nextUntrustedState = untrustedState.insertLightBlock(lightBlock)
-        assert(nextUntrustedState.bottomHeight().map(nextHeight < _).getOrElse(true))
-        assert(trustedState.currentHeight() < nextHeight)
-        assert(nextHeight <= nextUntrustedState.targetLimit)
+
         WaitingForHeader(nextHeight, trustedState, nextUntrustedState)
 
-      case ExpiredTrustedState =>
-        Finished(ExpiredTrustedState, trustedState, untrustedState.insertLightBlock(lightBlock))
-      case InvalidCommit =>
-        Finished(InvalidCommit, trustedState, untrustedState.insertLightBlock(lightBlock))
-      case Failure =>
-        Finished(Failure, trustedState, untrustedState.insertLightBlock(lightBlock))
+      case verdict =>
+        assert(verdict != Success && verdict != InsufficientTrust)
+        Finished(verdict, trustedState, untrustedState.insertLightBlock(lightBlock))
     }
   }.ensuring {
     case waitingForHeader: WaitingForHeader =>
