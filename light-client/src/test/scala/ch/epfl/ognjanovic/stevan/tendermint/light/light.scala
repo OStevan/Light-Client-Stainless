@@ -28,7 +28,7 @@ package object light {
         .downField("trusting_period")
         .as[Long]
       provider <- cursor.downField("input")
-        .as[LightBlockProvider](InMemoryProvider.decoder(LightClientSingleStepTests.lightBlockDecoder))
+        .as[LightBlockProvider](InMemoryProvider.decoder(VerifierTests.lightBlockDecoder))
     } yield {
       val trustVerifier = TrustVerifiers.defaultTrustVerifier
 
@@ -38,7 +38,7 @@ package object light {
           signedHeader.commit,
           nextValidatorSet,
           nextValidatorSet,
-          LightClientSingleStepTests.defaultProvider),
+          VerifierTests.defaultProvider),
         trustVerifier),
         trustVerifier,
         trustingPeriod,
