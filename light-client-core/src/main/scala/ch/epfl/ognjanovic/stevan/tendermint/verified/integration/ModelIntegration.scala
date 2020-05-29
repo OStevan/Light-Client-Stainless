@@ -4,12 +4,11 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.VerificationOutcome
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifiers.DefaultVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation.pure
-import stainless.lang._
 
 object ModelIntegration {
   def snapshotExecution(
@@ -17,7 +16,7 @@ object ModelIntegration {
     trustedHeight: Height,
     heightToVerify: Height,
     nextHeightCalculator: NextHeightCalculator
-  ): VerifierState = {
+  ): VerificationOutcome = {
     require(blockchainState.currentHeight() > heightToVerify && heightToVerify > trustedHeight)
     val soundSignedHeaderProvider = BlockchainLightBlockProviders(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
@@ -28,33 +27,12 @@ object ModelIntegration {
     assert(trustedState.currentHeight() < heightToVerify)
     assert(heightToVerify <= untrustedState.targetLimit)
 
-    val verifier = WaitingForHeader(
-      heightToVerify,
-      trustedState,
-      untrustedState)
-
-    verify(
-      verifier,
+    MultiStepVerifier(
       soundSignedHeaderProvider,
-      LightClient(
-        DefaultVerifier(
-          HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight),
-          TrustVerifiers.defaultTrustVerifier),
-        nextHeightCalculator))
-  }
-
-  @scala.annotation.tailrec
-  def verify(
-    waitingForHeader: WaitingForHeader,
-    lightBlockProvider: LightBlockProvider,
-    verifier: LightClient): Finished = {
-    require(waitingForHeader.untrustedState.targetLimit < lightBlockProvider.currentHeight)
-    decreases(LightClientLemmas.terminationMeasure(waitingForHeader))
-
-    verifier.processHeader(waitingForHeader, lightBlockProvider.lightBlock(waitingForHeader.requestHeight)) match {
-      case state: WaitingForHeader => verify(state, lightBlockProvider, verifier)
-      case state: Finished => state
-    }
+      DefaultVerifier(
+        HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight),
+        TrustVerifiers.defaultTrustVerifier),
+      nextHeightCalculator).verifyUntrusted(trustedState, untrustedState)
   }
 
   private [integration] case class HeightBasedExpirationChecker(height: Height) extends ExpirationChecker {

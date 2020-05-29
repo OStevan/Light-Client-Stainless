@@ -26,7 +26,7 @@ object VerifierStates {
     trustedState: TrustedState,
     untrustedState: UntrustedState) extends VerifierState {
     require(
-      untrustedState.bottomHeight().forall(requestHeight < _) &&
+      untrustedState.bottomHeight().map(requestHeight < _).getOrElse(true) &&
         trustedState.currentHeight() < requestHeight &&
         requestHeight <= untrustedState.targetLimit)
   }

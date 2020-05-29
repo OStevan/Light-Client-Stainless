@@ -1,5 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClientLemmas._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
@@ -7,16 +8,48 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.Untru
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifiers.Verifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
 import stainless.lang.StaticChecks.Ensuring
 import stainless.lang._
 
-case class LightClient(
+case class MultiStepVerifier(
+  lightBlockProvider: LightBlockProvider,
   verifier: Verifier,
   heightCalculator: NextHeightCalculator) {
 
+  def verifyUntrusted(
+    trustedState: TrustedState,
+    untrustedState: UntrustedState): VerificationOutcome = {
+    require(
+      trustedState.currentHeight() < untrustedState.targetLimit &&
+        untrustedState.bottomHeight().isEmpty &&
+        untrustedState.targetLimit < lightBlockProvider.currentHeight)
 
-  def processHeader(
+    val nextHeight = if (trustedState.currentHeight() + 1 == untrustedState.targetLimit)
+      untrustedState.targetLimit
+    else
+      heightCalculator.nextHeight(trustedState.currentHeight(), untrustedState.targetLimit)
+
+    assert(untrustedState.bottomHeight().map(nextHeight < _).getOrElse(true))
+    assert(trustedState.currentHeight() < nextHeight)
+    assert(nextHeight <= untrustedState.targetLimit)
+    verify(WaitingForHeader(nextHeight, trustedState, untrustedState)).outcome
+  }
+
+  @scala.annotation.tailrec
+  private def verify(
+    waitingForHeader: WaitingForHeader): Finished = {
+    require(waitingForHeader.untrustedState.targetLimit < lightBlockProvider.currentHeight)
+    decreases(LightClientLemmas.terminationMeasure(waitingForHeader))
+
+    assert(waitingForHeader.requestHeight < lightBlockProvider.currentHeight)
+    processHeader(waitingForHeader, lightBlockProvider.lightBlock(waitingForHeader.requestHeight)) match {
+      case state: WaitingForHeader => verify(state)
+      case state: Finished => state
+    }
+  }
+
+  private def processHeader(
     waitingForHeader: WaitingForHeader,
     lightBlock: LightBlock): VerifierState = {
     require(lightBlock.header.height == waitingForHeader.requestHeight)
@@ -52,7 +85,7 @@ case class LightClient(
     require(
       lightBlock.header.height <= untrustedState.targetLimit &&
         trustedState.currentHeight() < lightBlock.header.height &&
-        untrustedState.bottomHeight().forall(lightBlock.header.height < _))
+        untrustedState.bottomHeight().map(lightBlock.header.height < _).getOrElse(true))
     decreases(untrustedState.targetLimit.value - trustedState.currentHeight().value)
     verifier.verify(trustedState, lightBlock) match {
       case Success =>
@@ -64,19 +97,27 @@ case class LightClient(
           stepByStepVerification(nextLightBlock, newTrustedState, nextUntrustedState)
         } else if (newTrustedState.currentHeight() + 1 == untrustedState.targetLimit)
           WaitingForHeader(untrustedState.targetLimit, newTrustedState, untrustedState)
-        else
+        else {
+          val newTargetHeight = heightCalculator.nextHeight(
+            newTrustedState.currentHeight(),
+            untrustedState.bottomHeight().getOrElse(untrustedState.targetLimit))
+
+          assert(untrustedState.bottomHeight().map(newTargetHeight < _).getOrElse(true))
+          assert(trustedState.currentHeight() < newTargetHeight)
+          assert(newTargetHeight <= untrustedState.targetLimit)
           WaitingForHeader(
-            heightCalculator.nextHeight(
-              newTrustedState.currentHeight(),
-              untrustedState.bottomHeight().getOrElse(untrustedState.targetLimit)),
+            newTargetHeight,
             newTrustedState,
             untrustedState)
+        }
 
       case InsufficientTrust =>
-        WaitingForHeader(
-          heightCalculator.nextHeight(trustedState.currentHeight(), lightBlock.header.height),
-          trustedState,
-          untrustedState.insertLightBlock(lightBlock))
+        val nextHeight = heightCalculator.nextHeight(trustedState.currentHeight(), lightBlock.header.height)
+        val nextUntrustedState = untrustedState.insertLightBlock(lightBlock)
+        assert(nextUntrustedState.bottomHeight().map(nextHeight < _).getOrElse(true))
+        assert(trustedState.currentHeight() < nextHeight)
+        assert(nextHeight <= nextUntrustedState.targetLimit)
+        WaitingForHeader(nextHeight, trustedState, nextUntrustedState)
 
       case ExpiredTrustedState =>
         Finished(ExpiredTrustedState, trustedState, untrustedState.insertLightBlock(lightBlock))
