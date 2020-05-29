@@ -14,6 +14,9 @@ object LightBlockProviders {
 
     @pure
     def currentHeight: Height
+
+    @pure
+    def chainId: String
   }
 
 }

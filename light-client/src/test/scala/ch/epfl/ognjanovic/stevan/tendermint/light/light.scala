@@ -8,7 +8,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.L
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{LightBlock, ValidatorSet}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, ValidatorSet}
 import io.circe.Decoder
 
 package object light {
@@ -28,7 +28,7 @@ package object light {
         .downField("trusting_period")
         .as[Long]
       provider <- cursor.downField("input")
-        .as[LightBlockProvider](InMemoryProvider.decoder(VerifierTests.lightBlockDecoder))
+        .as[LightBlockProvider](InMemoryProvider.defaultChainDecoder(VerifierTests.lightBlockDecoder))
     } yield {
       val trustVerifier = TrustVerifiers.defaultTrustVerifier
 
@@ -45,5 +45,15 @@ package object light {
         now,
         provider)
     }
+
+  implicit val multiStepTestCaseDecoder: Decoder[(TrustOptions, LightBlockProvider, Height, Instant)] = cursor => for {
+    trustOptions <- cursor.downField("trust_options").as[TrustOptions](TrustOptions.decoder)
+    primary <- cursor.downField("primary")
+      .as[LightBlockProvider](InMemoryProvider.decoder(VerifierTests.lightBlockDecoder))
+    heightToVerify <- cursor.downField("height_to_verify").as[Long]
+    now <- cursor.downField("now").as[Instant](circe.instantDecoder)
+  } yield {
+    (trustOptions, primary, Height(heightToVerify), now)
+  }
 
 }

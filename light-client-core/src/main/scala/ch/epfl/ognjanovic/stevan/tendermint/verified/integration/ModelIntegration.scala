@@ -50,6 +50,8 @@ object ModelIntegration {
 
     @pure
     override def currentHeight: Height = blockchainState.currentHeight()
+
+    override def chainId: String = "verified-chain-01"
   }
 
 }
