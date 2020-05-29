@@ -23,14 +23,12 @@ object VerifierStates {
   @inlineInvariant
   case class WaitingForHeader(
     requestHeight: Height,
-    targetHeight: Height,
     trustedState: TrustedState,
     untrustedState: UntrustedState) extends VerifierState {
     require(
-      requestHeight <= targetHeight &&
+      untrustedState.bottomHeight().forall(requestHeight < _) &&
         trustedState.currentHeight() < requestHeight &&
-        untrustedState.bottomHeight().map(requestHeight < _).getOrElse(true) &&
-        untrustedState.targetLimit == targetHeight)
+        requestHeight <= untrustedState.targetLimit)
   }
 
 }

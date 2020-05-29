@@ -23,17 +23,15 @@ object ModelIntegration {
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
 
     val trustedState: TrustedState = SimpleTrustedState(trustedSignedHeader, TrustVerifiers.defaultTrustVerifier)
-    val startingState = UntrustedStates.empty(heightToVerify)
-    assert(heightToVerify <= heightToVerify)
+    val untrustedState = UntrustedStates.empty(heightToVerify)
+    assert(untrustedState.bottomHeight().forall(heightToVerify < _))
     assert(trustedState.currentHeight() < heightToVerify)
-    assert(startingState.bottomHeight().map(heightToVerify < _).getOrElse(true))
-    assert(startingState.targetLimit == heightToVerify)
+    assert(heightToVerify <= untrustedState.targetLimit)
 
     val verifier = WaitingForHeader(
       heightToVerify,
-      heightToVerify,
       trustedState,
-      UntrustedStates.empty(heightToVerify))
+      untrustedState)
 
     verify(
       verifier,
@@ -50,12 +48,8 @@ object ModelIntegration {
     waitingForHeader: WaitingForHeader,
     lightBlockProvider: LightBlockProvider,
     verifier: LightClient): Finished = {
-    require(waitingForHeader.targetHeight < lightBlockProvider.currentHeight)
+    require(waitingForHeader.untrustedState.targetLimit < lightBlockProvider.currentHeight)
     decreases(LightClientLemmas.terminationMeasure(waitingForHeader))
-    Height.helperLemma(
-      waitingForHeader.requestHeight,
-      waitingForHeader.targetHeight,
-      lightBlockProvider.currentHeight)
 
     verifier.processHeader(waitingForHeader, lightBlockProvider.lightBlock(waitingForHeader.requestHeight)) match {
       case state: WaitingForHeader => verify(state, lightBlockProvider, verifier)

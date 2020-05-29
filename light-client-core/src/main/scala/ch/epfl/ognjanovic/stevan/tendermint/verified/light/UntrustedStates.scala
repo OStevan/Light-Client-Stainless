@@ -22,7 +22,9 @@ object UntrustedStates {
   }.ensuring(res => res.bottomHeight().isEmpty && targetHeight == res.targetLimit)
 
   abstract class UntrustedState {
-    val targetLimit: Height
+    def targetLimit: Height = {
+      ??? : Height
+    }.ensuring(res => bottomHeight().forall(_ <= res))
 
     @pure
     def hasNextHeader(bottom: Height, target: Height): Boolean = {
@@ -59,7 +61,9 @@ object UntrustedStates {
     }.ensuring(res => res.map(_ <= targetLimit).getOrElse(true))
   }
 
-  case class InMemoryUntrustedState(targetLimit: Height, pending: List[LightBlock]) extends UntrustedState {
+  case class InMemoryUntrustedState(
+    override val targetLimit: Height,
+    pending: List[LightBlock]) extends UntrustedState {
     require(pendingInvariant(pending) && pending.forall(_.header.height <= targetLimit))
 
     @pure
