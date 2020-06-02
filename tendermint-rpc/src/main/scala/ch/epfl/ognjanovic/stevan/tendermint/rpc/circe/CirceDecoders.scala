@@ -4,6 +4,7 @@ import java.nio.ByteBuffer
 import java.time.Instant
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustLevel
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.CommitSignatures._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Validators.Validator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
@@ -129,6 +130,13 @@ object CirceDecoders {
     commit <- cursor.downField("commit").as[Commit]
   } yield {
     SignedHeader(header, commit)
+  }
+
+  implicit val trustLevelDecoder: Decoder[TrustLevel] = cursor => for {
+    numerator <- cursor.downField("numerator").as[Long]
+    denominator <- cursor.downField("denominator").as[Long]
+  } yield {
+    TrustLevel(numerator, denominator)
   }
 
 }

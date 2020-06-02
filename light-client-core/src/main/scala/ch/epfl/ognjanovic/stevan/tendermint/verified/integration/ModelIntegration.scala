@@ -4,12 +4,11 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.VerificationOutcome
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifiers.DefaultVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation.pure
-import stainless.lang._
 
 object ModelIntegration {
   def snapshotExecution(
@@ -17,67 +16,50 @@ object ModelIntegration {
     trustedHeight: Height,
     heightToVerify: Height,
     nextHeightCalculator: NextHeightCalculator
-  ): VerifierState = {
-    require(blockchainState.currentHeight() > heightToVerify && heightToVerify > trustedHeight)
+  ): VerificationOutcome = {
+    require(
+      blockchainState.currentHeight() >= Height(2) &&
+        blockchainState.currentHeight() > heightToVerify &&
+        heightToVerify > trustedHeight)
     val soundSignedHeaderProvider = BlockchainLightBlockProviders(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
 
     val trustedState: TrustedState = SimpleTrustedState(trustedSignedHeader, TrustVerifiers.defaultTrustVerifier)
-    val startingState = UntrustedStates.empty(heightToVerify)
-    assert(heightToVerify <= heightToVerify)
+    val untrustedState = UntrustedStates.empty(heightToVerify)
+    assert(untrustedState.bottomHeight().forall(heightToVerify < _))
     assert(trustedState.currentHeight() < heightToVerify)
-    assert(startingState.bottomHeight().map(heightToVerify < _).getOrElse(true))
-    assert(startingState.targetLimit == heightToVerify)
+    assert(heightToVerify <= untrustedState.targetLimit)
 
-    val verifier = WaitingForHeader(
-      heightToVerify,
-      heightToVerify,
-      trustedState,
-      UntrustedStates.empty(heightToVerify))
-
-    verify(
-      verifier,
+    MultiStepVerifier(
       soundSignedHeaderProvider,
-      LightClient(
-        DefaultVerifier(
-          HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight),
-          TrustVerifiers.defaultTrustVerifier),
-        nextHeightCalculator))
+      DefaultVerifier(
+        HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight),
+        TrustVerifiers.defaultTrustVerifier),
+      nextHeightCalculator)
+      .verifyUntrusted(trustedState, untrustedState)
   }
 
-  @scala.annotation.tailrec
-  def verify(
-    waitingForHeader: WaitingForHeader,
-    lightBlockProvider: LightBlockProvider,
-    verifier: LightClient): Finished = {
-    require(waitingForHeader.targetHeight < lightBlockProvider.currentHeight)
-    decreases(LightClientLemmas.terminationMeasure(waitingForHeader))
-    Height.helperLemma(
-      waitingForHeader.requestHeight,
-      waitingForHeader.targetHeight,
-      lightBlockProvider.currentHeight)
-
-    verifier.processHeader(waitingForHeader, lightBlockProvider.lightBlock(waitingForHeader.requestHeight)) match {
-      case state: WaitingForHeader => verify(state, lightBlockProvider, verifier)
-      case state: Finished => state
-    }
-  }
-
-  private [integration] case class HeightBasedExpirationChecker(height: Height) extends ExpirationChecker {
+  private[integration] case class HeightBasedExpirationChecker(height: Height) extends ExpirationChecker {
     override def isExpired(lightBlock: LightBlock): Boolean = height > lightBlock.header.height
   }
 
   private[integration] case class BlockchainLightBlockProviders(
     blockchainState: BlockchainState) extends LightBlockProvider {
+    require(blockchainState.currentHeight() >= Height(2))
 
     @pure
     override def lightBlock(height: Height): LightBlock = {
-      require(height < blockchainState.currentHeight())
+      require(height <= currentHeight)
       blockchainState.lightBlock(height)
     }
 
     @pure
-    override def currentHeight: Height = blockchainState.currentHeight()
+    override def currentHeight: Height = {
+      assert(blockchainState.currentHeight() >= Height(2)) // helps with verification
+      Height(blockchainState.currentHeight().value - 1)
+    }
+
+    override def chainId: String = "verified-chain-01"
   }
 
 }

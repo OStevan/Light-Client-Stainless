@@ -8,12 +8,15 @@ object LightBlockProviders {
   abstract class LightBlockProvider {
     @pure
     def lightBlock(height: Height): LightBlock = {
-      require(height < currentHeight)
+      require(height <= currentHeight)
       ??? : LightBlock
     }.ensuring(res => res.header.height == height)
 
     @pure
     def currentHeight: Height
+
+    @pure
+    def chainId: String
   }
 
 }

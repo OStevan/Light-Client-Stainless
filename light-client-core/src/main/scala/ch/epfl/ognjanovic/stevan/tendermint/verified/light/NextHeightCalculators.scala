@@ -10,7 +10,7 @@ object NextHeightCalculators {
     def nextHeight(bottom: Height, top: Height): Height = {
       require(bottom + 1 < top)
       ??? : Height
-    }.ensuring(res => res > bottom && res < top)
+    }.ensuring(res => bottom < res && res < top)
   }
 
   case object BisectionHeightCalculator extends NextHeightCalculator {

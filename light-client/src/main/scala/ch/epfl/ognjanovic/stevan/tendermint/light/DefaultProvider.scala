@@ -7,7 +7,9 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 /**
  * Only does the fetching and of the necessary data using a requester of a specified peer. Doesn't validate hashes, etc.
  */
-sealed class DefaultProvider(private val requester: Requester) extends LightBlockProvider {
+sealed class DefaultProvider(
+  override val chainId: String,
+  private val requester: Requester) extends LightBlockProvider {
   /**
    * For a given height gives back the `LightBlock` of that height.
    *

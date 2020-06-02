@@ -13,7 +13,7 @@ import io.circe.Decoder
 
 import scala.io.Source
 
-object LightClientSingleStepTests {
+object VerifierTests {
   val defaultProvider: PeerId =
     PeerId(
       Key(
@@ -32,7 +32,7 @@ object LightClientSingleStepTests {
   }
 
   def deserializeSingleStepTestCase(path: String): (Verifier, TrustedState, LightBlockProvider) = {
-    val content = LightClientSingleStepTests.content(path)
+    val content = VerifierTests.content(path)
     val (trustedState, trustVerifier, trustingPeriod, now, provider) =
       new CirceDeserializer(singleStepTestCaseDecoder)(content)
 

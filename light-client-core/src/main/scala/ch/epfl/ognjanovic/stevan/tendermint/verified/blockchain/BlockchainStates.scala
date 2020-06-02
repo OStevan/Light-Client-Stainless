@@ -145,6 +145,7 @@ object BlockchainStates {
 
     override def numberOfNodes: BigInt = allNodes.toList.size
 
+    @pure
     override def currentHeight(): Height = blockchain.chain.height
   }
 
@@ -185,6 +186,7 @@ object BlockchainStates {
 
     override def numberOfNodes: BigInt = allNodes.toList.size
 
+    @pure
     override def currentHeight(): Height = blockchain.chain.height
   }
 
@@ -201,6 +203,7 @@ object BlockchainStates {
 
     override def maxPower: VotingPower = VotingPower(0)
 
+    @pure
     override def currentHeight(): Height = blockchain.chain.height
   }
 
