@@ -39,7 +39,7 @@ object ModelIntegration {
       .verifyUntrusted(trustedState, untrustedState)
   }
 
-  private [integration] case class HeightBasedExpirationChecker(height: Height) extends ExpirationChecker {
+  private[integration] case class HeightBasedExpirationChecker(height: Height) extends ExpirationChecker {
     override def isExpired(lightBlock: LightBlock): Boolean = height > lightBlock.header.height
   }
 
