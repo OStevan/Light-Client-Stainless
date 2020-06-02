@@ -15,7 +15,7 @@ object Verifiers {
       require(trustedState.currentHeight() < untrustedLightBlock.header.height)
       ??? : VerificationOutcome
     }.ensuring(res => ((res == Success) ==> trustedState.trusted(untrustedLightBlock)) &&
-      ((res == InsufficientTrust) ==> (trustedState.currentHeight() + 1  < untrustedLightBlock.header.height)))
+      ((res == InsufficientTrust) ==> (trustedState.currentHeight() + 1 < untrustedLightBlock.header.height)))
   }
 
   case class DefaultVerifier(expirationChecker: ExpirationChecker, trustVerifier: TrustVerifier) extends Verifier {
@@ -24,23 +24,25 @@ object Verifiers {
       require(trustedState.currentHeight() < untrustedLightBlock.header.height)
       if (expirationChecker.isExpired(trustedState.trustedLightBlock))
         ExpiredTrustedState
+      else if (isCommitInvalid(untrustedLightBlock))
+        InvalidCommit
       else if (trustedState.trusted(untrustedLightBlock))
-        checkCommit(untrustedLightBlock)
+        Success
       else if (trustedState.isAdjacent(untrustedLightBlock))
         Failure
       else
         InsufficientTrust
     }.ensuring(res => ((res == Success) ==> trustedState.trusted(untrustedLightBlock)) &&
-      ((res == InsufficientTrust) ==> (trustedState.currentHeight() + 1  < untrustedLightBlock.header.height)))
+      ((res == InsufficientTrust) ==> (trustedState.currentHeight() + 1 < untrustedLightBlock.header.height)))
 
     @pure
-    def checkCommit(header: LightBlock): VerificationOutcome = {
+    def isCommitInvalid(header: LightBlock): Boolean = {
       if (header.commit.forBlock.nonEmpty &&
         (header.commit.forBlock subsetOf header.validatorSet.keys) &&
         trustVerifier.consensusObtained(header.validatorSet, header.commit))
-        Success
+        false
       else
-        InvalidCommit
+        true
     }
   }
 

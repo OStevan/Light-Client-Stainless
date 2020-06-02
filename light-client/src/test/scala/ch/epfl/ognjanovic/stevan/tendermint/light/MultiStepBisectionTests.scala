@@ -22,4 +22,32 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec {
 
     assert(result == ExpiredTrustedState)
   }
+
+  //  "Invalid validator set" should "fail verification" in {
+  //    val (verifier, trustedState, heightToVerify) = MultiStepVerifierTests.deserializeMultiStepTestCase(
+  //      "/bisection/single-peer/invalid_validator_set.json")
+  //
+  //    val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
+  //
+  //    assert(result == ExpiredTrustedState)
+  //  }
+
+  "Not enough commits" should "fail verification" in {
+    val (verifier, trustedState, heightToVerify) = MultiStepVerifierTests.deserializeMultiStepTestCase(
+      "/bisection/single-peer/not_enough_commits.json")
+
+    val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
+
+    // per the test description should be InvalidCommit however it fails on validator sets (same as rust)
+    assert(result == Failure)
+  }
+
+  "Worst case scenario for bisection" should "not influence the successful outcome" in {
+    val (verifier, trustedState, heightToVerify) = MultiStepVerifierTests.deserializeMultiStepTestCase(
+      "/bisection/single-peer/worst_case.json")
+
+    val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
+
+    assert(result == Success)
+  }
 }
