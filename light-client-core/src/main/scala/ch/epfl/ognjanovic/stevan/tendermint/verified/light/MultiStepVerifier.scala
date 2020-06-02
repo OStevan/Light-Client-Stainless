@@ -23,7 +23,7 @@ case class MultiStepVerifier(
     require(
       trustedState.currentHeight() < untrustedState.targetLimit &&
         untrustedState.bottomHeight().isEmpty &&
-        untrustedState.targetLimit < lightBlockProvider.currentHeight)
+        untrustedState.targetLimit <= lightBlockProvider.currentHeight)
 
     val nextHeight = if (trustedState.currentHeight() + 1 == untrustedState.targetLimit)
       untrustedState.targetLimit
@@ -39,7 +39,7 @@ case class MultiStepVerifier(
   @scala.annotation.tailrec
   private def verify(
     waitingForHeader: WaitingForHeader): Finished = {
-    require(waitingForHeader.untrustedState.targetLimit < lightBlockProvider.currentHeight)
+    require(waitingForHeader.untrustedState.targetLimit <= lightBlockProvider.currentHeight)
     decreases(LightClientLemmas.terminationMeasure(waitingForHeader))
 
     processHeader(waitingForHeader, lightBlockProvider.lightBlock(waitingForHeader.requestHeight)) match {

@@ -17,7 +17,10 @@ object ModelIntegration {
     heightToVerify: Height,
     nextHeightCalculator: NextHeightCalculator
   ): VerificationOutcome = {
-    require(blockchainState.currentHeight() > heightToVerify && heightToVerify > trustedHeight)
+    require(
+      blockchainState.currentHeight() >= Height(2) &&
+        blockchainState.currentHeight() > heightToVerify &&
+        heightToVerify > trustedHeight)
     val soundSignedHeaderProvider = BlockchainLightBlockProviders(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
 
@@ -32,7 +35,8 @@ object ModelIntegration {
       DefaultVerifier(
         HeightBasedExpirationChecker(blockchainState.blockchain.minTrustedHeight),
         TrustVerifiers.defaultTrustVerifier),
-      nextHeightCalculator).verifyUntrusted(trustedState, untrustedState)
+      nextHeightCalculator)
+      .verifyUntrusted(trustedState, untrustedState)
   }
 
   private [integration] case class HeightBasedExpirationChecker(height: Height) extends ExpirationChecker {
@@ -41,15 +45,19 @@ object ModelIntegration {
 
   private[integration] case class BlockchainLightBlockProviders(
     blockchainState: BlockchainState) extends LightBlockProvider {
+    require(blockchainState.currentHeight() >= Height(2))
 
     @pure
     override def lightBlock(height: Height): LightBlock = {
-      require(height < blockchainState.currentHeight())
+      require(height <= currentHeight)
       blockchainState.lightBlock(height)
     }
 
     @pure
-    override def currentHeight: Height = blockchainState.currentHeight()
+    override def currentHeight: Height = {
+      assert(blockchainState.currentHeight() >= Height(2)) // helps with verification
+      Height(blockchainState.currentHeight().value - 1)
+    }
 
     override def chainId: String = "verified-chain-01"
   }
