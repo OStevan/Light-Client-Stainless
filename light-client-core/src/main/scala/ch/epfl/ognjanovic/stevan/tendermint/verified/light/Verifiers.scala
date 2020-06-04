@@ -26,6 +26,8 @@ object Verifiers {
         ExpiredTrustedState
       else if (isCommitInvalid(untrustedLightBlock))
         InvalidCommit
+      else if (trustedState.trustedLightBlock.header.chainId != untrustedLightBlock.header.chainId)
+        InvalidHeader
       else if (trustedState.trusted(untrustedLightBlock))
         Success
       else if (trustedState.isAdjacent(untrustedLightBlock))
