@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.{InvalidCommit, Success}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.InvalidCommit
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.{Failure, Success}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -33,7 +34,7 @@ sealed class VerifierSequentialCommitTests  extends AnyFlatSpec {
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
 
-    assert(result == InvalidCommit)
+    assert(result.asInstanceOf[Failure].reason == InvalidCommit)
   }
 
   "Commit of a wrong height" should "fail verification" in {
@@ -43,6 +44,6 @@ sealed class VerifierSequentialCommitTests  extends AnyFlatSpec {
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
 
-    assert(result == InvalidCommit)
+    assert(result.asInstanceOf[Failure].reason == InvalidCommit)
   }
 }

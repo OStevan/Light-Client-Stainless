@@ -4,12 +4,13 @@ import java.nio.ByteBuffer
 import java.time.Instant
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.{ParameterizedTrustVerifier, TrustVerifier}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifiers.{DefaultVerifier, Verifier}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{DefaultLightBlockValidator, MultiStepVerifier}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, Key, LightBlock, PeerId}
 import io.circe.Decoder
 
@@ -38,15 +39,22 @@ object MultiStepVerifierTests {
     val (trustOptions: TrustOptions, primary: LightBlockProvider, heightToVerify: Height, now: Instant) =
       new CirceDeserializer(multiStepTestCaseDecoder)(content)
 
-    val trustVerfier = ParameterizedTrustVerifier(trustOptions.trustLevel)
+    val trustVerifier = ParameterizedTrustVerifier(trustOptions.trustLevel)
+    val expirationChecker = new TimeBasedExpirationChecker(() => now, trustOptions.trustPeriod)
     val verifier =
       createDefaultVerifier(
-        trustVerfier,
+        trustVerifier,
         trustOptions.trustPeriod,
         now)
 
-    (MultiStepVerifier(primary, verifier, BisectionHeightCalculator),
-      SimpleTrustedState(primary.lightBlock(trustOptions.trustedHeight), trustVerfier),
-      heightToVerify)
+    (
+      MultiStepVerifier(
+        primary,
+        DefaultLightBlockValidator(expirationChecker, DefaultCommitValidator(trustVerifier)),
+        verifier,
+        BisectionHeightCalculator),
+      SimpleTrustedState(primary.lightBlock(trustOptions.trustedHeight), trustVerifier),
+      heightToVerify
+    )
   }
 }
