@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockValidators.LightBlockValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClientLemmas._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
@@ -89,14 +90,24 @@ case class MultiStepVerifier(
 
     lightBlockValidator.validateUntrustedBlock(trustedState.trustedLightBlock, lightBlock) match {
       case error: Right[Unit, VerificationError] =>
-        Finished(error, trustedState, untrustedState.insertLightBlock(lightBlock))
+        val newUntrustedState = untrustedState.insertLightBlock(lightBlock)
+        assert(
+          (error.isLeft && trustedState.currentHeight() == newUntrustedState.targetLimit) ||
+          (error.isRight && trustedState.currentHeight() < newUntrustedState.targetLimit))
+        Finished(error, trustedState, newUntrustedState)
+
       case _: Left[Unit, VerificationError] =>
         verifier.verify(trustedState, lightBlock) match {
           case Success =>
             val newTrustedState = trustedState.increaseTrust(lightBlock)
-            if (newTrustedState.currentHeight() == untrustedState.targetLimit)
-              Finished(Left(()), newTrustedState, untrustedState)
-            else if (untrustedState.hasNextHeader(newTrustedState.currentHeight(), untrustedState.targetLimit)) {
+            if (newTrustedState.currentHeight() == untrustedState.targetLimit) {
+              val result = Left[Unit, VerificationError](())
+
+              assert(
+                (result.isLeft && newTrustedState.currentHeight() == untrustedState.targetLimit) ||
+                  (result.isRight && newTrustedState.currentHeight() < untrustedState.targetLimit))
+              Finished(result, newTrustedState, untrustedState)
+            } else if (untrustedState.hasNextHeader(newTrustedState.currentHeight(), untrustedState.targetLimit)) {
               val (nextLightBlock, nextUntrustedState) = untrustedState.removeBottom()
               stepByStepVerification(nextLightBlock, newTrustedState, nextUntrustedState)
             } else if (newTrustedState.currentHeight() + 1 == untrustedState.targetLimit)
@@ -118,7 +129,12 @@ case class MultiStepVerifier(
             WaitingForHeader(nextHeight, trustedState, nextUntrustedState)
 
           case Failure(reason) =>
-            Finished(Right(reason), trustedState, untrustedState.insertLightBlock(lightBlock))
+            val error = Right[Unit, VerificationError](reason)
+            val newUntrustedState = untrustedState.insertLightBlock(lightBlock)
+            assert(
+              (error.isLeft && trustedState.currentHeight() == newUntrustedState.targetLimit) ||
+                (error.isRight && trustedState.currentHeight() < newUntrustedState.targetLimit))
+            Finished(error, trustedState, newUntrustedState)
         }
     }
   }.ensuring {

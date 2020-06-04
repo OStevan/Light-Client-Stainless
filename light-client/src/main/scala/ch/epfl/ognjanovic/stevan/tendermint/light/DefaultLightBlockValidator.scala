@@ -1,9 +1,11 @@
-package ch.epfl.ognjanovic.stevan.tendermint.verified.light
+package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.CommitValidator
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockValidators.LightBlockValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
-import stainless.lang._
+import stainless.lang.{Either, Right}
 
 case class DefaultLightBlockValidator(
   expirationChecker: ExpirationChecker,

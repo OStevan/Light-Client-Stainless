@@ -6,11 +6,11 @@ import java.time.Instant
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.{ParameterizedTrustVerifier, TrustVerifier}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifiers.{DefaultVerifier, Verifier}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{DefaultLightBlockValidator, MultiStepVerifier}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, Key, LightBlock, PeerId}
 import io.circe.Decoder
 

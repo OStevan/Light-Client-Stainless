@@ -1,8 +1,8 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.integration
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates.BlockchainState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockValidators.DummyLightBlockValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
@@ -36,7 +36,7 @@ object ModelIntegration {
 
     MultiStepVerifier(
       soundSignedHeaderProvider,
-      DefaultLightBlockValidator(expirationChecker, DefaultCommitValidator(TrustVerifiers.defaultTrustVerifier)),
+      DummyLightBlockValidator(),
       DefaultVerifier(
         expirationChecker,
         TrustVerifiers.defaultTrustVerifier),
