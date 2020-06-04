@@ -4,7 +4,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustV
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
-import stainless.annotation.pure
+import stainless.annotation.{opaque, pure}
 import stainless.lang._
 
 object Verifiers {
@@ -19,11 +19,13 @@ object Verifiers {
   }
 
   case class DefaultVerifier(expirationChecker: ExpirationChecker, trustVerifier: TrustVerifier) extends Verifier {
-    @pure
+    @pure @opaque
     override def verify(trustedState: TrustedState, untrustedLightBlock: LightBlock): VerificationOutcome = {
       require(trustedState.currentHeight() < untrustedLightBlock.header.height)
       if (expirationChecker.isExpired(trustedState.trustedLightBlock))
         ExpiredTrustedState
+      else if (!untrustedLightBlock.header.time.isAfter(trustedState.trustedLightBlock.header.time))
+        InvalidHeader
       else if (isCommitInvalid(untrustedLightBlock))
         InvalidCommit
       else if (trustedState.trustedLightBlock.header.chainId != untrustedLightBlock.header.chainId)
