@@ -39,6 +39,7 @@ object Verifiers {
     def isCommitInvalid(header: LightBlock): Boolean = {
       if (header.commit.forBlock.nonEmpty &&
         (header.commit.forBlock subsetOf header.validatorSet.keys) &&
+        header.commit.height == header.header.height &&
         trustVerifier.consensusObtained(header.validatorSet, header.commit))
         false
       else

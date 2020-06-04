@@ -35,4 +35,14 @@ sealed class VerifierSequentialCommitTests  extends AnyFlatSpec {
 
     assert(result == InvalidCommit)
   }
+
+  "Commit of a wrong height" should "fail verification" in {
+    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
+      "/single-step/sequential/commit/wrong_commit_height.json")
+
+    val requestHeight = Height(2)
+    val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
+
+    assert(result == InvalidCommit)
+  }
 }
