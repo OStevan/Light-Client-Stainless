@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustVerifier
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.pure
 
@@ -44,7 +44,7 @@ object TrustedStates {
     def trustedLightBlock: LightBlock
   }
 
-  case class SimpleTrustedState(trustedLightBlock: LightBlock, trustVerifier: TrustVerifier) extends TrustedState {
+  case class SimpleTrustedState(trustedLightBlock: LightBlock, trustVerifier: VotingPowerVerifier) extends TrustedState {
 
     @pure
     override def currentHeight(): Height = trustedLightBlock.header.height

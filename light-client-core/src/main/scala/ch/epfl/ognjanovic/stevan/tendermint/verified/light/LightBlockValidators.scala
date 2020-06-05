@@ -15,7 +15,7 @@ object LightBlockValidators {
 
   }
 
-  case class DummyLightBlockValidator() extends LightBlockValidator {
+  case class  DummyLightBlockValidator() extends LightBlockValidator {
     @pure
     override def validateUntrustedBlock(
       trustedLightBlock: LightBlock,
