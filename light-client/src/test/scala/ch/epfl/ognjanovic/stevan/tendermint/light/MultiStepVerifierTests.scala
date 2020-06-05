@@ -4,12 +4,13 @@ import java.nio.ByteBuffer
 import java.time.Instant
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.{ParameterizedTrustVerifier, TrustVerifier}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifiers.{DefaultVerifier, Verifier}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.{ParameterizedVotingPowerVerifier, VotingPowerVerifier}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{MultiStepVerifier, Verifier}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, Key, LightBlock, PeerId}
 import io.circe.Decoder
 
@@ -29,8 +30,16 @@ object MultiStepVerifierTests {
     try source.mkString finally source.close()
   }
 
-  private def createDefaultVerifier(trustVerifier: TrustVerifier, trustingPeriod: Long, now: Instant): Verifier = {
-    DefaultVerifier(new TimeBasedExpirationChecker(() => now, trustingPeriod), trustVerifier)
+  private def createDefaultVerifier(
+    votingPowerVerifier: VotingPowerVerifier,
+    trustingPeriod: Long,
+    now: Instant): Verifier = {
+    val expirationChecker = new TimeBasedExpirationChecker(() => now, trustingPeriod)
+    Verifier(
+      DefaultLightBlockValidator(expirationChecker, DefaultCommitValidator(votingPowerVerifier)),
+      DefaultTrustVerifier(),
+      DefaultCommitValidator(votingPowerVerifier)
+    )
   }
 
   def deserializeMultiStepTestCase(path: String): (MultiStepVerifier, TrustedState, Height) = {
@@ -38,15 +47,20 @@ object MultiStepVerifierTests {
     val (trustOptions: TrustOptions, primary: LightBlockProvider, heightToVerify: Height, now: Instant) =
       new CirceDeserializer(multiStepTestCaseDecoder)(content)
 
-    val trustVerfier = ParameterizedTrustVerifier(trustOptions.trustLevel)
+    val trustVerifier = ParameterizedVotingPowerVerifier(trustOptions.trustLevel)
     val verifier =
       createDefaultVerifier(
-        trustVerfier,
+        trustVerifier,
         trustOptions.trustPeriod,
         now)
 
-    (MultiStepVerifier(primary, verifier, BisectionHeightCalculator),
-      SimpleTrustedState(primary.lightBlock(trustOptions.trustedHeight), trustVerfier),
-      heightToVerify)
+    (
+      MultiStepVerifier(
+        primary,
+        verifier,
+        BisectionHeightCalculator),
+      SimpleTrustedState(primary.lightBlock(trustOptions.trustedHeight), trustVerifier),
+      heightToVerify
+    )
   }
 }

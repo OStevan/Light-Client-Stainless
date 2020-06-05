@@ -4,10 +4,12 @@ import java.nio.ByteBuffer
 import java.time.Instant
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustVerifier
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifiers.{DefaultVerifier, Verifier}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifier
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Key, LightBlock, PeerId}
 import io.circe.Decoder
 
@@ -27,8 +29,16 @@ object VerifierTests {
     try source.mkString finally source.close()
   }
 
-  private def createDefaultVerifier(trustVerifier: TrustVerifier, trustingPeriod: Long, now: Instant): Verifier = {
-    DefaultVerifier(new TimeBasedExpirationChecker(() => now, trustingPeriod), trustVerifier)
+  private def createDefaultVerifier(
+    votingPowerVerifier: VotingPowerVerifier,
+    trustingPeriod: Long,
+    now: Instant): Verifier = {
+    val expirationChecker = new TimeBasedExpirationChecker(() => now, trustingPeriod)
+    Verifier(
+      DefaultLightBlockValidator(expirationChecker, DefaultCommitValidator(votingPowerVerifier)),
+      DefaultTrustVerifier(),
+      DefaultCommitValidator(votingPowerVerifier)
+    )
   }
 
   def deserializeSingleStepTestCase(path: String): (Verifier, TrustedState, LightBlockProvider) = {

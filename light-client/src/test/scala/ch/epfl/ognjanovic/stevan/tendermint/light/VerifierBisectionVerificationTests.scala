@@ -1,5 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.{ExpiredTrustedState, InvalidCommit}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import org.scalatest.flatspec.AnyFlatSpec
@@ -64,7 +65,7 @@ sealed class VerifierBisectionVerificationTests extends AnyFlatSpec {
     val requestHeight = Height(3)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
 
-    assert(result == InvalidCommit)
+    assert(result.asInstanceOf[Failure].reason == InvalidCommit)
   }
 
   "Verification with an expired trusted header" should "fail with expired trusted state" in {
@@ -74,6 +75,6 @@ sealed class VerifierBisectionVerificationTests extends AnyFlatSpec {
     val requestHeight = Height(5)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
 
-    assert(result == ExpiredTrustedState)
+    assert(result.asInstanceOf[Failure].reason == ExpiredTrustedState)
   }
 }

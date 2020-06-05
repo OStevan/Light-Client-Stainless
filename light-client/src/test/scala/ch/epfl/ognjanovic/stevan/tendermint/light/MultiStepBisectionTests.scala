@@ -1,8 +1,9 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.{ExpiredTrustedState, InvalidNextValidatorSet, VerificationError}
 import org.scalatest.flatspec.AnyFlatSpec
+import stainless.lang._
 
 sealed class MultiStepBisectionTests extends AnyFlatSpec {
   "Happy path bisection" should "succeed" in {
@@ -11,7 +12,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec {
 
     val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
 
-    assert(result == Success)
+    assert(result.isLeft)
   }
 
   "Trusted state expired" should "fail verification" in {
@@ -20,7 +21,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec {
 
     val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
 
-    assert(result == ExpiredTrustedState)
+    assert(result.isRight && result.get == ExpiredTrustedState)
   }
 
   //  "Invalid validator set" should "fail verification" in {
@@ -39,7 +40,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec {
     val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
 
     // per the test description should be InvalidCommit however it fails on validator sets (same as rust)
-    assert(result == Failure)
+    assert(result.isRight && result.get == InvalidNextValidatorSet)
   }
 
   "Worst case scenario for bisection" should "not influence the successful outcome" in {
@@ -48,6 +49,6 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec {
 
     val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
 
-    assert(result == Success)
+    assert(result == Left[Unit, VerificationError](()))
   }
 }

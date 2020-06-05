@@ -5,15 +5,15 @@ import java.time.Instant
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.{CirceDecoders, circe}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, ValidatorSet}
 import io.circe.Decoder
 
 package object light {
 
-  implicit val singleStepTestCaseDecoder: Decoder[(TrustedState, TrustVerifier, Long, Instant, LightBlockProvider)] =
+  implicit val singleStepTestCaseDecoder: Decoder[(TrustedState, VotingPowerVerifier, Long, Instant, LightBlockProvider)] =
     cursor => for {
       signedHeader <- cursor.downField("initial")
         .downField("signed_header")
@@ -30,7 +30,7 @@ package object light {
       provider <- cursor.downField("input")
         .as[LightBlockProvider](InMemoryProvider.defaultChainDecoder(VerifierTests.lightBlockDecoder))
     } yield {
-      val trustVerifier = TrustVerifiers.defaultTrustVerifier
+      val trustVerifier = VotingPowerVerifiers.defaultTrustVerifier
 
       (SimpleTrustedState(
         LightBlock(

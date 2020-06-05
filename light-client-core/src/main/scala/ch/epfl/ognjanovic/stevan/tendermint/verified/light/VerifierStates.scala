@@ -2,22 +2,24 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import stainless.annotation.inlineInvariant
+import stainless.lang._
 
 object VerifierStates {
 
+  @inlineInvariant
   sealed abstract class VerifierState
 
   @inlineInvariant
   case class Finished(
-    outcome: VerificationOutcome,
+    outcome: Either[Unit, VerificationError],
     trustedState: TrustedState,
     untrustedState: UntrustedState) extends VerifierState {
     require(
-      (outcome == Success && trustedState.currentHeight() == untrustedState.targetLimit) ||
-        (outcome != Success && trustedState.currentHeight() < untrustedState.targetLimit))
+      (outcome.isLeft && trustedState.currentHeight() == untrustedState.targetLimit) ||
+        (outcome.isRight && trustedState.currentHeight() < untrustedState.targetLimit))
   }
 
   @inlineInvariant

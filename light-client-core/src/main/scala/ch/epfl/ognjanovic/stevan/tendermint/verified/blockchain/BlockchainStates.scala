@@ -1,7 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.{SystemStep, _}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation._
 import stainless.lang.StaticChecks.assert
@@ -9,8 +9,6 @@ import stainless.lang._
 import utils.SetInvariants
 
 object BlockchainStates {
-
-  private val trustVerifier = TrustVerifiers.defaultTrustVerifier
 
   @inline
   private def runningStateInvariant(
@@ -123,7 +121,7 @@ object BlockchainStates {
 
           val lastBlock = blockchain.chain.head
           if (
-            trustVerifier.consensusObtained(lastBlock.validatorSet, lastCommit) &&
+            VotingPowerVerifiers.defaultTrustVerifier.consensusObtained(lastBlock.validatorSet, lastCommit) &&
               blockchain.faultChecker.isCorrect(nextValidatorSet, faulty)) {
             val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
             assert(newBlockchain.chain.head.validatorSet.keys.subsetOf(allNodes))
