@@ -17,9 +17,9 @@ object CommitValidators {
         (header.commit.forBlock subsetOf header.validatorSet.keys) &&
         header.commit.height == header.header.height &&
         trustVerifier.consensusObtained(header.validatorSet, header.commit))
-        Right(InvalidCommit)
+        Left()
       else
-        Left(())
+        Right(InvalidCommit)
     }
   }
 
