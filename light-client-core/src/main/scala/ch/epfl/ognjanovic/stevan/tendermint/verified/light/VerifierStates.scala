@@ -9,6 +9,7 @@ import stainless.lang._
 
 object VerifierStates {
 
+  @inlineInvariant
   sealed abstract class VerifierState
 
   @inlineInvariant
