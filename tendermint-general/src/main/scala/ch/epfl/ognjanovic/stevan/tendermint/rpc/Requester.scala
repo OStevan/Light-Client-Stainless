@@ -2,6 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.rpc
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Requester.{SignedHeaderNotFoundException, ValidatorSetNotFoundException}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Address, PeerId, ValidatorSet}
+import stainless.annotation.ignore
 
 /**
  * Minimal set of methods required to communicate with Tendermint full node to be able to do Light Client verification

@@ -4,6 +4,7 @@ import java.nio.ByteBuffer
 import java.time.Instant
 
 import io.circe.Decoder
+import stainless.annotation.ignore
 
 @ignore
 object circe {

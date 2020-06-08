@@ -3,6 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.rpc.circe
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import io.circe.parser.parse
 import io.circe.{Decoder, Json}
+import stainless.annotation.ignore
 
 @ignore
 class CirceDeserializer[T](private val decoder: Decoder[T]) extends Deserializer[T] {

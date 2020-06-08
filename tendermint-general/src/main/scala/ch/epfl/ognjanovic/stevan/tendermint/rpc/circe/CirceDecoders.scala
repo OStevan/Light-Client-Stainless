@@ -9,6 +9,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.CommitSignatures._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Validators.Validator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import io.circe.Decoder
+import stainless.annotation.ignore
 import utils.ListMap
 
 @ignore

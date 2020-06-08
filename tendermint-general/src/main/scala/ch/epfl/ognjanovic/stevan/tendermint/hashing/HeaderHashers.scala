@@ -1,4 +1,4 @@
-package ch.epfl.ognjanovic.stevan.tendermint.light
+package ch.epfl.ognjanovic.stevan.tendermint.hashing
 
 import java.nio.ByteBuffer
 
