@@ -23,13 +23,13 @@ object CirceDecoders {
 
   implicit val partSetDecoder: Decoder[PartSetHeader] = cursor => for {
     total <- cursor.downField("total").as[Int]
-    hash <- cursor.downField("hash").as[ByteArray](hashDecoder)
+    hash <- cursor.downField("hash").as[ByteArray](hexStringDecoder)
   } yield {
     PartSetHeader(total, hash)
   }
 
   implicit val blockIdDecoder: Decoder[BlockId] = cursor => for {
-    hash <- cursor.downField("hash").as[ByteArray](hashDecoder)
+    hash <- cursor.downField("hash").as[ByteArray](hexStringDecoder)
     parts <- cursor.downField("parts").as[PartSetHeader]
   } yield {
     BlockId(hash, parts)
@@ -99,14 +99,14 @@ object CirceDecoders {
     height <- cursor.downField("height").as[Long]
     time <- cursor.downField("time").as[Instant]
     lastBlockId <- cursor.downField("last_block_id").as[BlockId]
-    lastCommit <- cursor.downField("last_commit_hash").as[ByteArray](hashDecoder)
-    data <- cursor.downField("data_hash").as[ByteArray](hashDecoder)
-    validators <- cursor.downField("validators_hash").as[ByteArray](hashDecoder)
-    nextValidators <- cursor.downField("next_validators_hash").as[ByteArray](hashDecoder)
-    consensus <- cursor.downField("consensus_hash").as[ByteArray](hashDecoder)
-    app <- cursor.downField("app_hash").as[ByteArray](hashDecoder)
-    lastResults <- cursor.downField("last_results_hash").as[ByteArray](hashDecoder)
-    evidence <- cursor.downField("evidence_hash").as[ByteArray](hashDecoder)
+    lastCommit <- cursor.downField("last_commit_hash").as[ByteArray](hexStringDecoder)
+    data <- cursor.downField("data_hash").as[ByteArray](hexStringDecoder)
+    validators <- cursor.downField("validators_hash").as[ByteArray](hexStringDecoder)
+    nextValidators <- cursor.downField("next_validators_hash").as[ByteArray](hexStringDecoder)
+    consensus <- cursor.downField("consensus_hash").as[ByteArray](hexStringDecoder)
+    app <- cursor.downField("app_hash").as[ByteArray](hexStringDecoder)
+    lastResults <- cursor.downField("last_results_hash").as[ByteArray](hexStringDecoder)
+    evidence <- cursor.downField("evidence_hash").as[ByteArray](hexStringDecoder)
     proposer <- cursor.downField("proposer_address").as[Address]
   } yield {
     Header(

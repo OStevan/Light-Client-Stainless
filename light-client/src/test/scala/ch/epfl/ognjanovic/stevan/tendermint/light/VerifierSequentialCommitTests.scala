@@ -1,5 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
+import ch.epfl.ognjanovic.stevan.tendermint.hashing.HeaderHashers.DefaultHeaderHasher
+import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.InvalidCommit
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.{Failure, Success}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
@@ -14,6 +16,11 @@ sealed class VerifierSequentialCommitTests  extends AnyFlatSpec {
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
 
+    val headerHasher = new DefaultHeaderHasher(MerkleRoot.default)
+
+    val hashValue = headerHasher.hashHeader(provider.lightBlock(requestHeight).header)
+
+    assert(hashValue == provider.lightBlock(requestHeight).commit.blockId.bytes)
     assert(result == Success)
   }
 

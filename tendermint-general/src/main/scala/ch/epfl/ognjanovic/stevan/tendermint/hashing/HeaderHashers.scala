@@ -2,6 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.hashing
 
 import java.nio.ByteBuffer
 
+import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.circe.ByteArray
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Header
 import com.google.protobuf.timestamp.Timestamp
@@ -16,7 +17,7 @@ object HeaderHashers {
     def hashHeader(header: Header): ByteArray
   }
 
-  sealed class DefaultHeaderHasher extends HeaderHasher {
+  sealed class DefaultHeaderHasher(private val merkleRoot: MerkleRoot) extends HeaderHasher {
     override def hashHeader(header: Header): ByteArray = {
       val fieldsBytes: mutable.Queue[Array[Byte]] = mutable.Queue()
       fieldsBytes.enqueue(
@@ -35,19 +36,27 @@ object HeaderHashers {
         encodeByteVector(header.evidence),
         encodeByteVector(ByteBuffer.wrap(BigInt(header.proposer.address, 16).toByteArray))
       )
-      ByteBuffer.allocate(0)
+
+      println(fieldsBytes.toList.map(_.toList.map(_.toInt & 0xff)))
+
+      ByteBuffer.wrap(merkleRoot.computeRoot(fieldsBytes.toArray)).asReadOnlyBuffer()
     }
 
-    private def extractBlockID(header: Header) = {
-      BlockID(
-        ByteString.copyFrom(header.lastBlockId.bytes),
-        Some(PartSetHeader(header.lastBlockId.parts.total, ByteString.copyFrom(header.lastBlockId.bytes))))
+    private def extractBlockID(header: Header): BlockID = {
+      val hash = ByteString.copyFrom(header.lastBlockId.bytes)
+      val optionalPartSet = Some(
+        PartSetHeader(
+          header.lastBlockId.parts.total,
+          ByteString.copyFrom(header.lastBlockId.parts.hash.array())))
+      BlockID(hash, optionalPartSet)
     }
 
     private def encodeByteVector(bytes: ByteArray): Array[Byte] = {
+      if (bytes.capacity() == 0)
+        return Array.empty
       val output = Array.ofDim[Byte](CodedOutputStream.computeByteBufferSizeNoTag(bytes))
       val outputBuffer = CodedOutputStream.newInstance(output)
-      outputBuffer.writeByteArrayNoTag(bytes.array())
+      outputBuffer.writeByteArrayNoTag(bytes.get(Array.ofDim[Byte](bytes.capacity())).array())
       output
     }
 

@@ -9,7 +9,7 @@ private sealed class DefaultMerkleRoot(private val messageDigest: MessageDigest)
 
   def computeSplitPoint(length: Int): Int = length match {
     case 0 | 1 => throw new IllegalArgumentException("Split point for numbers less than 2 does not make sense")
-    case _ if length % 2 == 0 => length / 2
+    case _ if Integer.bitCount(length) == 1 => length / 2
     case _ => 1 << (32 - Integer.numberOfLeadingZeros(length) - 1)
   }
 
