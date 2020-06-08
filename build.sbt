@@ -10,14 +10,6 @@ lazy val circeDependencies = Seq(
   "io.circe" %% "circe-parser"
 ).map(_ % circeVersion)
 
-lazy val commonSettings: Seq[Setting[_]] = Seq(
-  libraryDependencies ++= circeDependencies ++ Seq(
-    "org.scalamock" %% "scalamock" % "4.4.0" % Test,
-    "org.scalactic" %% "scalactic" % "3.1.1",
-    "org.scalatest" %% "scalatest" % "3.1.1" % Test
-  )
-)
-
 val lightClientCoreName = "light-client-core"
 lazy val lightClientCore = project
   .in(file(lightClientCoreName))
@@ -33,8 +25,18 @@ lazy val tendermintRpc = project
   .settings(
     name := "tendermint-rpc",
     stainlessEnabled := false,
-    commonSettings
-  )
+    PB.targets in Compile := Seq(
+      scalapb.gen(flatPackage = false) -> (sourceManaged in Compile).value / "scalapb"
+    ),
+    Seq(
+      libraryDependencies ++= circeDependencies ++ Seq(
+        "org.scalamock" %% "scalamock" % "4.4.0" % Test,
+        "org.scalactic" %% "scalactic" % "3.1.1",
+        "org.scalatest" %% "scalatest" % "3.1.1" % Test,
+        "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
+        "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
+        "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
+        "com.thesamet.scalapb" %% "scalapb-json4s" % scalapb.compiler.Version.scalapbVersion)))
   .dependsOn(lightClientCore)
 
 val lightClientName = "light-client"
@@ -42,6 +44,11 @@ lazy val lightClient = project
   .in(file(lightClientName))
   .settings(
     name := lightClientName,
-    commonSettings
+    Seq(
+      libraryDependencies ++= circeDependencies ++ Seq(
+        "org.scalamock" %% "scalamock" % "4.4.0" % Test,
+        "org.scalactic" %% "scalactic" % "3.1.1",
+        "org.scalatest" %% "scalatest" % "3.1.1" % Test
+      ))
   )
   .dependsOn(tendermintRpc)
