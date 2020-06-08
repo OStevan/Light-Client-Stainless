@@ -25,8 +25,9 @@ lazy val tendermintRpc = project
   .settings(
     name := "tendermint-rpc",
     stainlessEnabled := false,
+    PB.protoSources in Compile := Seq((sourceManaged in Compile).value),
     PB.targets in Compile := Seq(
-      scalapb.gen(flatPackage = false) -> (sourceManaged in Compile).value / "scalapb"
+      scalapb.gen(flatPackage = false) -> (sourceManaged in Compile).value
     ),
     Seq(
       libraryDependencies ++= circeDependencies ++ Seq(
