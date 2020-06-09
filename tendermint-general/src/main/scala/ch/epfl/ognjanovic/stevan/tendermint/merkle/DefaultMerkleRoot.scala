@@ -2,7 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.merkle
 
 import java.security.MessageDigest
 
-private sealed class DefaultMerkleRoot(private val messageDigest: MessageDigest) extends MerkleRoot {
+private[merkle] sealed class DefaultMerkleRoot(private val messageDigest: MessageDigest) extends MerkleRoot {
   override def computeRoot(items: Array[Array[Byte]]): Array[Byte] = {
     computeRootInner(items)
   }
@@ -13,7 +13,7 @@ private sealed class DefaultMerkleRoot(private val messageDigest: MessageDigest)
     case _ => 1 << (32 - Integer.numberOfLeadingZeros(length) - 1)
   }
 
-  private def computeRootInner(items: Array[Array[Byte]]): Array[Byte] = items.length match {
+  def computeRootInner(items: Array[Array[Byte]]): Array[Byte] = items.length match {
     case 0 => Array.empty
     case 1 => leafHash(items(0))
     case length =>
