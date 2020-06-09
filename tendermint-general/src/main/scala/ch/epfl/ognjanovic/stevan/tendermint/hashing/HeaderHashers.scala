@@ -38,13 +38,12 @@ object HeaderHashers {
     }
 
     private def extractBlockID(header: Header): BlockID = {
-      val hash = ByteString.copyFrom(header.lastBlockId.bytes.position(0))
-      val partsHash = header.lastBlockId.parts.hash
-      val optionalPartSet = Some(
-        PartSetHeader(
-          header.lastBlockId.parts.total,
-          ByteString.copyFrom(partsHash.duplicate().get(Array.ofDim[Byte](partsHash.capacity())).position(0))))
-      BlockID(hash, optionalPartSet)
+      BlockID(
+        safeConversionToByteString(header.lastBlockId.bytes),
+        Some(
+          PartSetHeader(
+            header.lastBlockId.parts.total,
+            safeConversionToByteString(header.lastBlockId.parts.hash))))
     }
 
     private def encodeByteVector(bytes: ByteArray): Array[Byte] = {
@@ -53,9 +52,12 @@ object HeaderHashers {
       val output = Array.ofDim[Byte](CodedOutputStream.computeByteBufferSizeNoTag(bytes))
       val outputBuffer = CodedOutputStream.newInstance(output)
       outputBuffer.writeBytesNoTag(
-        ByteString.copyFrom(
-          bytes.duplicate().get(Array.ofDim[Byte](bytes.capacity())).position(0)))
+        safeConversionToByteString(bytes))
       output
+    }
+
+    private def safeConversionToByteString(bytes: ByteArray) = {
+      ByteString.copyFrom(bytes.duplicate().get(Array.ofDim[Byte](bytes.capacity())).position(0))
     }
 
     private def encodeVarInt(long: Long): Array[Byte] = {
