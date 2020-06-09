@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.{InvalidCommit, InvalidNextValidatorSet}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.{InsufficientCommitPower, InvalidNextValidatorSet}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.{Failure, Success}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import org.scalatest.flatspec.AnyFlatSpec
@@ -45,7 +45,7 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[Failure])
-    assert(result.asInstanceOf[Failure].reason == InvalidCommit)
+    assert(result.asInstanceOf[Failure].reason == InsufficientCommitPower)
   }
 
   "Half of the validators changing between two adjacent blocks" should "not influence verification" in {

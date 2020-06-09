@@ -39,7 +39,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec {
 
     val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
 
-    // per the test description should be InvalidCommit however it fails on validator sets (same as rust)
+    // this test should fail with InsufficientCommitPower but it fails with InvalidNextValidatorSet
     assert(result.isRight && result.get == InvalidNextValidatorSet)
   }
 

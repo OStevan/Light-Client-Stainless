@@ -13,7 +13,7 @@ object TrustOptions {
   def decoder: Decoder[TrustOptions] = cursor => for {
     trustPeriod <- cursor.downField("period").as[Long]
     height <- cursor.downField("height").as[Long]
-    hash <- cursor.downField("hash").as[ByteArray](circe.hashDecoder)
+    hash <- cursor.downField("hash").as[ByteArray](circe.hexStringDecoder)
     trustLevel <- cursor.downField("trust_level").as[TrustLevel](CirceDecoders.trustLevelDecoder)
   } yield {
     TrustOptions(trustPeriod, Height(height), hash, trustLevel)
