@@ -16,6 +16,10 @@ object VerificationErrors {
 
   case object InvalidNextValidatorSet extends VerificationError
 
+  case object InvalidValidatorSetHash extends VerificationError
+
+  case object InvalidNextValidatorSetHash extends VerificationError
+
   case object ExpiredTrustedState extends VerificationError
 
 }

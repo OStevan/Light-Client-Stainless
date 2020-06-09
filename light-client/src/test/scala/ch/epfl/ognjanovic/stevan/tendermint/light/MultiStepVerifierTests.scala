@@ -1,9 +1,8 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import java.nio.ByteBuffer
 import java.time.Instant
 
-import ch.epfl.ognjanovic.stevan.tendermint.hashing.HeaderHashers.DefaultHeaderHasher
+import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.DefaultHasher
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
@@ -13,19 +12,14 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.Defaul
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.{ParameterizedVotingPowerVerifier, VotingPowerVerifier}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{MultiStepVerifier, Verifier}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, Key, LightBlock, PeerId}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import io.circe.Decoder
 
 import scala.io.Source
 
 object MultiStepVerifierTests {
-  val defaultProvider: PeerId =
-    PeerId(
-      Key(
-        "tendermint/PubKeyEd25519",
-        ByteBuffer.wrap("OAaNq3DX/15fGJP2MI6bujt1GRpvjwrqIevChirJsbc=".getBytes).asReadOnlyBuffer()))
 
-  implicit val lightBlockDecoder: Decoder[LightBlock] = LightBlockDecoder.decoder(defaultProvider)
+  implicit val lightBlockDecoder: Decoder[LightBlock] = LightBlockDecoder.decoder(VerifierTests.defaultProvider)
 
   def getContent(path: String): String = {
     val source = Source.fromURL(getClass.getResource(path))
@@ -41,7 +35,7 @@ object MultiStepVerifierTests {
       DefaultLightBlockValidator(
         expirationChecker,
         DefaultCommitValidator(votingPowerVerifier),
-        new DefaultHeaderHasher(MerkleRoot.default())),
+        new DefaultHasher(MerkleRoot.default())),
       DefaultTrustVerifier(),
       DefaultCommitValidator(votingPowerVerifier)
     )
