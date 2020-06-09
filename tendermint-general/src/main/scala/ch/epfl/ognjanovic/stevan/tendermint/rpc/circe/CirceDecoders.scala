@@ -18,7 +18,7 @@ object CirceDecoders {
   import circe._
 
   implicit val addressDecoder: Decoder[Address] = cursor => for {
-    value <- cursor.as[String]
+    value <- cursor.as[ByteArray](hexStringDecoder)
   } yield Address(value)
 
   implicit val partSetDecoder: Decoder[PartSetHeader] = cursor => for {

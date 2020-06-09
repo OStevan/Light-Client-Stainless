@@ -1,6 +1,5 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
-import java.nio.{ByteBuffer => ByteArray}
 import java.time.Instant
 
 import stainless.annotation.{extern, pure}
@@ -11,12 +10,12 @@ case class Header(
   height: Height,
   @extern @pure time: Instant,
   @extern @pure lastBlockId: BlockId,
-  @extern @pure lastCommit: ByteArray,
-  @extern @pure data: ByteArray,
-  @extern @pure validators: ByteArray,
-  @extern @pure nextValidators: ByteArray,
-  @extern @pure consensus: ByteArray,
-  @extern @pure app: ByteArray,
-  @extern @pure lastResults: ByteArray,
-  @extern @pure evidence: ByteArray,
+  @extern @pure lastCommit: Seq[Byte],
+  @extern @pure data: Seq[Byte],
+  @extern @pure validators: Seq[Byte],
+  @extern @pure nextValidators: Seq[Byte],
+  @extern @pure consensus: Seq[Byte],
+  @extern @pure app: Seq[Byte],
+  @extern @pure lastResults: Seq[Byte],
+  @extern @pure evidence: Seq[Byte],
   proposer: Address)

@@ -1,7 +1,5 @@
 package ch.epfl.ognjanovic.stevan.tendermint.hashing
 
-import java.nio.ByteBuffer
-
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.circe.ByteArray
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Header
@@ -19,7 +17,7 @@ object HeaderHashers {
     override def hashHeader(header: Header): ByteArray = {
       val fieldsBytes = Array[Array[Byte]](
         Consensus(header.version.block, header.version.app).toByteArray,
-        encodeByteVector(ByteBuffer.wrap(header.chainId.getBytes)),
+        encodeByteVector(header.chainId.getBytes),
         encodeVarInt(header.height.value.toLong),
         Timestamp(header.time.getEpochSecond, header.time.getNano).toByteArray,
         extractBlockID(header).toByteArray,
@@ -31,33 +29,29 @@ object HeaderHashers {
         encodeByteVector(header.app),
         encodeByteVector(header.lastResults),
         encodeByteVector(header.evidence),
-        encodeByteVector(ByteBuffer.wrap(BigInt(header.proposer.address, 16).toByteArray))
+        encodeByteVector(header.proposer.address)
       )
 
-      ByteBuffer.wrap(merkleRoot.computeRoot(fieldsBytes)).asReadOnlyBuffer()
+      merkleRoot.computeRoot(fieldsBytes).toVector
     }
 
     private def extractBlockID(header: Header): BlockID = {
       BlockID(
-        safeConversionToByteString(header.lastBlockId.bytes),
+        ByteString.copyFrom(header.lastBlockId.bytes.toArray),
         Some(
           PartSetHeader(
             header.lastBlockId.parts.total,
-            safeConversionToByteString(header.lastBlockId.parts.hash))))
+            ByteString.copyFrom(header.lastBlockId.parts.hash.toArray))))
     }
 
     private def encodeByteVector(bytes: ByteArray): Array[Byte] = {
-      if (bytes.capacity() == 0)
+      if (bytes.isEmpty)
         return Array.empty
-      val output = Array.ofDim[Byte](CodedOutputStream.computeByteBufferSizeNoTag(bytes))
+      val byteString = ByteString.copyFrom(bytes.toArray)
+      val output = Array.ofDim[Byte](CodedOutputStream.computeBytesSizeNoTag(byteString))
       val outputBuffer = CodedOutputStream.newInstance(output)
-      outputBuffer.writeBytesNoTag(
-        safeConversionToByteString(bytes))
+      outputBuffer.writeBytesNoTag(byteString)
       output
-    }
-
-    private def safeConversionToByteString(bytes: ByteArray) = {
-      ByteString.copyFrom(bytes.duplicate().get(Array.ofDim[Byte](bytes.capacity())).position(0))
     }
 
     private def encodeVarInt(long: Long): Array[Byte] = {
