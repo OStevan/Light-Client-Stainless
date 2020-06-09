@@ -10,8 +10,6 @@ import com.google.protobuf.{ByteString, CodedOutputStream}
 import tendermint.proto.types.types.{BlockID, PartSetHeader}
 import tendermint.proto.version.version.Consensus
 
-import scala.collection.mutable
-
 object HeaderHashers {
   trait HeaderHasher {
     def hashHeader(header: Header): ByteArray
@@ -19,8 +17,7 @@ object HeaderHashers {
 
   sealed class DefaultHeaderHasher(private val merkleRoot: MerkleRoot) extends HeaderHasher {
     override def hashHeader(header: Header): ByteArray = {
-      val fieldsBytes: mutable.Queue[Array[Byte]] = mutable.Queue()
-      fieldsBytes.enqueue(
+      val fieldsBytes = Array[Array[Byte]](
         Consensus(header.version.block, header.version.app).toByteArray,
         encodeByteVector(ByteBuffer.wrap(header.chainId.getBytes)),
         encodeVarInt(header.height.value.toLong),
@@ -37,17 +34,16 @@ object HeaderHashers {
         encodeByteVector(ByteBuffer.wrap(BigInt(header.proposer.address, 16).toByteArray))
       )
 
-      println(fieldsBytes.toList.map(_.toList.map(_.toInt & 0xff)))
-
-      ByteBuffer.wrap(merkleRoot.computeRoot(fieldsBytes.toArray)).asReadOnlyBuffer()
+      ByteBuffer.wrap(merkleRoot.computeRoot(fieldsBytes)).asReadOnlyBuffer()
     }
 
     private def extractBlockID(header: Header): BlockID = {
-      val hash = ByteString.copyFrom(header.lastBlockId.bytes)
+      val hash = ByteString.copyFrom(header.lastBlockId.bytes.position(0))
+      val partsHash = header.lastBlockId.parts.hash
       val optionalPartSet = Some(
         PartSetHeader(
           header.lastBlockId.parts.total,
-          ByteString.copyFrom(header.lastBlockId.parts.hash.array())))
+          ByteString.copyFrom(partsHash.duplicate().get(Array.ofDim[Byte](partsHash.capacity())).position(0))))
       BlockID(hash, optionalPartSet)
     }
 
@@ -56,7 +52,9 @@ object HeaderHashers {
         return Array.empty
       val output = Array.ofDim[Byte](CodedOutputStream.computeByteBufferSizeNoTag(bytes))
       val outputBuffer = CodedOutputStream.newInstance(output)
-      outputBuffer.writeByteArrayNoTag(bytes.get(Array.ofDim[Byte](bytes.capacity())).array())
+      outputBuffer.writeBytesNoTag(
+        ByteString.copyFrom(
+          bytes.duplicate().get(Array.ofDim[Byte](bytes.capacity())).position(0)))
       output
     }
 

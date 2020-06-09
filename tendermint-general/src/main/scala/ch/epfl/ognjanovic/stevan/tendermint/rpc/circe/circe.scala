@@ -13,7 +13,7 @@ object circe {
   val hexStringDecoder: Decoder[ByteArray] = cursor => for {
     value <- cursor.as[String]
   } yield {
-    ByteBuffer.wrap(value.sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toArray)
+    ByteBuffer.wrap(value.sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toArray).asReadOnlyBuffer()
   }
 
   implicit val instantDecoder: Decoder[Instant] = cursor => for {

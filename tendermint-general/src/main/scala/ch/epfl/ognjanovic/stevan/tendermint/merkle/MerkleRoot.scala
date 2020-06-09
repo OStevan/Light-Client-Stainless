@@ -7,7 +7,8 @@ trait MerkleRoot {
 }
 
 object MerkleRoot {
-  val default: MerkleRoot = new DefaultMerkleRoot(MessageDigest.getInstance("SHA-256"))
+  // do not make this a val as the MessageDigest instances are not
+  def default(): MerkleRoot = new DefaultMerkleRoot(MessageDigest.getInstance("SHA-256"))
 
   def apply(messageDigest: MessageDigest): MerkleRoot = {
     require(messageDigest.getAlgorithm == "SHA-256", "unsupported algorithm")

@@ -21,7 +21,7 @@ case class Verifier(validator: LightBlockValidator, trustVerifier: TrustVerifier
       if (verificationResult != Success)
         verificationResult
       else
-        commitValidators.isCommitInvalid(untrustedLightBlock) match {
+        commitValidators.hasSufficientSignersOverlap(untrustedLightBlock) match {
           case Left(_) => Success
           case Right(content) => Failure(content)
         }

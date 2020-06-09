@@ -3,6 +3,8 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 import java.nio.ByteBuffer
 import java.time.Instant
 
+import ch.epfl.ognjanovic.stevan.tendermint.hashing.HeaderHashers.DefaultHeaderHasher
+import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
@@ -36,7 +38,10 @@ object MultiStepVerifierTests {
     now: Instant): Verifier = {
     val expirationChecker = new TimeBasedExpirationChecker(() => now, trustingPeriod)
     Verifier(
-      DefaultLightBlockValidator(expirationChecker, DefaultCommitValidator(votingPowerVerifier)),
+      DefaultLightBlockValidator(
+        expirationChecker,
+        DefaultCommitValidator(votingPowerVerifier),
+        new DefaultHeaderHasher(MerkleRoot.default())),
       DefaultTrustVerifier(),
       DefaultCommitValidator(votingPowerVerifier)
     )
