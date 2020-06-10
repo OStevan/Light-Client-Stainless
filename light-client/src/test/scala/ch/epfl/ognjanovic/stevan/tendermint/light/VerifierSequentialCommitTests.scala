@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.{InsufficientCommitPower, InvalidCommit}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.{InsufficientCommitPower, InvalidCommit, InvalidCommitValue}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.{Failure, Success}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import org.scalatest.flatspec.AnyFlatSpec
@@ -45,5 +45,15 @@ sealed class VerifierSequentialCommitTests  extends AnyFlatSpec {
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
 
     assert(result.asInstanceOf[Failure].reason == InvalidCommit)
+  }
+
+  "Wrong header hash" should "fail verification" in {
+    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
+      "/single-step/sequential/commit/wrong_header_hash.json")
+
+    val requestHeight = Height(2)
+    val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
+
+    assert(result.asInstanceOf[Failure].reason == InvalidCommitValue)
   }
 }
