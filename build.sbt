@@ -48,7 +48,8 @@ lazy val lightClient = project
       libraryDependencies ++= circeDependencies ++ Seq(
         "org.scalamock" %% "scalamock" % "4.4.0" % Test,
         "org.scalactic" %% "scalactic" % "3.1.1",
-        "org.scalatest" %% "scalatest" % "3.1.1" % Test
+        "org.scalatest" %% "scalatest" % "3.1.1" % Test,
+        "com.google.crypto.tink" % "tink" % "1.4.0-rc2"
       ))
   )
   .dependsOn(tendermintGeneral)
