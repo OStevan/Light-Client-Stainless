@@ -2,6 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.rpc.circe
 
 import java.nio.ByteBuffer
 import java.time.Instant
+import java.util.Base64
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustLevel
@@ -18,7 +19,7 @@ object CirceDecoders {
   import circe._
 
   implicit val addressDecoder: Decoder[Address] = cursor => for {
-    value <- cursor.as[String]
+    value <- cursor.as[ByteArray](hexStringDecoder)
   } yield Address(value)
 
   implicit val partSetDecoder: Decoder[PartSetHeader] = cursor => for {
@@ -55,7 +56,7 @@ object CirceDecoders {
     tpe <- cursor.downField("type").as[String]
     stringValue <- cursor.downField("value").as[String]
   } yield {
-    Key(tpe, ByteBuffer.wrap(stringValue.map(_.toByte).toArray).asReadOnlyBuffer())
+    Key(tpe, Base64.getDecoder.decode(stringValue).toVector)
   }
 
   implicit val signatureDecoder: Decoder[CommitSignature] = cursor => for {

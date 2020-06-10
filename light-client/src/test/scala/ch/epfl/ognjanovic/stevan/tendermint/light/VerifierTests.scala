@@ -1,9 +1,9 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import java.nio.ByteBuffer
 import java.time.Instant
+import java.util.Base64
 
-import ch.epfl.ognjanovic.stevan.tendermint.hashing.HeaderHashers.DefaultHeaderHasher
+import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.DefaultHasher
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
@@ -22,7 +22,7 @@ object VerifierTests {
     PeerId(
       Key(
         "tendermint/PubKeyEd25519",
-        ByteBuffer.wrap("OAaNq3DX/15fGJP2MI6bujt1GRpvjwrqIevChirJsbc=".getBytes).asReadOnlyBuffer()))
+        Base64.getDecoder.decode("OAaNq3DX/15fGJP2MI6bujt1GRpvjwrqIevChirJsbc=".getBytes).toVector))
 
   implicit val lightBlockDecoder: Decoder[LightBlock] = LightBlockDecoder.decoder(defaultProvider)
 
@@ -40,7 +40,7 @@ object VerifierTests {
       DefaultLightBlockValidator(
         expirationChecker,
         DefaultCommitValidator(votingPowerVerifier),
-        new DefaultHeaderHasher(MerkleRoot.default())),
+        new DefaultHasher(MerkleRoot.default())),
       DefaultTrustVerifier(),
       DefaultCommitValidator(votingPowerVerifier)
     )
