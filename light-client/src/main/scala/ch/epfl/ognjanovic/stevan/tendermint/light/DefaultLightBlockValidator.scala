@@ -20,7 +20,7 @@ case class DefaultLightBlockValidator(
     else if (trustedLightBlock.header.chainId != untrustedLightBlock.header.chainId)
       Right(InvalidHeader)
     else if (untrustedLightBlock.header.validators != headerHasher.hashValidatorSet(untrustedLightBlock.validatorSet))
-      Right(InvalidNextValidatorSetHash)
+      Right(InvalidValidatorSetHash)
     else if (untrustedLightBlock.header.nextValidators != headerHasher.hashValidatorSet(untrustedLightBlock.nextValidatorSet))
       Right(InvalidNextValidatorSetHash)
     else if (untrustedLightBlock.commit.blockId.bytes != headerHasher.hashHeader(untrustedLightBlock.header))
