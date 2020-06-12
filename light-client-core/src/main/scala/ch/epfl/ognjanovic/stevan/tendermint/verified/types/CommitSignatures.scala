@@ -4,6 +4,8 @@ import java.time.Instant
 
 import stainless.annotation.{extern, pure}
 
+import scala.collection.Seq
+
 object CommitSignatures {
 
   sealed abstract class CommitSignature

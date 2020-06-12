@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.{InsufficientCommitPower, InvalidNextValidatorSet}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.{InsufficientCommitPower, InvalidCommitVoteSignature, InvalidNextValidatorSet}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.{Failure, Success}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import org.scalatest.flatspec.AnyFlatSpec
@@ -136,5 +136,15 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
 
     assert(result.asInstanceOf[Failure].reason == InvalidNextValidatorSet)
+  }
+
+  "Wrong vote signatures" should "result in failed verification" in {
+    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
+      "/single-step/sequential/commit/wrong_vote_signature.json")
+
+    val requestHeight = Height(2)
+    val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
+
+    assert(result.asInstanceOf[Failure].reason == InvalidCommitVoteSignature)
   }
 }
