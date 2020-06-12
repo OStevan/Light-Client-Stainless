@@ -1,9 +1,10 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
-import java.nio.ByteBuffer
 import java.time.Instant
 
 import stainless.annotation.{extern, pure}
+
+import scala.collection.Seq
 
 object CommitSignatures {
 
@@ -14,11 +15,12 @@ object CommitSignatures {
   case class BlockIDFlagCommit(
     validator: Address,
     @extern @pure timestamp: Instant,
-    @extern @pure signature: ByteBuffer) extends CommitSignature
+    @extern @pure signature: Seq[Byte]) extends CommitSignature
 
   case class BlockIdFlagNil(
     validator: Address,
     @extern @pure timestamp: Instant,
-    @extern @pure signature: ByteBuffer) extends CommitSignature
+    @extern @pure signature: Seq[Byte]) extends CommitSignature {
+  }
 
 }

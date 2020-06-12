@@ -1,6 +1,5 @@
 package ch.epfl.ognjanovic.stevan.tendermint.rpc.circe
 
-import java.nio.ByteBuffer
 import java.time.Instant
 import java.util.Base64
 
@@ -65,8 +64,7 @@ object CirceDecoders {
     timestamp <- cursor.downField("timestamp").as[Instant]
     signature <- cursor.downField("signature").as[Option[String]]
   } yield {
-    val signatureOption = toStainlessOption(signature)
-      .map(value => ByteBuffer.wrap(value.map(_.toByte).toArray).asReadOnlyBuffer())
+    val signatureOption = toStainlessOption(signature).map(value => Base64.getDecoder.decode(value).toVector)
     blockFlagId match {
       case 1 => BlockIDFlagAbsent
       case 2 => BlockIDFlagCommit(validatorAddress.get, timestamp, signatureOption.get)
