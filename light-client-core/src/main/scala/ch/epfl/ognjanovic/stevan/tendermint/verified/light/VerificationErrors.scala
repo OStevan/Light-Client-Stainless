@@ -20,6 +20,8 @@ object VerificationErrors {
 
   case object InvalidNextValidatorSetHash extends VerificationError
 
+  case object InvalidCommitVoteSignature extends VerificationError
+
   case object ExpiredTrustedState extends VerificationError
 
 }

@@ -34,10 +34,10 @@ object MultiStepVerifierTests {
     Verifier(
       DefaultLightBlockValidator(
         expirationChecker,
-        DefaultCommitValidator(votingPowerVerifier),
+        DefaultCommitValidator(votingPowerVerifier, new DefaultCommitSignatureVerifier()),
         new DefaultHasher(MerkleRoot.default())),
       DefaultTrustVerifier(),
-      DefaultCommitValidator(votingPowerVerifier)
+      DefaultCommitValidator(votingPowerVerifier, new DefaultCommitSignatureVerifier())
     )
   }
 

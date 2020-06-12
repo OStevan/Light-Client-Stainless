@@ -40,7 +40,7 @@ object ModelIntegration {
       Verifier(
         DummyLightBlockValidator(),
         lightBlockVerifier,
-        DefaultCommitValidator(VotingPowerVerifiers.defaultTrustVerifier)),
+        DefaultCommitValidator(VotingPowerVerifiers.defaultTrustVerifier, (_: LightBlock) => true)),
       nextHeightCalculator)
       .verifyUntrusted(trustedState, untrustedState)
   }
