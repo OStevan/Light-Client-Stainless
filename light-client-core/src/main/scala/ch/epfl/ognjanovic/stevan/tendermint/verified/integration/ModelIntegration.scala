@@ -40,9 +40,13 @@ object ModelIntegration {
       Verifier(
         DummyLightBlockValidator(),
         lightBlockVerifier,
-        DefaultCommitValidator(VotingPowerVerifiers.defaultTrustVerifier, (_: LightBlock) => true)),
+        DefaultCommitValidator(VotingPowerVerifiers.defaultTrustVerifier, DummyCommitSignatureVerifier())),
       nextHeightCalculator)
       .verifyUntrusted(trustedState, untrustedState)
+  }
+
+  private[integration] case class DummyCommitSignatureVerifier() extends CommitSignatureVerifier {
+    override def verifyCommitSignatures(lightBlock: LightBlock): Boolean = true
   }
 
   private[integration] case class HeightBasedExpirationChecker(height: Height) extends ExpirationChecker {
