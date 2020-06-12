@@ -4,6 +4,8 @@ import java.time.Instant
 
 import stainless.annotation.{extern, pure}
 
+import scala.collection.Seq
+
 case class Header(
   @extern @pure version: Consensus,
   @extern @pure chainId: String,
