@@ -3,14 +3,14 @@ package utils
 import stainless.annotation._
 import stainless.collection._
 import stainless.lang._
-import ListUtils._
+import utils.ListUtils._
 
 /**
  * Copied as is from `https://github.com/epfl-lara/verifythis2020/blob/f10e38d864838f70e0bf880d48e40de8e815fbec/src/main/scala/pgp/ListMap.scala`
  */
 @library
 case class ListMap[A, B](toList: List[(A, B)]) {
-  require(noDuplicate(toList.map(_._1)))
+  require(ListOps.noDuplicate(toList.map(_._1)))
 
   def isEmpty: Boolean = toList.isEmpty
 
@@ -46,7 +46,7 @@ case class ListMap[A, B](toList: List[(A, B)]) {
     assert(!toList.filter(_._1 != keyValue._1).map(_._1).contains(keyValue._1))
 
     noDuplicateMapFilter(toList, (kv: (A, B)) => kv._1 != keyValue._1, (kv: (A, B)) => kv._1) // gives us:
-    assert(noDuplicate(toList.filter(_._1 != keyValue._1).map(_._1)))
+    assert(ListOps.noDuplicate(toList.filter(_._1 != keyValue._1).map(_._1)))
 
     ListMap(keyValue :: toList.filter(_._1 != keyValue._1))
   }
@@ -208,7 +208,7 @@ object ListMap {
 
     @opaque
     def uniqueImage[A, B](l: List[(A, B)], a: A, b: B): Unit = {
-      require(noDuplicate(l.map(_._1)) && l.contains((a, b)))
+      require(ListOps.noDuplicate(l.map(_._1)) && l.contains((a, b)))
       decreases(l)
 
       if (!l.isEmpty && l.head != (a, b)) {

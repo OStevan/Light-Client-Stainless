@@ -4,7 +4,7 @@ resolvers ++= Seq(
   Resolver.mavenLocal
 )
 
-val StainlessVersion = "0.7.0-9-g67b2b7f"
+val StainlessVersion = "0.7.1"
 
 addSbtPlugin("ch.epfl.lara" % "sbt-stainless" % StainlessVersion)
 

@@ -53,8 +53,8 @@ object ValidatorSet {
     require(
       first.forall(second.contains) &&
         second.forall(validatorSet.powerAssignments.toList.map(_._1).contains) &&
-        ListUtils.noDuplicate(first) &&
-        ListUtils.noDuplicate(second)
+        ListOps.noDuplicate(first) &&
+        ListOps.noDuplicate(second)
     )
     transitivityLemma(first, second, validatorSet.powerAssignments.toList.map(_._1))
     val firstFiltered = validatorSet.powerAssignments.toList.filter(node => first.contains(node._1))
@@ -72,7 +72,7 @@ object ValidatorSet {
   @opaque
   @ghost
   def subsetSumLessEq(@induct first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
-    require(first.forall(second.contains) && ListUtils.noDuplicate(first) && ListUtils.noDuplicate(second))
+    require(first.forall(second.contains) && ListOps.noDuplicate(first) && ListOps.noDuplicate(second))
     val difference = removingFromSet(second, first)
     sumWithDifferenceIsEqual(first, second)
     appendSameAsAddition(first, difference)
@@ -82,7 +82,7 @@ object ValidatorSet {
   @opaque
   @ghost
   def sumWithDifferenceIsEqual(first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
-    require(first.forall(second.contains) && ListUtils.noDuplicate(first) && ListUtils.noDuplicate(second))
+    require(first.forall(second.contains) && ListOps.noDuplicate(first) && ListOps.noDuplicate(second))
     second match {
       case Nil() => ()
 
@@ -103,14 +103,14 @@ object ValidatorSet {
   @opaque
   @ghost
   def removeOne(elem: (Address, Validator), list: List[(Address, Validator)]): Unit = {
-    require(ListUtils.noDuplicate(list) && list.contains(elem) && list.nonEmpty)
+    require(ListOps.noDuplicate(list) && list.contains(elem) && list.nonEmpty)
     list match {
       case Cons(_, Nil()) => ()
       case Cons(_, tail) if !tail.contains(elem) => removingNonContained(tail, elem)
       case Cons(_, tail) => removeOne(elem, tail)
     }
   }.ensuring(_ =>
-    sumVotingPower(list) == elem._2.votingPower + sumVotingPower(list - elem) && ListUtils.noDuplicate(list - elem))
+    sumVotingPower(list) == elem._2.votingPower + sumVotingPower(list - elem) && ListOps.noDuplicate(list - elem))
 
   @opaque
   @ghost
