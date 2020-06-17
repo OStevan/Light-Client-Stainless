@@ -64,8 +64,7 @@ object Hashers {
     }
 
     override def hashValidatorSet(validatorSet: ValidatorSet): ByteArray = {
-      val validatorBytes = validatorSet.values
-        .toScala(validatorSet.values)
+      val validatorBytes = validatorSet.values.toScala
         .map(_.toInfoHashable)
         .map(encodeValidator)
         .toArray

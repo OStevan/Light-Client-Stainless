@@ -24,7 +24,7 @@ object UntrustedStates {
   abstract class UntrustedState {
     def targetLimit: Height = {
       ??? : Height
-    }.ensuring(res => bottomHeight().forall(_ <= res))
+    }
 
     @pure
     def hasNextHeader(bottom: Height, target: Height): Boolean = {
