@@ -32,12 +32,12 @@ sealed case class Height(value: BigInt) {
 }
 
 object Height {
-  implicit def min(first: Height, second: Height): Height = {
-    if (first.value < second.value)
-      first
-    else
-      second
-  } ensuring (res => (res == first || res == second) && (res.value <= first.value && res.value <= second.value))
+//  implicit def min(first: Height, second: Height): Height = {
+//    if (first.value < second.value)
+//      first
+//    else
+//      second
+//  } ensuring (res => (res == first || res == second) && (res.value <= first.value && res.value <= second.value))
 
   @opaque
   def helperLemma(first: Height, second: Height, third: Height): Unit = {

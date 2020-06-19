@@ -27,11 +27,11 @@ object BlockchainSystem {
 
     val noFaulty = Set.empty[Address]
 
-    val genesisBlock = BlockHeader(Blockchain.constructHeader(Height(1)), initialCommit, validatorSet, nextValidatorSet)
+    val genesisBlock = BlockHeader(Blockchain.constructHeader(Height(1), Timestamp(1, 0)), initialCommit, validatorSet, nextValidatorSet)
     val initialChain = Genesis(genesisBlock)
-    val minTrustedHeight = Height(1)
+    val minTrustedTime = Timestamp(0, 0)
 
-    val startingBlockchain: Blockchain = Blockchain(maxHeight, minTrustedHeight, initialChain, Set.empty, faultChecker)
+    val startingBlockchain: Blockchain = Blockchain(maxHeight, minTrustedTime, initialChain, Set.empty, faultChecker)
 
     if (maxHeight.value == BigInt(1))
       Finished(validatorSet.keys, noFaulty, startingBlockchain)

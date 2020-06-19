@@ -1,7 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Address, Commit, ValidatorSet}
-import stainless.lang._
 
 object SystemSteps {
 
@@ -11,14 +10,12 @@ object SystemSteps {
   sealed abstract class SystemStep
 
   /**
-   * Models a progression of time in an arbitrary way by specifying by how much the min trusted height should be
-   * increased. This is in line with how we think of BFT time in terms of the Tendermint blockchain. When processing
-   * this message the system invariants need to be guaranteed as they are not maintained here.
-   *
-   * @param step modeling the progression of time
+   * Models time progression by a specific time delta defined with seconds and nanos.
+   * @param seconds passed
+   * @param nanos passed
    */
-  case class TimeStep(step: BigInt) extends SystemStep {
-    require(step > BigInt(0))
+  case class TimeStep(seconds: BigInt, nanos: BigInt) extends SystemStep {
+    require(seconds > 0 && nanos > 0)
   }
 
   /**

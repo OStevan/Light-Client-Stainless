@@ -39,6 +39,7 @@ object Chain {
     def appendBlock(blockHeader: BlockHeader): Chain = {
       require(
         blockHeader.header.height == this.height + 1 &&
+          blockHeader.header.time > this.head.header.time &&
           blockHeader.validatorSet == head.nextValidatorSet)
       ChainLink(blockHeader, this)
     } ensuring (res => res.height == this.height + 1)
@@ -51,6 +52,7 @@ object Chain {
   case class ChainLink(blockHeader: BlockHeader, tail: Chain) extends Chain {
     require(
       blockHeader.header.height == tail.height + 1 && // height needs to be increasing in steps of 1
+        blockHeader.header.time > tail.head.header.time &&
         blockHeader.validatorSet == tail.head.nextValidatorSet
     )
   }

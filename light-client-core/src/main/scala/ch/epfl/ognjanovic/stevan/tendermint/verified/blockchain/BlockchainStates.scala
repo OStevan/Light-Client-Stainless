@@ -107,8 +107,8 @@ object BlockchainStates {
           else
             Faulty(allNodes, newFaulty, maxVotingPower, newChain)
 
-        case TimeStep(step) =>
-          val updated = blockchain.increaseMinTrustedHeight(step)
+        case TimeStep(seconds, nanos) =>
+          val updated = blockchain.increaseTime(seconds, nanos)
           Running(allNodes, faulty, maxVotingPower, updated)
 
         // ignores append messages which do not preserve guarantees of the system
@@ -159,9 +159,9 @@ object BlockchainStates {
     override def step(systemStep: SystemStep): BlockchainState = {
       StaticChecks.require(faultyStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
       systemStep match {
-        case TimeStep(step) if step > 0 =>
+        case TimeStep(seconds, nanos) if seconds > 0 && nanos > 0=>
           // propagation of time allows us to move away from the chain where too many fault happened
-          val updated = blockchain.increaseMinTrustedHeight(step)
+          val updated = blockchain.increaseTime(seconds, nanos)
 
           if (updated.faultAssumption())
             Running(allNodes, faulty, maxVotingPower, updated)

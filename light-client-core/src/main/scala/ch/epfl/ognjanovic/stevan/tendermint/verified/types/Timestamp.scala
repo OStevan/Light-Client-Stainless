@@ -8,7 +8,16 @@ case class Timestamp(seconds: BigInt, nanos: BigInt) {
   def <=(other: Timestamp): Boolean = {
     if (seconds < other.seconds)
       true
-    else if (seconds == other.seconds && nanos <= other.seconds)
+    else if (seconds == other.seconds && nanos <= other.nanos)
+      true
+    else
+      false
+  }
+
+  def >(other: Timestamp): Boolean = {
+    if (seconds > other.seconds)
+      true
+    else if (seconds == other.seconds && nanos > other.nanos)
       true
     else
       false
