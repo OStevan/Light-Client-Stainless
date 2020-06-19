@@ -5,10 +5,10 @@ import stainless.annotation._
  * Timestamp visible for Stainless, treated as UTC epoch Instant
  */
 case class Timestamp(seconds: BigInt, nanos: BigInt) {
-  def <(other: Timestamp): Boolean = {
+  def <=(other: Timestamp): Boolean = {
     if (seconds < other.seconds)
       true
-    else if (seconds == other.seconds && nanos < other.seconds)
+    else if (seconds == other.seconds && nanos <= other.seconds)
       true
     else
       false

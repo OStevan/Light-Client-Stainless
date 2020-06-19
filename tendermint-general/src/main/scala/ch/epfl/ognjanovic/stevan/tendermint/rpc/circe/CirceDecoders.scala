@@ -112,7 +112,7 @@ object CirceDecoders {
       version,
       chanId,
       Height(height),
-      time,
+      Timestamp(time.getEpochSecond, time.getNano),
       lastBlockId,
       lastCommit,
       data,
