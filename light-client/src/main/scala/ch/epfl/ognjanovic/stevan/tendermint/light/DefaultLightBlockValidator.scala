@@ -25,7 +25,7 @@ case class DefaultLightBlockValidator(
       Right(InvalidNextValidatorSetHash)
     else if (untrustedLightBlock.commit.blockId.bytes != headerHasher.hashHeader(untrustedLightBlock.header))
       Right(InvalidCommitValue)
-    else if (!untrustedLightBlock.header.time.isAfter(trustedLightBlock.header.time))
+    else if (untrustedLightBlock.header.time <= trustedLightBlock.header.time)
       Right(NonMonotonicBftTime)
     else
       commitValidator.validateCommit(untrustedLightBlock)

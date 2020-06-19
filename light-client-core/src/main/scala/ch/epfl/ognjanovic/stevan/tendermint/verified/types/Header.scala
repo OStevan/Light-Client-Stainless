@@ -1,7 +1,5 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.types
 
-import java.time.Instant
-
 import stainless.annotation.{extern, pure}
 
 import scala.collection.Seq
@@ -10,7 +8,7 @@ case class Header(
   @extern @pure version: Consensus,
   @extern @pure chainId: String,
   height: Height,
-  @extern @pure time: Instant,
+  time: Timestamp,
   @extern @pure lastBlockId: BlockId,
   @extern @pure lastCommit: Seq[Byte],
   @extern @pure data: Seq[Byte],

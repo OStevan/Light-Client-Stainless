@@ -21,7 +21,7 @@ object Hashers {
         Consensus(header.version.block, header.version.app).toByteArray,
         encodeByteVector(header.chainId.getBytes),
         encodeVarInt(header.height.value.toLong),
-        Timestamp(header.time.getEpochSecond, header.time.getNano).toByteArray,
+        Timestamp(header.time.seconds.toLong, header.time.nanos.toInt).toByteArray,
         extractBlockID(header).toByteArray,
         encodeByteVector(header.lastCommit),
         encodeByteVector(header.data),
