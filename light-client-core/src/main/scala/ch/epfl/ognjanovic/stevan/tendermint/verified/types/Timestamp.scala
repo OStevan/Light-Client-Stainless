@@ -28,7 +28,7 @@ case class Timestamp(seconds: BigInt, nanos: BigInt) {
    */
   @pure
   def addTime(seconds: BigInt, nanos: BigInt): Timestamp = {
-    require(seconds > 0 && nanos > 0)
+    require(seconds >= 0 && nanos >= 0)
     Timestamp(this.seconds + seconds, this.nanos + nanos)
   }
 }

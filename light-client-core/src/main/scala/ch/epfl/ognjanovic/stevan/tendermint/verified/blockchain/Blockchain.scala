@@ -7,29 +7,31 @@ import stainless.lang._
 
 case class Blockchain(
   maxHeight: Height,
-  minTrustedTime: Timestamp,
+  now: Timestamp,
+  secondsTrustingPeriod: BigInt,
   chain: Chain,
   faulty: Set[Address],
   faultChecker: FaultChecker) {
-  require(chain.height <= maxHeight)
+  require(chain.height <= maxHeight && secondsTrustingPeriod > 0)
 
   @pure
   def increaseTime(seconds: BigInt, nanos: BigInt): Blockchain = {
     require(seconds > 0 && nanos > 0)
-    val newMinTrustedTime = minTrustedTime.addTime(seconds, nanos)
+    val newNow = now.addTime(seconds, nanos)
     Blockchain.timeProgressDoesNotDeteriorateTheState(
       faultChecker,
-      newMinTrustedTime,
-      minTrustedTime,
+      newNow,
+      now,
+      secondsTrustingPeriod,
       chain,
       faulty)
-    Blockchain(maxHeight, newMinTrustedTime, chain, faulty, faultChecker)
+    Blockchain(maxHeight, now, secondsTrustingPeriod, chain, faulty, faultChecker)
   }.ensuring(res => faultAssumption() ==> res.faultAssumption())
 
   @pure
   def faultAssumption(): Boolean = {
     chain.forAll(header =>
-      minTrustedTime > header.header.time || faultChecker.isCorrect(header.nextValidatorSet, faulty))
+      now > header.header.time.addTime(secondsTrustingPeriod, 0) || faultChecker.isCorrect(header.nextValidatorSet, faulty))
   }
 
   @pure
@@ -43,12 +45,13 @@ case class Blockchain(
       lastCommit,
       chain.head.nextValidatorSet, nextVS)
     val newChain = chain.appendBlock(header)
-    Blockchain(maxHeight, minTrustedTime, newChain, faulty, faultChecker)
+    Blockchain(maxHeight, now, secondsTrustingPeriod, newChain, faulty, faultChecker)
   }.ensuring(res =>
     res.faultAssumption() &&
       res.height == height + 1 &&
       res.chain.height <= maxHeight &&
-      res.minTrustedTime == minTrustedTime &&
+      res.now == now &&
+      res.secondsTrustingPeriod == secondsTrustingPeriod &&
       res.chain.head.validatorSet == chain.head.nextValidatorSet)
 
   @inline
@@ -63,8 +66,8 @@ case class Blockchain(
   @inline
   def setFaulty(newFaulty: Set[Address]): Blockchain = {
     require(faulty subsetOf newFaulty)
-    Blockchain.faultyChainDoesNotRecoverWithNewFault(faultChecker, minTrustedTime, chain, faulty, newFaulty)
-    Blockchain(maxHeight, minTrustedTime, chain, newFaulty, faultChecker)
+    Blockchain.faultyChainDoesNotRecoverWithNewFault(faultChecker, now, secondsTrustingPeriod, chain, faulty, newFaulty)
+    Blockchain(maxHeight, now, secondsTrustingPeriod, chain, newFaulty, faultChecker)
   }.ensuring(res => !faultAssumption() ==> !res.faultAssumption())
 
   def getHeader(height: Height): BlockHeader = {
@@ -118,29 +121,33 @@ object Blockchain {
   @opaque
   def faultyChainDoesNotRecoverWithNewFault(
     faultChecker: FaultChecker,
-    minTrustedTime: Timestamp,
+    now: Timestamp,
+    secondsTrustingPeriod: BigInt,
     @induct chain: Chain,
     faulty: Set[Address],
     newFaulty: Set[Address]): Unit = {
-    require(faulty subsetOf newFaulty)
+    require((faulty subsetOf newFaulty) && secondsTrustingPeriod > 0)
   }.ensuring { _ =>
     FaultChecker.moreFaultyDoesNotHelp(faultChecker, faulty, newFaulty)
     !chain.forAll(
-      header => minTrustedTime > header.header.time || faultChecker.isCorrect(header.nextValidatorSet, faulty)) ==>
+      header => now > header.header.time.addTime(secondsTrustingPeriod, 0) || faultChecker.isCorrect(header.nextValidatorSet, faulty)) ==>
       !chain.forAll(
-        header => minTrustedTime > header.header.time || faultChecker.isCorrect(header.nextValidatorSet, newFaulty))
+        header => now > header.header.time.addTime(secondsTrustingPeriod, 0) || faultChecker.isCorrect(header.nextValidatorSet, newFaulty))
   }
 
   @opaque
   def timeProgressDoesNotDeteriorateTheState(
     faultChecker: FaultChecker,
-    newMinTrustedTime: Timestamp,
-    minTrustedTime: Timestamp,
+    newNow: Timestamp,
+    now: Timestamp,
+    secondsTrustingPeriod: BigInt,
     @induct chain: Chain,
     faulty: Set[Address]): Unit = {
-    require(minTrustedTime <= newMinTrustedTime)
+    require(now <= newNow && secondsTrustingPeriod > 0)
   }.ensuring { _ =>
-    chain.forAll(header => minTrustedTime > header.header.time || faultChecker.isCorrect(header.nextValidatorSet, faulty)) ==>
-      chain.forAll(header => newMinTrustedTime > header.header.time || faultChecker.isCorrect(header.nextValidatorSet, faulty))
+    chain.forAll(
+      header => now > header.header.time.addTime(secondsTrustingPeriod, 0) || faultChecker.isCorrect(header.nextValidatorSet, faulty)) ==>
+      chain.forAll(
+        header => newNow > header.header.time.addTime(secondsTrustingPeriod, 0) || faultChecker.isCorrect(header.nextValidatorSet, faulty))
   }
 }
