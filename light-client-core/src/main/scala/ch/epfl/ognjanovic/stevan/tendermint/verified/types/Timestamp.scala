@@ -27,8 +27,8 @@ case class Timestamp(seconds: BigInt, nanos: BigInt) {
    * Time can only go forward.
    */
   @pure
-  def addTime(seconds: BigInt, nanos: BigInt): Timestamp = {
-    require(seconds >= 0 && nanos >= 0)
-    Timestamp(this.seconds + seconds, this.nanos + nanos)
+  def addTime(duration: Duration): Timestamp = {
+    require(duration.seconds >= 0 && duration.nanos >= 0)
+    Timestamp(this.seconds + duration.seconds, this.nanos + duration.nanos)
   }
 }

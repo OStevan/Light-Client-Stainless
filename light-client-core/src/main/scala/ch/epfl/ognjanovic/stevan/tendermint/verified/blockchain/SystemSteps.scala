@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Address, Commit, ValidatorSet}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Address, Commit, Duration, ValidatorSet}
 
 object SystemSteps {
 
@@ -11,12 +11,9 @@ object SystemSteps {
 
   /**
    * Models time progression by a specific time delta defined with seconds and nanos.
-   * @param seconds passed
-   * @param nanos passed
+   * @param timeDelta of time passed
    */
-  case class TimeStep(seconds: BigInt, nanos: BigInt) extends SystemStep {
-    require(seconds > 0 && nanos > 0)
-  }
+  case class TimeStep(timeDelta: Duration) extends SystemStep
 
   /**
    * Models an arbitrary fault event of a single node. Assumption is that failed nodes will not recover.

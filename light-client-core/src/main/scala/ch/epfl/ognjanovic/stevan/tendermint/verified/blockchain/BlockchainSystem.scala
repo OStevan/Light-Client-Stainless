@@ -31,7 +31,7 @@ object BlockchainSystem {
     val initialChain = Genesis(genesisBlock)
     val minTrustedTime = Timestamp(1, 0)
 
-    val startingBlockchain: Blockchain = Blockchain(maxHeight, minTrustedTime, 10, initialChain, Set.empty, faultChecker)
+    val startingBlockchain: Blockchain = Blockchain(maxHeight, minTrustedTime, Duration(100, 0), initialChain, Set.empty, faultChecker)
 
     if (maxHeight.value == BigInt(1))
       Finished(validatorSet.keys, noFaulty, startingBlockchain)
