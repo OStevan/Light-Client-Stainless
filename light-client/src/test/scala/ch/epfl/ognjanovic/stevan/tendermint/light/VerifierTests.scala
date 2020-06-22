@@ -12,7 +12,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.Defaul
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Key, LightBlock, PeerId}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Key, LightBlock, PeerId}
 import io.circe.Decoder
 
 import scala.io.Source
@@ -33,7 +33,7 @@ object VerifierTests {
 
   private def createDefaultVerifier(
     votingPowerVerifier: VotingPowerVerifier,
-    trustingPeriod: Long,
+    trustingPeriod: Duration,
     now: Instant): Verifier = {
     val expirationChecker = new TimeBasedExpirationChecker(() => now, trustingPeriod)
     Verifier(

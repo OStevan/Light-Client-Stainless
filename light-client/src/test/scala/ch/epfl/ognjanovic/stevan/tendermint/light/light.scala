@@ -8,12 +8,12 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.L
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, ValidatorSet}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock, ValidatorSet}
 import io.circe.Decoder
 
 package object light {
 
-  implicit val singleStepTestCaseDecoder: Decoder[(TrustedState, VotingPowerVerifier, Long, Instant, LightBlockProvider)] =
+  implicit val singleStepTestCaseDecoder: Decoder[(TrustedState, VotingPowerVerifier, Duration, Instant, LightBlockProvider)] =
     cursor => for {
       signedHeader <- cursor.downField("initial")
         .downField("signed_header")
@@ -41,7 +41,7 @@ package object light {
           VerifierTests.defaultProvider),
         trustVerifier),
         trustVerifier,
-        trustingPeriod,
+        Duration(0, trustingPeriod),
         now,
         provider)
     }

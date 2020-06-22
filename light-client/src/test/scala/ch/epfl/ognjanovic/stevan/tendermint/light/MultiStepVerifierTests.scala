@@ -12,7 +12,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.Defaul
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.{ParameterizedVotingPowerVerifier, VotingPowerVerifier}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{MultiStepVerifier, Verifier}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock}
 import io.circe.Decoder
 
 import scala.io.Source
@@ -28,7 +28,7 @@ object MultiStepVerifierTests {
 
   private def createDefaultVerifier(
     votingPowerVerifier: VotingPowerVerifier,
-    trustingPeriod: Long,
+    trustingPeriod: Duration,
     now: Instant): Verifier = {
     val expirationChecker = new TimeBasedExpirationChecker(() => now, trustingPeriod)
     Verifier(
