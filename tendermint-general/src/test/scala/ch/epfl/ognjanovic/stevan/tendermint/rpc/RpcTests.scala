@@ -1,19 +1,19 @@
 package ch.epfl.ognjanovic.stevan.tendermint.rpc
 
-import com.dimafeng.testcontainers.MySQLContainer
+import com.dimafeng.testcontainers.GenericContainer.Def
 import com.dimafeng.testcontainers.scalatest.TestContainerForAll
 import org.scalatest.flatspec.AnyFlatSpec
 import stainless.annotation.ignore
 
 @ignore
-class DummyTest extends AnyFlatSpec with TestContainerForAll {
+class RpcTests extends AnyFlatSpec with TestContainerForAll {
 
-  // You need to override `containerDef` with needed container definition
-  override val containerDef = MySQLContainer.Def()
+  override val containerDef: Def[TendermintSingleNodeContainer] = TendermintSingleNodeContainer.Def()
 
   // To use containers in tests you need to use `withContainers` function
-  it should "test" in withContainers { mysqlContainer =>
+  it should "test" in withContainers { myContainer =>
     // Inside your test body you can do with your container whatever you want to
-    println(mysqlContainer.testQueryString)
+    println(myContainer.rpcPort)
+    println(myContainer.url)
   }
 }
