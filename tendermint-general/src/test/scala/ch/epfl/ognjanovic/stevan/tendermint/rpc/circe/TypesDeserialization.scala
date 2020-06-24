@@ -47,7 +47,7 @@ sealed class TypesDeserialization extends AnyFlatSpec {
   "ValidatorSet deserialization" should "succeed" in {
     val content = TypesDeserialization.content("/types/validator_set.json")
 
-    new CirceDeserializer(CirceDecoders.validatorSetDecoder)(content)
+    new CirceDeserializer(CirceDecoders.conformanceTestValidatorSetDecoder)(content)
   }
 
   "SignedHeader deserialization" should "succeed" in {

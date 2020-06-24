@@ -83,13 +83,19 @@ object CirceDecoders {
   }
 
   implicit val validatorSetDecoder: Decoder[ValidatorSet] = cursor => for {
-    validators <- cursor.downField("validators").as[Array[Validator]]
-    proposer <- cursor.downField("proposer").as[Validator]
+    validators <- cursor.as[Array[Validator]]
   } yield {
     ValidatorSet(
       validators.foldLeft(VotingPower(0))((acc, validator) => acc + validator.votingPower),
-      ListMap(stainless.collection.List.fromScala(validators.toList.map(value => (value.address, value)))),
-      proposer)
+      ListMap(stainless.collection.List.fromScala(validators.toList.map(value => (value.address, value)))))
+  }
+
+  implicit val conformanceTestValidatorSetDecoder: Decoder[ValidatorSet] = cursor => for {
+    validators <- cursor.downField("validators").as[Array[Validator]]
+  } yield {
+    ValidatorSet(
+      validators.foldLeft(VotingPower(0))((acc, validator) => acc + validator.votingPower),
+      ListMap(stainless.collection.List.fromScala(validators.toList.map(value => (value.address, value)))))
   }
 
   implicit val headerDecoder: Decoder[Header] = cursor => for {

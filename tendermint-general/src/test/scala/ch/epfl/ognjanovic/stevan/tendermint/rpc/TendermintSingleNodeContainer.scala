@@ -5,7 +5,6 @@ import stainless.annotation.ignore
 
 @ignore
 class TendermintSingleNodeContainer(underlying: GenericContainer) extends GenericContainer(underlying) {
-  // you can add any methods or fields inside your container's body
 
   def rpcPort: Int = underlying.mappedPort(TendermintSingleNodeContainer.INTERNAL_RPC_PORT)
 

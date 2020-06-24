@@ -10,10 +10,23 @@ class RpcTests extends AnyFlatSpec with TestContainerForAll {
 
   override val containerDef: Def[TendermintSingleNodeContainer] = TendermintSingleNodeContainer.Def()
 
+  override def afterContainersStart(containers: TendermintSingleNodeContainer): Unit = {
+    super.afterContainersStart(containers)
+    Thread.sleep(500)
+  }
+
   // To use containers in tests you need to use `withContainers` function
   it should "test" in withContainers { myContainer =>
     // Inside your test body you can do with your container whatever you want to
-    println(myContainer.rpcPort)
-    println(myContainer.url)
+    val client = new TendermintFullNodeClient(
+      false,
+      myContainer.url,
+      Some(myContainer.rpcPort))
+    for {
+      _ <- 1 to 10
+    } {
+      println(client.commit(Option.empty))
+      println(client.validatorSet(Option.empty))
+    }
   }
 }

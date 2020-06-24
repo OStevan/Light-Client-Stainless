@@ -20,7 +20,7 @@ package object light {
         .as[SignedHeader](CirceDecoders.signedHeaderDecoder)
       nextValidatorSet <- cursor.downField("initial")
         .downField("next_validator_set")
-        .as[ValidatorSet](CirceDecoders.validatorSetDecoder)
+        .as[ValidatorSet](CirceDecoders.conformanceTestValidatorSetDecoder)
       now <- cursor.downField("initial")
         .downField("now")
         .as[Instant](circe.instantDecoder)
