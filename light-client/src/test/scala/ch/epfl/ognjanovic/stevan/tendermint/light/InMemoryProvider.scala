@@ -12,6 +12,8 @@ class InMemoryProvider(
 
   override def currentHeight: Height =
     map.keys.max((x: Height, y: Height) => math.signum((x.value - y.value).toLong).toInt)
+
+  override def latestLightBlock: LightBlock = map(currentHeight)
 }
 
 object InMemoryProvider {

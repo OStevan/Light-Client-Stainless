@@ -12,6 +12,8 @@ object LightBlockProviders {
       ??? : LightBlock
     }.ensuring(res => res.header.height == height)
 
+    def latestLightBlock: LightBlock
+
     @pure
     def currentHeight: Height
 
