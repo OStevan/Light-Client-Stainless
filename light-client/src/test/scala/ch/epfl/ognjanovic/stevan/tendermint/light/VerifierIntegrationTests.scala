@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.DefaultHasher
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
@@ -39,9 +40,20 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
 
       val primary = new DefaultProvider("dockerchain", new RpcRequester(null, client))
 
-      val expirationChecker = new TimeBasedExpirationChecker(() => Instant.now(), Duration(86400, 0))
-
       val votingPowerVerifier = ParameterizedVotingPowerVerifier(TrustLevel(1, 3))
+
+      val trustedState = SimpleTrustedState(primary.lightBlock(Height(1)), votingPowerVerifier)
+
+      val expirationChecker = new TimeBasedExpirationChecker(
+        () => Instant.now(),
+        Duration(
+          86400 +
+            ChronoUnit.SECONDS.between(
+              Instant.ofEpochSecond(
+                trustedState.trustedLightBlock.header.time.seconds.toLong,
+                trustedState.trustedLightBlock.header.time.nanos.toLong), Instant.now()),
+          0)
+      )
 
       val verifier = DefaultTrustVerifier()
 
@@ -59,10 +71,28 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
         singleStepVerifier,
         BisectionHeightCalculator)
 
-      val trustedState = SimpleTrustedState(primary.lightBlock(Height(1)), votingPowerVerifier)
+      Thread.sleep(500)
+
+      var heightToVerify = primary.currentHeight
+
+      var result = multiStepVerifier.verifyUntrusted(
+        trustedState,
+        InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
+
+      assert(result.outcome.isLeft)
+      assert(result.trustedState.currentHeight() == heightToVerify)
+      assert(result.untrustedState.bottomHeight().isEmpty)
 
       Thread.sleep(500)
 
-      multiStepVerifier.verifyUntrusted(trustedState, InMemoryUntrustedState(primary.currentHeight, stainless.collection.List.empty))
+      heightToVerify = primary.currentHeight
+
+      result = multiStepVerifier.verifyUntrusted(
+        result.trustedState,
+        InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
+
+      assert(result.outcome.isLeft)
+      assert(result.trustedState.currentHeight() == heightToVerify)
+      assert(result.untrustedState.bottomHeight().isEmpty)
   }
 }

@@ -42,7 +42,7 @@ object ModelIntegration {
         lightBlockVerifier,
         DefaultCommitValidator(VotingPowerVerifiers.defaultTrustVerifier, DummyCommitSignatureVerifier())),
       nextHeightCalculator)
-      .verifyUntrusted(trustedState, untrustedState)
+      .verifyUntrusted(trustedState, untrustedState).outcome
   }
 
   private[integration] case class DummyCommitSignatureVerifier() extends CommitSignatureVerifier {

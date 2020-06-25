@@ -12,7 +12,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec {
 
     val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
 
-    assert(result.isLeft)
+    assert(result.outcome.isLeft)
   }
 
   "Trusted state expired" should "fail verification" in {
@@ -21,7 +21,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec {
 
     val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
 
-    assert(result.isRight && result.get == ExpiredTrustedState)
+    assert(result.outcome.isRight && result.outcome.get == ExpiredTrustedState)
   }
 
   //  "Invalid validator set" should "fail verification" in {
@@ -40,7 +40,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec {
     val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
 
     // this test should fail with InsufficientCommitPower but it fails with InvalidNextValidatorSet
-    assert(result.isRight && result.get == InvalidNextValidatorSet)
+    assert(result.outcome.isRight && result.outcome.get == InvalidNextValidatorSet)
   }
 
   "Worst case scenario for bisection" should "not influence the successful outcome" in {
@@ -49,6 +49,6 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec {
 
     val result = verifier.verifyUntrusted(trustedState, UntrustedStates.empty(heightToVerify))
 
-    assert(result == Left[Unit, VerificationError](()))
+    assert(result.outcome == Left[Unit, VerificationError](()))
   }
 }
