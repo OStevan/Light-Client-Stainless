@@ -7,6 +7,7 @@ import io.circe.generic.auto._
 import io.circe.parser._
 import stainless.annotation.ignore
 import sttp.client._
+import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDecoders.{validatorSetDecoder, signedHeaderDecoder}
 
 @ignore
 class TendermintFullNodeClient(
