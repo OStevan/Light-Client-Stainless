@@ -28,9 +28,10 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
     Thread.sleep(500)
   }
 
-  // To use containers in tests you need to use `withContainers` function
-  it should "succeed to verify one latest light block with initial trusted height 1" in withContainers {
+  "Verification of a newest light block with a trusted state at height 1 " should "succeed" in withContainers {
     myContainer: TendermintSingleNodeContainer =>
+      val timeOfTest = Instant.now()
+
       // Inside your test body you can do with your container whatever you want to
       val client = new TendermintFullNodeClient(
         false,
@@ -45,7 +46,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
       val trustedState = SimpleTrustedState(primary.lightBlock(Height(1)), votingPowerVerifier)
 
       val expirationChecker = new TimeBasedExpirationChecker(
-        () => Instant.now(),
+        () => timeOfTest,
         Duration(
           86400 +
             ChronoUnit.SECONDS.between(
@@ -56,14 +57,77 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
       )
 
       val verifier = DefaultTrustVerifier()
+      val commitSignatureVerifier = new DefaultCommitSignatureVerifier()
+
+      val commitValidator = DefaultCommitValidator(votingPowerVerifier, commitSignatureVerifier)
 
       val singleStepVerifier = Verifier(
         DefaultLightBlockValidator(
           expirationChecker,
-          DefaultCommitValidator(votingPowerVerifier, new DefaultCommitSignatureVerifier()),
+          commitValidator,
           new DefaultHasher(MerkleRoot.default())),
         verifier,
-        DefaultCommitValidator(votingPowerVerifier, new DefaultCommitSignatureVerifier())
+        commitValidator
+      )
+
+      val multiStepVerifier = MultiStepVerifier(
+        primary,
+        singleStepVerifier,
+        BisectionHeightCalculator)
+
+      Thread.sleep(500)
+
+      var heightToVerify = primary.currentHeight
+
+      var result = multiStepVerifier.verifyUntrusted(
+        trustedState,
+        InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
+
+      assert(result.outcome.isLeft)
+      assert(result.trustedState.currentHeight() == heightToVerify)
+      assert(result.untrustedState.bottomHeight().isEmpty)
+  }
+
+  "Verifying one highest block with the state after verifying previous highest one" should "succeed" in withContainers {
+    myContainer: TendermintSingleNodeContainer =>
+      val timeOfTest = Instant.now()
+
+      // Inside your test body you can do with your container whatever you want to
+      val client = new TendermintFullNodeClient(
+        false,
+        myContainer.url,
+        Some(myContainer.rpcPort),
+        HttpURLConnectionBackend())
+
+      val primary = new DefaultProvider("dockerchain", new RpcRequester(null, client))
+
+      val votingPowerVerifier = ParameterizedVotingPowerVerifier(TrustLevel(1, 3))
+
+      val trustedState = SimpleTrustedState(primary.lightBlock(Height(1)), votingPowerVerifier)
+
+      val expirationChecker = new TimeBasedExpirationChecker(
+        () => timeOfTest,
+        Duration(
+          86400 +
+            ChronoUnit.SECONDS.between(
+              Instant.ofEpochSecond(
+                trustedState.trustedLightBlock.header.time.seconds.toLong,
+                trustedState.trustedLightBlock.header.time.nanos.toLong), Instant.now()),
+          0)
+      )
+
+      val verifier = DefaultTrustVerifier()
+      val commitSignatureVerifier = new DefaultCommitSignatureVerifier()
+
+      val commitValidator = DefaultCommitValidator(votingPowerVerifier, commitSignatureVerifier)
+
+      val singleStepVerifier = Verifier(
+        DefaultLightBlockValidator(
+          expirationChecker,
+          commitValidator,
+          new DefaultHasher(MerkleRoot.default())),
+        verifier,
+        commitValidator
       )
 
       val multiStepVerifier = MultiStepVerifier(
