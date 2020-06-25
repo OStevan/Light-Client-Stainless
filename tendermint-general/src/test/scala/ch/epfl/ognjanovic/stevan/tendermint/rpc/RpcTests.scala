@@ -4,6 +4,7 @@ import com.dimafeng.testcontainers.GenericContainer.Def
 import com.dimafeng.testcontainers.scalatest.TestContainerForAll
 import org.scalatest.flatspec.AnyFlatSpec
 import stainless.annotation.ignore
+import sttp.client.HttpURLConnectionBackend
 
 @ignore
 class RpcTests extends AnyFlatSpec with TestContainerForAll {
@@ -21,7 +22,8 @@ class RpcTests extends AnyFlatSpec with TestContainerForAll {
     val client = new TendermintFullNodeClient(
       false,
       myContainer.url,
-      Some(myContainer.rpcPort))
+      Some(myContainer.rpcPort),
+      HttpURLConnectionBackend())
     for {
       _ <- 1 to 10
     } {
