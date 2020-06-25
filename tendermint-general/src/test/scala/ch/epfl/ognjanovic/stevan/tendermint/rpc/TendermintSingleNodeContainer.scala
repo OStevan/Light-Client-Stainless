@@ -13,7 +13,6 @@ class TendermintSingleNodeContainer(underlying: GenericContainer) extends Generi
 
 @ignore
 object TendermintSingleNodeContainer {
-
   private val INTERNAL_RPC_PORT = 26657
 
   // In the container definition you need to describe, how your container will be constructed:
