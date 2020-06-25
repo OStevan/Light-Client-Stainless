@@ -39,10 +39,8 @@ lazy val tendermintGeneral = project
         "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
         "com.thesamet.scalapb" %% "scalapb-json4s" % scalapb.compiler.Version.scalapbVersion,
         "com.softwaremill.sttp.client" %% "core" % "2.2.1",
-        "mysql" % "mysql-connector-java" % "8.0.20" % Test,
         "org.slf4j" % "slf4j-simple" % "1.7.30" % Test,
-        "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersScalaVersion % "test",
-        "com.dimafeng" %% "testcontainers-scala-mysql" % testContainersScalaVersion % "test"
+        "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersScalaVersion % "test"
       )))
   .dependsOn(lightClientCore)
 
@@ -56,7 +54,10 @@ lazy val lightClient = project
         "org.scalamock" %% "scalamock" % "4.4.0" % Test,
         "org.scalactic" %% "scalactic" % "3.1.1",
         "org.scalatest" %% "scalatest" % "3.1.1" % Test,
-        "com.google.crypto.tink" % "tink" % "1.4.0-rc2"
+        "com.google.crypto.tink" % "tink" % "1.4.0-rc2",
+        "com.softwaremill.sttp.client" %% "core" % "2.2.1",
+        "org.slf4j" % "slf4j-simple" % "1.7.30" % Test,
+        "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersScalaVersion % "test"
       ))
   )
-  .dependsOn(tendermintGeneral)
+  .dependsOn(tendermintGeneral % "compile->compile;test->test")
