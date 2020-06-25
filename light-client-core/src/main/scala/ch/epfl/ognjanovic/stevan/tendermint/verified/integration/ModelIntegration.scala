@@ -42,7 +42,7 @@ object ModelIntegration {
         lightBlockVerifier,
         DefaultCommitValidator(VotingPowerVerifiers.defaultTrustVerifier, DummyCommitSignatureVerifier())),
       nextHeightCalculator)
-      .verifyUntrusted(trustedState, untrustedState)
+      .verifyUntrusted(trustedState, untrustedState).outcome
   }
 
   private[integration] case class DummyCommitSignatureVerifier() extends CommitSignatureVerifier {
@@ -70,6 +70,8 @@ object ModelIntegration {
     }
 
     override def chainId: String = "verified-chain-01"
+
+    override def latestLightBlock: LightBlock = blockchainState.lightBlock(currentHeight)
   }
 
 }

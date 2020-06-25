@@ -19,7 +19,7 @@ case class MultiStepVerifier(
 
   def verifyUntrusted(
     trustedState: TrustedState,
-    untrustedState: UntrustedState): Either[Unit, VerificationError] = {
+    untrustedState: UntrustedState): Finished = {
     require(
       trustedState.currentHeight() < untrustedState.targetLimit &&
         untrustedState.bottomHeight().isEmpty &&
@@ -33,7 +33,7 @@ case class MultiStepVerifier(
     assert(untrustedState.bottomHeight().map(nextHeight < _).getOrElse(true))
     assert(trustedState.currentHeight() < nextHeight)
     assert(nextHeight <= untrustedState.targetLimit)
-    verify(WaitingForHeader(nextHeight, trustedState, untrustedState)).outcome
+    verify(WaitingForHeader(nextHeight, trustedState, untrustedState))
   }
 
   @scala.annotation.tailrec

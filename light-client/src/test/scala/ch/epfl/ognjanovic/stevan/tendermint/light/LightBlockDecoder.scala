@@ -10,8 +10,8 @@ private object LightBlockDecoder {
     peerId =>
       cursor => for {
         signedHeader <- cursor.downField("signed_header").as[SignedHeader](CirceDecoders.signedHeaderDecoder)
-        validatorSet <- cursor.downField("validator_set").as[ValidatorSet](CirceDecoders.validatorSetDecoder)
-        nextValidatorSet <- cursor.downField("next_validator_set").as[ValidatorSet](CirceDecoders.validatorSetDecoder)
+        validatorSet <- cursor.downField("validator_set").as[ValidatorSet](CirceDecoders.conformanceTestValidatorSetDecoder)
+        nextValidatorSet <- cursor.downField("next_validator_set").as[ValidatorSet](CirceDecoders.conformanceTestValidatorSetDecoder)
       } yield {
         LightBlock(signedHeader.header, signedHeader.commit, validatorSet, nextValidatorSet, peerId)
       }

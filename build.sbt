@@ -3,6 +3,7 @@ ThisBuild / organization := "com.example"
 ThisBuild / scalaVersion := "2.12.9"
 
 val circeVersion = "0.12.3"
+val testContainersScalaVersion = "0.37.0"
 
 lazy val circeDependencies = Seq(
   "io.circe" %% "circe-core",
@@ -36,7 +37,11 @@ lazy val tendermintGeneral = project
         "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
         "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
         "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
-        "com.thesamet.scalapb" %% "scalapb-json4s" % scalapb.compiler.Version.scalapbVersion)))
+        "com.thesamet.scalapb" %% "scalapb-json4s" % scalapb.compiler.Version.scalapbVersion,
+        "com.softwaremill.sttp.client" %% "core" % "2.2.1",
+        "org.slf4j" % "slf4j-simple" % "1.7.30" % Test,
+        "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersScalaVersion % "test"
+      )))
   .dependsOn(lightClientCore)
 
 val lightClientName = "light-client"
@@ -49,7 +54,10 @@ lazy val lightClient = project
         "org.scalamock" %% "scalamock" % "4.4.0" % Test,
         "org.scalactic" %% "scalactic" % "3.1.1",
         "org.scalatest" %% "scalatest" % "3.1.1" % Test,
-        "com.google.crypto.tink" % "tink" % "1.4.0-rc2"
+        "com.google.crypto.tink" % "tink" % "1.4.0-rc2",
+        "com.softwaremill.sttp.client" %% "core" % "2.2.1",
+        "org.slf4j" % "slf4j-simple" % "1.7.30" % Test,
+        "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersScalaVersion % "test"
       ))
   )
-  .dependsOn(tendermintGeneral)
+  .dependsOn(tendermintGeneral % "compile->compile;test->test")

@@ -17,11 +17,19 @@ sealed class DefaultProvider(
    * @return block for the specified height
    */
   override def lightBlock(height: Height): LightBlock = {
-    val signedHeader = requester.signedHeader(height.value.toLong)
-    val validatorSet = requester.validatorSet(height.value.toLong)
-    val nextValidatorSet = requester.validatorSet((signedHeader.header.height + 1).value.toLong)
+    val optionalHeight = Some(height)
+    val signedHeader = requester.signedHeader(optionalHeight)
+    val validatorSet = requester.validatorSet(optionalHeight)
+    val nextValidatorSet = requester.validatorSet(Some(height + 1))
     LightBlock(signedHeader.header, signedHeader.commit, validatorSet, nextValidatorSet, requester.peerId)
   }
 
-  override def currentHeight: Height = requester.signedHeader(0).header.height
+  override def currentHeight: Height = requester.signedHeader(None).header.height
+
+  override def latestLightBlock: LightBlock = {
+    val signedHeader = requester.signedHeader(None)
+    val validatorSet = requester.validatorSet(Some(signedHeader.header.height))
+    val nextValidatorSet = requester.validatorSet(Some(signedHeader.header.height + 1))
+    LightBlock(signedHeader.header, signedHeader.commit, validatorSet, nextValidatorSet, requester.peerId)
+  }
 }

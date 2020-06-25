@@ -7,7 +7,7 @@ import stainless.lang._
 import utils.ListSetUtils._
 import utils._
 
-case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Address, Validator], proposer: Validator) {
+case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Address, Validator]) {
   require(
     powerAssignments.forall(value => value._2.votingPower.isPositive) &&
       totalPower == powerAssignments.toList.foldLeft(VotingPower(0))((acc, value) => acc + value._2.votingPower) &&
