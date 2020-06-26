@@ -19,7 +19,7 @@ sealed case class Height(value: BigInt) {
   def +(value: BigInt): Height = {
     require(value > BigInt(0))
     Height(this.value + value)
-  } ensuring (res => res.value == this.value + value)
+  }.ensuring(res => res.value == this.value + value)
 
   def +(other: Height): Height = {
     Height(this.value + other.value)
@@ -29,6 +29,7 @@ sealed case class Height(value: BigInt) {
     require(value > BigInt(0) && this.value > BigInt(1))
     Height(this.value / 2)
   }
+
 }
 
 object Height {
@@ -43,4 +44,5 @@ object Height {
   def helperLemma(first: Height, second: Height, third: Height): Unit = {
     require(first <= second && second < third)
   }.ensuring(_ => first < third)
+
 }

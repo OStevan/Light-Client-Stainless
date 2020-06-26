@@ -18,27 +18,28 @@ object LightClientLemmas {
 
   @opaque
   def sameTrustedStateTerminationMeasure(previous: WaitingForHeader, current: WaitingForHeader): Unit = {
-    require(previous.untrustedState.targetLimit == current.untrustedState.targetLimit &&
-      previous.trustedState.currentHeight() == current.trustedState.currentHeight() &&
-      previous.requestHeight > current.requestHeight
-    )
+    require(
+      previous.untrustedState.targetLimit == current.untrustedState.targetLimit &&
+        previous.trustedState.currentHeight() == current.trustedState.currentHeight() &&
+        previous.requestHeight > current.requestHeight)
   }.ensuring { _ =>
     val previousTerminationMeasure = terminationMeasure(previous)
     val currentTerminationMeasure = terminationMeasure(current)
 
     previousTerminationMeasure._1 == currentTerminationMeasure._1 &&
-      previousTerminationMeasure._2 > currentTerminationMeasure._2
+    previousTerminationMeasure._2 > currentTerminationMeasure._2
   }
 
   @opaque
   def improvedTrustedStateLemma(previous: WaitingForHeader, current: WaitingForHeader): Unit = {
-    require(previous.untrustedState.targetLimit == current.untrustedState.targetLimit &&
-      previous.trustedState.currentHeight() < current.trustedState.currentHeight()
-    )
+    require(
+      previous.untrustedState.targetLimit == current.untrustedState.targetLimit &&
+        previous.trustedState.currentHeight() < current.trustedState.currentHeight())
   }.ensuring { _ =>
     val previousTerminationMeasure = terminationMeasure(previous)
     val currentTerminationMeasure = terminationMeasure(current)
 
     previousTerminationMeasure._1 > currentTerminationMeasure._1
   }
+
 }

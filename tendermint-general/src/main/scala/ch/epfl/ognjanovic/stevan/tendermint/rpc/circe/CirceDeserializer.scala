@@ -21,4 +21,5 @@ class CirceDeserializer[T](private val decoder: Decoder[T]) extends Deserializer
     case Left(error) => throw new IllegalArgumentException(error)
     case Right(value) => value
   }
+
 }

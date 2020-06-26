@@ -2,7 +2,8 @@ package ch.epfl.ognjanovic.stevan.tendermint.merkle
 
 import java.security.MessageDigest
 
-private[merkle] sealed class DefaultMerkleRoot(private val messageDigest: MessageDigest) extends MerkleRoot {
+sealed private[merkle] class DefaultMerkleRoot(private val messageDigest: MessageDigest) extends MerkleRoot {
+
   override def computeRoot(items: Array[Array[Byte]]): Array[Byte] = {
     computeRootInner(items)
   }
@@ -28,10 +29,7 @@ private[merkle] sealed class DefaultMerkleRoot(private val messageDigest: Messag
   }
 
   def innerHash(left: Array[Byte], right: Array[Byte]): Array[Byte] = {
-    messageDigest.digest(
-      Array.concat(
-        Array(1.toByte),
-        left,
-        right))
+    messageDigest.digest(Array.concat(Array(1.toByte), left, right))
   }
+
 }

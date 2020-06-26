@@ -7,7 +7,6 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation._
 import stainless.lang._
 
-
 object BlockchainSystem {
 
   @ghost
@@ -22,16 +21,18 @@ object BlockchainSystem {
     require(
       validatorSet.values.forall(_.votingPower.value == 1) &&
         maxPower.isPositive &&
-        (nextValidatorSet.keys subsetOf validatorSet.keys) &&
+        nextValidatorSet.keys.subsetOf(validatorSet.keys) &&
         faultChecker.isCorrect(nextValidatorSet, Set.empty) && initialCommit.forBlock.isEmpty)
 
     val noFaulty = Set.empty[Address]
 
-    val genesisBlock = BlockHeader(Blockchain.constructHeader(Height(1), Timestamp(0, 0)), initialCommit, validatorSet, nextValidatorSet)
+    val genesisBlock =
+      BlockHeader(Blockchain.constructHeader(Height(1), Timestamp(0, 0)), initialCommit, validatorSet, nextValidatorSet)
     val initialChain = Genesis(genesisBlock)
     val minTrustedTime = Timestamp(1, 0)
 
-    val startingBlockchain: Blockchain = Blockchain(maxHeight, minTrustedTime, Duration(100, 0), initialChain, Set.empty, faultChecker)
+    val startingBlockchain: Blockchain =
+      Blockchain(maxHeight, minTrustedTime, Duration(100, 0), initialChain, Set.empty, faultChecker)
 
     if (maxHeight.value == BigInt(1))
       Finished(validatorSet.keys, noFaulty, startingBlockchain)
@@ -54,8 +55,8 @@ object BlockchainSystem {
   @inlineOnce
   def neverStuckFalse2(blockchainState: BlockchainState): Boolean = {
     blockchainState.isInstanceOf[Faulty] ||
-      (blockchainState.isInstanceOf[Running] ||
-        blockchainState.isInstanceOf[Finished])
+    (blockchainState.isInstanceOf[Running] ||
+    blockchainState.isInstanceOf[Finished])
   }
 
   /**
@@ -82,4 +83,5 @@ object BlockchainSystem {
   def neverStuckFalse1(blockchainState: BlockchainState): Boolean = {
     blockchainState.isInstanceOf[Running]
   }
+
 }

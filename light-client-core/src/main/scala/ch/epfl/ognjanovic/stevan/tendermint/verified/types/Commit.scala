@@ -15,4 +15,5 @@ case class Commit(height: Height, round: Long, blockId: BlockId, signatures: Lis
       case value: BlockIDFlagCommit => List(value.validator)
       case _: BlockIdFlagNil => List.empty[Address]
     }.toSet
+
 }

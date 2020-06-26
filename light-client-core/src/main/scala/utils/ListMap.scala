@@ -54,7 +54,7 @@ case class ListMap[A, B](toList: List[(A, B)]) {
   def ++(keyValues: List[(A, B)]): ListMap[A, B] = {
     decreases(keyValues)
     keyValues match {
-      case Nil()                => this
+      case Nil() => this
       case Cons(keyValue, rest) => (this + keyValue) ++ rest
     }
   }
@@ -69,13 +69,14 @@ case class ListMap[A, B](toList: List[(A, B)]) {
   }
 
   def --(keys: List[A]): ListMap[A, B] = keys match {
-    case Nil()           => this
+    case Nil() => this
     case Cons(key, rest) => (this - key) -- rest
   }
 
   def forall(p: ((A, B)) => Boolean): Boolean = {
     toList.forall(p)
   }
+
 }
 
 object ListMap {
@@ -145,9 +146,7 @@ object ListMap {
       if (!l.isEmpty && l.head._1 != a2)
         filterStillContains(l.tail, a1, a2)
 
-    }.ensuring(_ =>
-      l.find(_._1 == a2) == l.filter(_._1 != a1).find(_._1 == a2)
-    )
+    }.ensuring(_ => l.find(_._1 == a2) == l.filter(_._1 != a1).find(_._1 == a2))
 
     @opaque
     def addApplyDifferent[A, B](lm: ListMap[A, B], a: A, b: B, a0: A): Unit = {
@@ -155,9 +154,7 @@ object ListMap {
 
       filterStillContains(lm.toList, a, a0)
 
-    }.ensuring(_ =>
-      (lm + (a -> b))(a0) == lm(a0)
-    )
+    }.ensuring(_ => (lm + (a -> b))(a0) == lm(a0))
 
     @opaque
     def addStillContains[A, B](lm: ListMap[A, B], a: A, b: B, a0: A): Unit = {
@@ -169,9 +166,7 @@ object ListMap {
       if (a != a0)
         filterStillContains(lm.toList, a, a0)
 
-    }.ensuring(_ =>
-      (lm + (a, b)).contains(a0)
-    )
+    }.ensuring(_ => (lm + (a, b)).contains(a0))
 
     @opaque
     def applyForall[A, B](lm: ListMap[A, B], p: ((A, B)) => Boolean, k: A): Unit = {
@@ -201,10 +196,7 @@ object ListMap {
       if (!l.isEmpty && l.head._1 != a)
         findFirstContained(l.tail, a)
 
-
-    }.ensuring(_ =>
-      l.map(_._1).contains(a)
-    )
+    }.ensuring(_ => l.map(_._1).contains(a))
 
     @opaque
     def uniqueImage[A, B](l: List[(A, B)], a: A, b: B): Unit = {
@@ -218,9 +210,7 @@ object ListMap {
         assert(l.find(_._1 == a) == Some((a, b)))
       }
 
-    }.ensuring(_ =>
-      l.find(_._1 == a) == Some((a, b))
-    )
+    }.ensuring(_ => l.find(_._1 == a) == Some((a, b)))
 
     @opaque
     def uniqueImage[A, B](lm: ListMap[A, B], a: A, b: B): Unit = {
@@ -228,16 +218,12 @@ object ListMap {
 
       uniqueImage(lm.toList, a, b)
 
-    }.ensuring(_ =>
-      lm.get(a) == Some(b)
-    )
+    }.ensuring(_ => lm.get(a) == Some(b))
 
     def keysOfSoundLemma0[A, B](@induct l1: List[(A, B)], l2: List[(A, B)], b: B): Unit = {
       require(!l2.isEmpty && l1.forall(p => l2.tail.contains((p._1, b))))
 
-    }.ensuring(_ =>
-      l1.forall(p => l2.contains((p._1, b)))
-    )
+    }.ensuring(_ => l1.forall(p => l2.contains((p._1, b))))
 
     @opaque
     def keysOfSoundLemma1[A, B](l: List[(A, B)], b: B): Unit = {
@@ -251,16 +237,14 @@ object ListMap {
         assert(l.tail.forall(p => l.contains((p._1, b))))
       }
 
-    }.ensuring(_ =>
-      l.forall(p => l.contains((p._1, b)))
-    )
+    }.ensuring(_ => l.forall(p => l.contains((p._1, b))))
 
     @opaque
     def keysOfSoundLemma2[A, B](l: List[(A, B)], lm: ListMap[A, B], b: B): Unit = {
       require {
         val filtered = lm.toList.filter(_._2 == b)
         l.forall(p => filtered.contains((p._1, b))) &&
-          l.forall(filtered.contains)
+        l.forall(filtered.contains)
       }
       decreases(l)
 
@@ -277,9 +261,7 @@ object ListMap {
         assert(l.head._2 == b)
       }
 
-    }.ensuring(_ =>
-      l.map(_._1).forall(key => lm.get(key) == Some(b))
-    )
+    }.ensuring(_ => l.map(_._1).forall(key => lm.get(key) == Some(b)))
 
     @opaque
     def keysOfSound[A, B](lm: ListMap[A, B], value: B): Unit = {
@@ -296,8 +278,8 @@ object ListMap {
       keysOfSoundLemma2(filtered, lm, value) // gives us:
       assert(filtered.map(_._1).forall(key => lm.get(key) == Some(value)))
 
-    }.ensuring(_ =>
-      lm.keysOf(value).forall(key => lm.get(key) == Some(value))
-    )
+    }.ensuring(_ => lm.keysOf(value).forall(key => lm.get(key) == Some(value)))
+
   }
+
 }

@@ -12,15 +12,10 @@ object CommitSignatures {
 
   case object BlockIDFlagAbsent extends CommitSignature
 
-  case class BlockIDFlagCommit(
-    validator: Address,
-    @extern @pure timestamp: Instant,
-    @extern @pure signature: Seq[Byte]) extends CommitSignature
+  case class BlockIDFlagCommit(validator: Address, @extern @pure timestamp: Instant, @extern @pure signature: Seq[Byte])
+      extends CommitSignature
 
-  case class BlockIdFlagNil(
-    validator: Address,
-    @extern @pure timestamp: Instant,
-    @extern @pure signature: Seq[Byte]) extends CommitSignature {
-  }
+  case class BlockIdFlagNil(validator: Address, @extern @pure timestamp: Instant, @extern @pure signature: Seq[Byte])
+      extends CommitSignature {}
 
 }

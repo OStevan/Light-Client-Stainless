@@ -17,9 +17,9 @@ object BlockchainStates {
     maxVotingPower: VotingPower,
     blockchain: Blockchain): Boolean = {
     blockchain.faultAssumption() &&
-      maxVotingPower.isPositive &&
-      !blockchain.finished &&
-      globalStateInvariant(allNodes, faulty, blockchain)
+    maxVotingPower.isPositive &&
+    !blockchain.finished &&
+    globalStateInvariant(allNodes, faulty, blockchain)
   }
 
   @inline
@@ -29,31 +29,32 @@ object BlockchainStates {
     maxVotingPower: VotingPower,
     blockchain: Blockchain): Boolean = {
     !blockchain.faultAssumption() &&
-      maxVotingPower.isPositive &&
-      !blockchain.finished &&
-      globalStateInvariant(allNodes, faulty, blockchain)
+    maxVotingPower.isPositive &&
+    !blockchain.finished &&
+    globalStateInvariant(allNodes, faulty, blockchain)
   }
 
   @inline
   private def finishedStateInvariant(allNodes: Set[Address], faulty: Set[Address], blockchain: Blockchain): Boolean = {
     blockchain.faultAssumption() &&
-      blockchain.finished &&
-      globalStateInvariant(allNodes, faulty, blockchain)
+    blockchain.finished &&
+    globalStateInvariant(allNodes, faulty, blockchain)
   }
 
   // state invariant forced in TLA
   @inline
   private def globalStateInvariant(allNodes: Set[Address], faulty: Set[Address], blockchain: Blockchain): Boolean = {
     allNodes.nonEmpty && // makes no sense to have no nodes
-      (faulty subsetOf allNodes) && // faulty nodes need to be from the set of existing nodes
-      faulty == blockchain.faulty &&
-      blockchain.chain.forAll(_.nextValidatorSet.keys.subsetOf(allNodes)) &&
-      blockchain.chain.forAll(_.lastCommit.forBlock.subsetOf(allNodes)) &&
-      blockchain.chain.forAll(_.validatorSet.keys.subsetOf(allNodes))
+    faulty.subsetOf(allNodes) && // faulty nodes need to be from the set of existing nodes
+    faulty == blockchain.faulty &&
+    blockchain.chain.forAll(_.nextValidatorSet.keys.subsetOf(allNodes)) &&
+    blockchain.chain.forAll(_.lastCommit.forBlock.subsetOf(allNodes)) &&
+    blockchain.chain.forAll(_.validatorSet.keys.subsetOf(allNodes))
   }
 
   @inlineInvariant
   sealed abstract class BlockchainState {
+
     @pure
     @inline
     def step(systemStep: SystemStep): BlockchainState
@@ -81,14 +82,12 @@ object BlockchainStates {
       require(height < currentHeight())
       blockchain.getLightBlock(height)
     }.ensuring(res => res.header.height == height)
+
   }
 
   @inlineInvariant
-  case class Running(
-    allNodes: Set[Address],
-    faulty: Set[Address],
-    maxVotingPower: VotingPower,
-    blockchain: Blockchain) extends BlockchainState {
+  case class Running(allNodes: Set[Address], faulty: Set[Address], maxVotingPower: VotingPower, blockchain: Blockchain)
+      extends BlockchainState {
     require(runningStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
 
     @pure
@@ -97,7 +96,7 @@ object BlockchainStates {
       systemStep match {
         // faultyNode is from expected nodes and at least one correct node exists
         case Fault(faultyNode)
-          if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
+            if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
           val newFaulty = faulty + faultyNode
           SetInvariants.setAdd(faulty, faultyNode, allNodes)
           val newChain = blockchain.setFaulty(newFaulty)
@@ -113,16 +112,16 @@ object BlockchainStates {
 
         // ignores append messages which do not preserve guarantees of the system
         case AppendBlock(lastCommit, nextValidatorSet: ValidatorSet)
-          if lastCommit.forBlock.subsetOf(blockchain.chain.head.validatorSet.keys) &&
-            nextValidatorSet.values.forall(_.votingPower <= maxVotingPower) &&
-            nextValidatorSet.keys.subsetOf(allNodes) &&
-            lastCommit.forBlock.subsetOf(allNodes) &&
-            lastCommit.forBlock.nonEmpty /* obvious from AppendBlock adt invariant times-out */ =>
-
+            if lastCommit.forBlock.subsetOf(blockchain.chain.head.validatorSet.keys) &&
+              nextValidatorSet.values.forall(_.votingPower <= maxVotingPower) &&
+              nextValidatorSet.keys.subsetOf(allNodes) &&
+              lastCommit.forBlock.subsetOf(allNodes) &&
+              lastCommit.forBlock.nonEmpty /* obvious from AppendBlock adt invariant times-out */ =>
           val lastBlock = blockchain.chain.head
           if (
             VotingPowerVerifiers.defaultTrustVerifier.consensusObtained(lastBlock.validatorSet, lastCommit) &&
-              blockchain.faultChecker.isCorrect(nextValidatorSet, faulty)) {
+            blockchain.faultChecker.isCorrect(nextValidatorSet, faulty)
+          ) {
             val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
             assert(newBlockchain.chain.head.validatorSet.keys.subsetOf(allNodes))
             assert(globalStateInvariant(allNodes, faulty, newBlockchain))
@@ -145,14 +144,12 @@ object BlockchainStates {
 
     @pure
     override def currentHeight(): Height = blockchain.chain.height
+
   }
 
   @inlineInvariant
-  case class Faulty(
-    allNodes: Set[Address],
-    faulty: Set[Address],
-    maxVotingPower: VotingPower,
-    blockchain: Blockchain) extends BlockchainState {
+  case class Faulty(allNodes: Set[Address], faulty: Set[Address], maxVotingPower: VotingPower, blockchain: Blockchain)
+      extends BlockchainState {
     require(faultyStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
 
     @pure
@@ -169,14 +166,15 @@ object BlockchainStates {
             Faulty(allNodes, faulty, maxVotingPower, updated)
 
         case Fault(faultyNode)
-          if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
+            if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
           val newFaulty = SetInvariants.setAdd(faulty, faultyNode, allNodes)
           Faulty(allNodes, newFaulty, maxVotingPower, blockchain.setFaulty(newFaulty))
 
         case _ => this
       }
-    }.ensuring(res => (res.blockchain.faultAssumption() && res.isInstanceOf[Running]) ||
-      (!res.blockchain.faultAssumption() && res.isInstanceOf[Faulty]))
+    }.ensuring(res =>
+      (res.blockchain.faultAssumption() && res.isInstanceOf[Running]) ||
+        (!res.blockchain.faultAssumption() && res.isInstanceOf[Faulty]))
 
     override def maxHeight: Height = blockchain.maxHeight
 
@@ -186,6 +184,7 @@ object BlockchainStates {
 
     @pure
     override def currentHeight(): Height = blockchain.chain.height
+
   }
 
   @inlineInvariant
@@ -203,6 +202,7 @@ object BlockchainStates {
 
     @pure
     override def currentHeight(): Height = blockchain.chain.height
+
   }
 
 }

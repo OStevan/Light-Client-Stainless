@@ -5,11 +5,11 @@ import stainless.lang._
 import StaticChecks._
 
 object SetInvariants {
+
   @extern
   def setIntersection[T](first: Set[T], second: Set[T]): Set[T] = {
     first & second
   }.ensuring(res => res.subsetOf(first) && res.subsetOf(second))
-
 
   @extern
   @opaque
@@ -17,4 +17,5 @@ object SetInvariants {
     require(allNodes.contains(elem) && set.subsetOf(allNodes))
     set + elem
   }.ensuring(res => set.subsetOf(res) && res.contains(elem) && res.subsetOf(allNodes))
+
 }

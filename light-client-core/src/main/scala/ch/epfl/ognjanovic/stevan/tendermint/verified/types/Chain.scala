@@ -9,6 +9,7 @@ object Chain {
    * By design chain can not be empty.
    */
   sealed abstract class Chain {
+
     def forAll(condition: BlockHeader => Boolean): Boolean = this match {
       case ChainLink(head, tail) => condition(head) && tail.forAll(condition)
       case Genesis(blockHeader) => condition(blockHeader)
@@ -42,7 +43,8 @@ object Chain {
           blockHeader.header.time > this.head.header.time &&
           blockHeader.validatorSet == head.nextValidatorSet)
       ChainLink(blockHeader, this)
-    } ensuring (res => res.height == this.height + 1)
+    }.ensuring(res => res.height == this.height + 1)
+
   }
 
   case class Genesis(blockHeader: BlockHeader) extends Chain {
@@ -56,4 +58,5 @@ object Chain {
         blockHeader.validatorSet == tail.head.nextValidatorSet
     )
   }
+
 }

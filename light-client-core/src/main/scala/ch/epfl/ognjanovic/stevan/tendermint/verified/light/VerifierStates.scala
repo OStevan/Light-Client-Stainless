@@ -16,17 +16,16 @@ object VerifierStates {
   case class Finished(
     outcome: Either[Unit, VerificationError],
     trustedState: TrustedState,
-    untrustedState: UntrustedState) extends VerifierState {
+    untrustedState: UntrustedState)
+      extends VerifierState {
     require(
       (outcome.isLeft && trustedState.currentHeight() == untrustedState.targetLimit) ||
         (outcome.isRight && trustedState.currentHeight() < untrustedState.targetLimit))
   }
 
   @inlineInvariant
-  case class WaitingForHeader(
-    requestHeight: Height,
-    trustedState: TrustedState,
-    untrustedState: UntrustedState) extends VerifierState {
+  case class WaitingForHeader(requestHeight: Height, trustedState: TrustedState, untrustedState: UntrustedState)
+      extends VerifierState {
     require(
       untrustedState.bottomHeight().map(requestHeight < _).getOrElse(true) &&
         trustedState.currentHeight() < requestHeight &&

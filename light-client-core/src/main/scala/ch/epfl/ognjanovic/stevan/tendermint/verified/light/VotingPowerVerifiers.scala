@@ -8,17 +8,20 @@ object VotingPowerVerifiers {
   val defaultTrustVerifier: VotingPowerVerifier = ParameterizedVotingPowerVerifier(TrustLevel.default)
 
   abstract class VotingPowerVerifier {
+
     @pure
     def consensusObtained(validatorSet: ValidatorSet, commit: Commit): Boolean = {
-      require(commit.forBlock subsetOf validatorSet.keys)
+      require(commit.forBlock.subsetOf(validatorSet.keys))
       ??? : Boolean
     }
 
     @pure
     def trustedCommit(validatorSet: ValidatorSet, commit: Commit): Boolean
+
   }
 
   case class ParameterizedVotingPowerVerifier(trustLevel: TrustLevel) extends VotingPowerVerifier {
+
     @pure
     override def consensusObtained(validatorSet: ValidatorSet, commit: Commit): Boolean = {
       validatorSet.nodesPower(commit.forBlock.toList) * VotingPower(3) > validatorSet.totalPower * VotingPower(2)
@@ -29,6 +32,7 @@ object VotingPowerVerifiers {
       trustLevel.denominator * validatorSet.nodesPower(commit.forBlock.toList).power() >
         validatorSet.totalPower.power() * trustLevel.numerator
     }
+
   }
 
 }

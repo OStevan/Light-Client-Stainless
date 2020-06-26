@@ -14,6 +14,7 @@ import stainless.annotation.pure
 import stainless.lang._
 
 object ModelIntegration {
+
   def snapshotExecution(
     blockchainState: BlockchainState,
     trustedHeight: Height,
@@ -41,8 +42,10 @@ object ModelIntegration {
         DummyLightBlockValidator(),
         lightBlockVerifier,
         DefaultCommitValidator(VotingPowerVerifiers.defaultTrustVerifier, DummyCommitSignatureVerifier())),
-      nextHeightCalculator)
-      .verifyUntrusted(trustedState, untrustedState).outcome
+      nextHeightCalculator
+    )
+      .verifyUntrusted(trustedState, untrustedState)
+      .outcome
   }
 
   private[integration] case class DummyCommitSignatureVerifier() extends CommitSignatureVerifier {
@@ -53,8 +56,8 @@ object ModelIntegration {
     override def isExpired(lightBlock: LightBlock): Boolean = height > lightBlock.header.height
   }
 
-  private[integration] case class BlockchainLightBlockProviders(
-    blockchainState: BlockchainState) extends LightBlockProvider {
+  private[integration] case class BlockchainLightBlockProviders(blockchainState: BlockchainState)
+      extends LightBlockProvider {
     require(blockchainState.currentHeight() >= Height(2))
 
     @pure
