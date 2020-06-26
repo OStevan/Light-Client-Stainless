@@ -34,4 +34,6 @@ jobs:
        with:
          java-version: 1.8
      - name: Verify Light Client Core
-       run: sbt 'set lightClientCore/stainlessEnabled := true; compile'
+       run: |
+         sbt update
+         sbt 'set lightClientCore/stainlessEnabled := true; compile'
