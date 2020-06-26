@@ -8,6 +8,7 @@ import utils.ListMap
 object SignedHeaderStore {
 
   abstract class LightBlockStore {
+
     @pure
     def put(lightBlock: LightBlock): LightBlockStore = {
       ??? : LightBlockStore
@@ -18,9 +19,11 @@ object SignedHeaderStore {
 
     @pure
     def contains(height: Height): Boolean
+
   }
 
   case class ListMapLightBlockStore(listMap: ListMap[Height, LightBlock]) extends LightBlockStore {
+
     @pure
     override def put(lightBlock: LightBlock): LightBlockStore = {
       helperLemma(listMap, (lightBlock.header.height, lightBlock))
@@ -36,9 +39,11 @@ object SignedHeaderStore {
 
     @pure
     override def contains(height: Height): Boolean = listMap.contains(height)
+
   }
 
   @opaque
-  private def helperLemma[K, V](listMap: ListMap[K, V], pair: (K, V)): Unit = {
-  }.ensuring(_ => (listMap + pair).contains(pair._1))
+  private def helperLemma[K, V](listMap: ListMap[K, V], pair: (K, V)): Unit = {}.ensuring(_ =>
+    (listMap + pair).contains(pair._1))
+
 }

@@ -6,6 +6,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Address
  * Manages `Requester`s for different full nodes identified by their network address.
  */
 trait RequesterManager {
+
   /**
    * Returns a requester for a given address.
    *

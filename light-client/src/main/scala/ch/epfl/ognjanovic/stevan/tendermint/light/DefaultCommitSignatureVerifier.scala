@@ -11,20 +11,22 @@ import com.google.protobuf.timestamp.Timestamp
 import tendermint.proto.types.canonical.{CanonicalBlockID, CanonicalPartSetHeader, CanonicalVote}
 import tendermint.proto.types.types.SignedMsgType
 
-
 sealed class DefaultCommitSignatureVerifier() extends CommitSignatureVerifier {
+
   override def verifyCommitSignatures(lightBlock: LightBlock): Boolean = {
     require(lightBlock.validatorSet.values.size == lightBlock.commit.signatures.size)
     lightBlock.validatorSet.values
       .zip(lightBlock.commit.signatures)
       .map(pair => (SignatureVerifier.forPublicKey(pair._1.publicKey), pair._2))
-      .map(pair => pair._2 match {
-        case CommitSignatures.BlockIDFlagAbsent => true
-        case BlockIDFlagCommit(_, _, signature) =>
-          pair._1.verify(serializeVote(lightBlock.header.chainId, lightBlock.commit, pair._2), signature.toArray)
-        case CommitSignatures.BlockIdFlagNil(_, _, signature) =>
-          pair._1.verify(serializeVote(lightBlock.header.chainId, lightBlock.commit, pair._2), signature.toArray)
-      }).forall(value => value)
+      .map(pair =>
+        pair._2 match {
+          case CommitSignatures.BlockIDFlagAbsent => true
+          case BlockIDFlagCommit(_, _, signature) =>
+            pair._1.verify(serializeVote(lightBlock.header.chainId, lightBlock.commit, pair._2), signature.toArray)
+          case CommitSignatures.BlockIdFlagNil(_, _, signature) =>
+            pair._1.verify(serializeVote(lightBlock.header.chainId, lightBlock.commit, pair._2), signature.toArray)
+        })
+      .forall(value => value)
   }
 
   private def convertToCanonicalBlockId(blockId: BlockId, commitSig: CommitSignature): Option[CanonicalBlockID] = {
@@ -65,4 +67,5 @@ sealed class DefaultCommitSignatureVerifier() extends CommitSignatureVerifier {
     convertToCanonical(chainId, commit, commitSignature).writeDelimitedTo(outputBuffer)
     outputBuffer.toByteArray
   }
+
 }

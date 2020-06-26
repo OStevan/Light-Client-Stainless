@@ -14,4 +14,5 @@ object MerkleRoot {
     require(messageDigest.getAlgorithm == "SHA-256", "unsupported algorithm")
     new DefaultMerkleRoot(messageDigest)
   }
+
 }

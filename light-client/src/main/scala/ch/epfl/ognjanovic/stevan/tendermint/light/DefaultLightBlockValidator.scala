@@ -11,7 +11,9 @@ import stainless.lang.{Either, Right}
 case class DefaultLightBlockValidator(
   expirationChecker: ExpirationChecker,
   commitValidator: CommitValidator,
-  headerHasher: Hasher) extends LightBlockValidator {
+  headerHasher: Hasher)
+    extends LightBlockValidator {
+
   override def validateUntrustedBlock(
     trustedLightBlock: LightBlock,
     untrustedLightBlock: LightBlock): Either[Unit, VerificationErrors.VerificationError] = {
@@ -21,7 +23,9 @@ case class DefaultLightBlockValidator(
       Right(InvalidHeader)
     else if (untrustedLightBlock.header.validators != headerHasher.hashValidatorSet(untrustedLightBlock.validatorSet))
       Right(InvalidValidatorSetHash)
-    else if (untrustedLightBlock.header.nextValidators != headerHasher.hashValidatorSet(untrustedLightBlock.nextValidatorSet))
+    else if (
+      untrustedLightBlock.header.nextValidators != headerHasher.hashValidatorSet(untrustedLightBlock.nextValidatorSet)
+    )
       Right(InvalidNextValidatorSetHash)
     else if (untrustedLightBlock.commit.blockId.bytes != headerHasher.hashHeader(untrustedLightBlock.header))
       Right(InvalidCommitValue)
@@ -30,4 +34,5 @@ case class DefaultLightBlockValidator(
     else
       commitValidator.validateCommit(untrustedLightBlock)
   }
+
 }

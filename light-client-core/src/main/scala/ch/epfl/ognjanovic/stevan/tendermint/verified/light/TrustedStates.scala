@@ -7,6 +7,7 @@ import stainless.annotation.pure
 object TrustedStates {
 
   abstract class TrustedState {
+
     /**
      * The height of the last block that we trust.
      */
@@ -31,8 +32,9 @@ object TrustedStates {
     def isAdjacent(lightBlock: LightBlock): Boolean = {
       require(currentHeight() < lightBlock.header.height)
       ??? : Boolean
-    }.ensuring(res => (res && currentHeight() + 1 == lightBlock.header.height) ||
-      (!res && currentHeight() + 1 < lightBlock.header.height))
+    }.ensuring(res =>
+      (res && currentHeight() + 1 == lightBlock.header.height) ||
+        (!res && currentHeight() + 1 < lightBlock.header.height))
 
     @pure
     def trusted(lightBlock: LightBlock): Boolean = {
@@ -42,9 +44,11 @@ object TrustedStates {
 
     @pure
     def trustedLightBlock: LightBlock
+
   }
 
-  case class SimpleTrustedState(trustedLightBlock: LightBlock, trustVerifier: VotingPowerVerifier) extends TrustedState {
+  case class SimpleTrustedState(trustedLightBlock: LightBlock, trustVerifier: VotingPowerVerifier)
+      extends TrustedState {
 
     @pure
     override def currentHeight(): Height = trustedLightBlock.header.height
@@ -80,6 +84,7 @@ object TrustedStates {
 
       trustVerifier.trustedCommit(trustedLightBlock.nextValidatorSet, lightBlock.commit)
     }
+
   }
 
 }

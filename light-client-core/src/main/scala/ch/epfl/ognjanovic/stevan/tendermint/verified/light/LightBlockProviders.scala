@@ -6,6 +6,7 @@ import stainless.annotation._
 object LightBlockProviders {
 
   abstract class LightBlockProvider {
+
     @pure
     def lightBlock(height: Height): LightBlock = {
       require(height <= currentHeight)
@@ -19,6 +20,7 @@ object LightBlockProviders {
 
     @pure
     def chainId: String
+
   }
 
 }

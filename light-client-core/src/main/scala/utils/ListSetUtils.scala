@@ -6,6 +6,7 @@ import stainless.lang.StaticChecks._
 import stainless.lang._
 
 object ListSetUtils {
+
   @opaque
   def uniquenessTransitivity[A, B](list: List[(A, B)]): Unit = {
     require(ListOps.noDuplicate(list.map(_._1)))
@@ -100,12 +101,8 @@ object ListSetUtils {
   }.ensuring(_ => ListOps.noDuplicate(list.filter(node => set.contains(node._1))))
 
   @opaque
-  def subsetFilteringCreatesSubsets[K, V](
-    first: List[K],
-    second: List[K],
-    assignments: List[(K, V)]): Unit = {
-    require(
-      first.forall(second.contains))
+  def subsetFilteringCreatesSubsets[K, V](first: List[K], second: List[K], assignments: List[(K, V)]): Unit = {
+    require(first.forall(second.contains))
     assignments match {
       case Nil() =>
       case Cons(h, t) =>
@@ -254,8 +251,9 @@ object ListSetUtils {
   @opaque
   def intersectionWithSubSetsContainmentLemma[T](original: List[T], @induct first: List[T], second: List[T]): Unit = {
     require(first.forall(second.contains))
-  }.ensuring(_ => forall((elem: T) =>
-    (original.contains(elem) && first.contains(elem)) ==> (original.contains(elem) && second.contains(elem))))
+  }.ensuring(_ =>
+    forall((elem: T) =>
+      (original.contains(elem) && first.contains(elem)) ==> (original.contains(elem) && second.contains(elem))))
 
   @opaque
   def setIntersectionContainmentLemma[T](original: List[T], first: List[T], second: List[T]): Unit = {
@@ -310,4 +308,5 @@ object ListSetUtils {
   def removingNonContained[T](@induct list: List[T], elem: T): Unit = {
     require(!list.contains(elem))
   }.ensuring(_ => list == list - elem)
+
 }

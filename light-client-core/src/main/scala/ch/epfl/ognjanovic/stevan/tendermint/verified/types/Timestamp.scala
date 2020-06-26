@@ -1,10 +1,12 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.types
+
 import stainless.annotation._
 
 /**
  * Timestamp visible for Stainless, treated as UTC epoch Instant
  */
 case class Timestamp(seconds: BigInt, nanos: BigInt) {
+
   def <=(other: Timestamp): Boolean = {
     if (seconds < other.seconds)
       true
@@ -31,4 +33,5 @@ case class Timestamp(seconds: BigInt, nanos: BigInt) {
     require(duration.seconds >= 0 && duration.nanos >= 0)
     Timestamp(this.seconds + duration.seconds, this.nanos + duration.nanos)
   }
+
 }

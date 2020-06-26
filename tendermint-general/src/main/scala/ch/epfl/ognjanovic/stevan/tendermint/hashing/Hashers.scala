@@ -10,12 +10,14 @@ import tendermint.proto.types.types.{BlockID, PartSetHeader}
 import tendermint.proto.version.version.Consensus
 
 object Hashers {
+
   trait Hasher {
     def hashHeader(header: Header): ByteArray
     def hashValidatorSet(validatorSet: ValidatorSet): ByteArray
   }
 
   sealed class DefaultHasher(private val merkleRoot: MerkleRoot) extends Hasher {
+
     override def hashHeader(header: Header): ByteArray = {
       val fieldsBytes = Array[Array[Byte]](
         Consensus(header.version.block, header.version.app).toByteArray,
@@ -40,10 +42,8 @@ object Hashers {
     private def extractBlockID(header: Header): BlockID = {
       BlockID(
         ByteString.copyFrom(header.lastBlockId.bytes.toArray),
-        Some(
-          PartSetHeader(
-            header.lastBlockId.parts.total,
-            ByteString.copyFrom(header.lastBlockId.parts.hash.toArray))))
+        Some(PartSetHeader(header.lastBlockId.parts.total, ByteString.copyFrom(header.lastBlockId.parts.hash.toArray)))
+      )
     }
 
     private def encodeByteVector(bytes: ByteArray): Array[Byte] = {
@@ -77,7 +77,7 @@ object Hashers {
       val votingPowerAsLong = hashable.votingPower.power().toLong
       val output = Array.ofDim[Byte](
         CodedOutputStream.computeByteArraySize(1, publicKeyAminoEncoded) +
-        CodedOutputStream.computeUInt64Size(2, votingPowerAsLong))
+          CodedOutputStream.computeUInt64Size(2, votingPowerAsLong))
       val outputBuffer = CodedOutputStream.newInstance(output)
       outputBuffer.writeByteArray(1, publicKeyAminoEncoded)
       outputBuffer.writeUInt64(2, votingPowerAsLong)
@@ -87,10 +87,12 @@ object Hashers {
     // https://docs.tendermint.com/master/spec/blockchain/encoding.html#public-key-cryptography
     private def encodePublicKey(key: Key): Array[Byte] = key.tpe match {
       case "tendermint/PubKeyEd25519" =>
-        val prefixAndSizeArray: Array[Byte] = Array(0x16, 0x24, 0xDE, 0x64, 0x20).map(_.toByte)
+        val prefixAndSizeArray: Array[Byte] = Array(0x16, 0x24, 0xde, 0x64, 0x20).map(_.toByte)
         assert(key.value.size == 0x20)
         prefixAndSizeArray ++ key.value.toArray[Byte]
       case _ => throw new IllegalArgumentException("Unknown key type for" + key)
     }
+
   }
+
 }

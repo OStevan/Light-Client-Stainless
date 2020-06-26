@@ -9,17 +9,19 @@ import stainless.annotation.ignore
 object circe {
   type ByteArray = Seq[Byte]
 
-  val hexStringDecoder: Decoder[ByteArray] = cursor => for {
-    value <- cursor.as[String]
-  } yield {
-    value.sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toVector
-  }
+  val hexStringDecoder: Decoder[ByteArray] = cursor =>
+    for {
+      value <- cursor.as[String]
+    } yield {
+      value.sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toVector
+    }
 
-  implicit val instantDecoder: Decoder[Instant] = cursor => for {
-    value <- cursor.as[String]
-  } yield {
-    Instant.parse(value)
-  }
+  implicit val instantDecoder: Decoder[Instant] = cursor =>
+    for {
+      value <- cursor.as[String]
+    } yield {
+      Instant.parse(value)
+    }
 
   private[rpc] def toStainlessOption[T](option: Option[T]): stainless.lang.Option[T] = {
     if (option.isDefined)
@@ -27,4 +29,5 @@ object circe {
     else
       stainless.lang.None()
   }
+
 }

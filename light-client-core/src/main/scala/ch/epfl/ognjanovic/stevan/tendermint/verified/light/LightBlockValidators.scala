@@ -8,6 +8,7 @@ import stainless.lang._
 object LightBlockValidators {
 
   abstract class LightBlockValidator {
+
     @pure
     def validateUntrustedBlock(
       trustedLightBlock: LightBlock,
@@ -15,11 +16,13 @@ object LightBlockValidators {
 
   }
 
-  case class  DummyLightBlockValidator() extends LightBlockValidator {
+  case class DummyLightBlockValidator() extends LightBlockValidator {
+
     @pure
     override def validateUntrustedBlock(
       trustedLightBlock: LightBlock,
       untrustedLightBlock: LightBlock): Either[Unit, VerificationError] = Left(())
+
   }
 
 }

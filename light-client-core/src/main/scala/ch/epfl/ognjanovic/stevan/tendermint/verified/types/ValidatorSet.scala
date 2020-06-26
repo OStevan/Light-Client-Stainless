@@ -121,11 +121,12 @@ object ValidatorSet {
 
   @opaque
   @ghost
-  def appendSameAsAddition(@induct first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
-  }.ensuring(_ => sumVotingPower(first ++ second) == sumVotingPower(first) + sumVotingPower(second))
+  def appendSameAsAddition(@induct first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {}
+    .ensuring(_ => sumVotingPower(first ++ second) == sumVotingPower(first) + sumVotingPower(second))
 
   @opaque
   @ghost
-  def additionLemma(first: List[(Address, Validator)], @induct second: List[(Address, Validator)]): Unit = {
-  }.ensuring(_ => sumVotingPower(first) <= sumVotingPower(first) + sumVotingPower(second))
+  def additionLemma(first: List[(Address, Validator)], @induct second: List[(Address, Validator)]): Unit = {}.ensuring(
+    _ => sumVotingPower(first) <= sumVotingPower(first) + sumVotingPower(second))
+
 }

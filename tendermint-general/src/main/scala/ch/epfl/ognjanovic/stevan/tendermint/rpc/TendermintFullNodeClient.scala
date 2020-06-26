@@ -7,7 +7,7 @@ import io.circe.generic.auto._
 import io.circe.parser._
 import stainless.annotation.ignore
 import sttp.client._
-import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDecoders.{validatorSetDecoder, signedHeaderDecoder}
+import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDecoders.{signedHeaderDecoder, validatorSetDecoder}
 
 @ignore
 class TendermintFullNodeClient(
@@ -36,8 +36,8 @@ class TendermintFullNodeClient(
     processResponse[ValidatorSetResponse](response).result.validators
   }
 
-  private def processResponse[T](response: Identity[Response[Either[String, String]]])
-                                (implicit decoder: Decoder[T]): JsonRpcResponse[T] = {
+  private def processResponse[T](response: Identity[Response[Either[String, String]]])(
+    implicit decoder: Decoder[T]): JsonRpcResponse[T] = {
     (response.body match {
       case Left(value) => throw new RuntimeException(value)
       case Right(value) =>
@@ -50,4 +50,5 @@ class TendermintFullNodeClient(
       case Right(value) => value
     }
   }
+
 }

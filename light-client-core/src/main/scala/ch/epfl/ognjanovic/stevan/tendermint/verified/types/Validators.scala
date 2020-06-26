@@ -9,4 +9,3 @@ object Validators {
   case class InfoHashable(publicKey: Key, votingPower: VotingPower)
 
 }
-

@@ -10,15 +10,19 @@ import stainless.lang._
 object TrustVerifiers {
 
   abstract class TrustVerifier {
+
     @pure
     def verify(trustedState: TrustedState, untrustedLightBlock: LightBlock): VerificationOutcome = {
       require(trustedState.currentHeight() < untrustedLightBlock.header.height)
       ??? : VerificationOutcome
-    }.ensuring(res => ((res == Success) ==> trustedState.trusted(untrustedLightBlock)) &&
-      ((res == InsufficientTrust) ==> (trustedState.currentHeight() + 1 < untrustedLightBlock.header.height)))
+    }.ensuring(res =>
+      ((res == Success) ==> trustedState.trusted(untrustedLightBlock)) &&
+        ((res == InsufficientTrust) ==> (trustedState.currentHeight() + 1 < untrustedLightBlock.header.height)))
+
   }
 
   case class DefaultTrustVerifier() extends TrustVerifier {
+
     @pure @opaque
     override def verify(trustedState: TrustedState, untrustedLightBlock: LightBlock): VerificationOutcome = {
       require(trustedState.currentHeight() < untrustedLightBlock.header.height)
@@ -28,8 +32,10 @@ object TrustVerifiers {
         Failure(InvalidNextValidatorSet)
       else
         InsufficientTrust
-    }.ensuring(res => ((res == Success) ==> trustedState.trusted(untrustedLightBlock)) &&
-      ((res == InsufficientTrust) ==> (trustedState.currentHeight() + 1 < untrustedLightBlock.header.height)))
+    }.ensuring(res =>
+      ((res == Success) ==> trustedState.trusted(untrustedLightBlock)) &&
+        ((res == InsufficientTrust) ==> (trustedState.currentHeight() + 1 < untrustedLightBlock.header.height)))
+
   }
 
 }
