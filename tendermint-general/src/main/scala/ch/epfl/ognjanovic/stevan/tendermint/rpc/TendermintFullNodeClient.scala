@@ -6,10 +6,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.rpc.types.Responses.{
   StatusResponse,
   ValidatorSetResponse
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{
-  Height,
-  ValidatorSet
-}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, ValidatorSet}
 import io.circe.Decoder
 import io.circe.generic.auto._
 import io.circe.parser._
@@ -33,10 +30,8 @@ class TendermintFullNodeClient(
 ) {
 
   private val scheme = if (secure) "https" else "http"
-  private val commitUri = (height: Option[Long]) =>
-    uri"$scheme://$ipAddress:$port/commit?height=$height"
-  private val validatorSetUri = (height: Option[Long]) =>
-    uri"$scheme://$ipAddress:$port/validators?height=$height"
+  private val commitUri = (height: Option[Long]) => uri"$scheme://$ipAddress:$port/commit?height=$height"
+  private val validatorSetUri = (height: Option[Long]) => uri"$scheme://$ipAddress:$port/validators?height=$height"
   private val statusUri = uri"$scheme://$ipAddress:$port/status"
 
   def commit(height: Option[Height]): SignedHeader = {
@@ -83,11 +78,11 @@ class TendermintFullNodeClient(
       case Left(value) => throw new RuntimeException(value)
       case Right(value) =>
         parse(value) match {
-          case Left(value)  => throw new RuntimeException(value)
+          case Left(value) => throw new RuntimeException(value)
           case Right(value) => value.as[JsonRpcResponse[T]]
         }
     }) match {
-      case Left(value)  => throw new RuntimeException(value)
+      case Left(value) => throw new RuntimeException(value)
       case Right(value) => value
     }
   }
