@@ -18,6 +18,7 @@ jobs:
     - name: Run tests
       run: |
         sbt update
+        sbt compile
         sbt test
 
   verify:
