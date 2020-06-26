@@ -46,12 +46,7 @@ object CirceDecoders {
       blockId <- cursor.downField("block_id").as[BlockId]
       signatures <- cursor.downField("signatures").as[List[CommitSignature]]
     } yield {
-      Commit(
-        Height(height),
-        round,
-        blockId,
-        stainless.collection.List.fromScala(signatures)
-      )
+      Commit(Height(height), round, blockId, stainless.collection.List.fromScala(signatures))
     }
 
   implicit val consensusDecoder: Decoder[Consensus] = cursor =>
@@ -73,28 +68,16 @@ object CirceDecoders {
   implicit val signatureDecoder: Decoder[CommitSignature] = cursor =>
     for {
       blockFlagId <- cursor.downField("block_id_flag").as[Int]
-      validatorAddress <-
-        cursor
-          .downField("validator_address")
-          .as[Option[Address]]
+      validatorAddress <- cursor.downField("validator_address").as[Option[Address]]
       timestamp <- cursor.downField("timestamp").as[Instant]
       signature <- cursor.downField("signature").as[Option[String]]
     } yield {
       val signatureOption = toStainlessOption(signature).map(value => Base64.getDecoder.decode(value).toVector)
       blockFlagId match {
         case 1 => BlockIDFlagAbsent
-        case 2 =>
-          BlockIDFlagCommit(
-            validatorAddress.get,
-            timestamp,
-            signatureOption.get
-          )
-        case 3 =>
-          BlockIdFlagNil(validatorAddress.get, timestamp, signatureOption.get)
-        case _ =>
-          throw new IllegalArgumentException(
-            "Unknown \"block_id_flag\": " + blockFlagId
-          )
+        case 2 => BlockIDFlagCommit(validatorAddress.get, timestamp, signatureOption.get)
+        case 3 => BlockIdFlagNil(validatorAddress.get, timestamp, signatureOption.get)
+        case _ => throw new IllegalArgumentException("Unknown \"block_id_flag\": " + blockFlagId)
       }
     }
 
@@ -114,26 +97,19 @@ object CirceDecoders {
     } yield {
       ValidatorSet(
         validators.foldLeft(VotingPower(0))((acc, validator) => acc + validator.votingPower),
-        ListMap(
-          stainless.collection.List
-            .fromScala(validators.toList.map(value => (value.address, value)))
-        )
+        ListMap(stainless.collection.List.fromScala(validators.toList.map(value => (value.address, value))))
       )
     }
 
-  implicit val conformanceTestValidatorSetDecoder: Decoder[ValidatorSet] =
-    cursor =>
-      for {
-        validators <- cursor.downField("validators").as[Array[Validator]]
-      } yield {
-        ValidatorSet(
-          validators.foldLeft(VotingPower(0))((acc, validator) => acc + validator.votingPower),
-          ListMap(
-            stainless.collection.List
-              .fromScala(validators.toList.map(value => (value.address, value)))
-          )
-        )
-      }
+  implicit val conformanceTestValidatorSetDecoder: Decoder[ValidatorSet] = cursor =>
+    for {
+      validators <- cursor.downField("validators").as[Array[Validator]]
+    } yield {
+      ValidatorSet(
+        validators.foldLeft(VotingPower(0))((acc, validator) => acc + validator.votingPower),
+        ListMap(stainless.collection.List.fromScala(validators.toList.map(value => (value.address, value))))
+      )
+    }
 
   implicit val headerDecoder: Decoder[Header] = cursor =>
     for {
@@ -142,32 +118,14 @@ object CirceDecoders {
       height <- cursor.downField("height").as[Long]
       time <- cursor.downField("time").as[Instant]
       lastBlockId <- cursor.downField("last_block_id").as[BlockId]
-      lastCommit <-
-        cursor
-          .downField("last_commit_hash")
-          .as[ByteArray](hexStringDecoder)
+      lastCommit <- cursor.downField("last_commit_hash").as[ByteArray](hexStringDecoder)
       data <- cursor.downField("data_hash").as[ByteArray](hexStringDecoder)
-      validators <-
-        cursor
-          .downField("validators_hash")
-          .as[ByteArray](hexStringDecoder)
-      nextValidators <-
-        cursor
-          .downField("next_validators_hash")
-          .as[ByteArray](hexStringDecoder)
-      consensus <-
-        cursor
-          .downField("consensus_hash")
-          .as[ByteArray](hexStringDecoder)
+      validators <- cursor.downField("validators_hash").as[ByteArray](hexStringDecoder)
+      nextValidators <- cursor.downField("next_validators_hash").as[ByteArray](hexStringDecoder)
+      consensus <- cursor.downField("consensus_hash").as[ByteArray](hexStringDecoder)
       app <- cursor.downField("app_hash").as[ByteArray](hexStringDecoder)
-      lastResults <-
-        cursor
-          .downField("last_results_hash")
-          .as[ByteArray](hexStringDecoder)
-      evidence <-
-        cursor
-          .downField("evidence_hash")
-          .as[ByteArray](hexStringDecoder)
+      lastResults <- cursor.downField("last_results_hash").as[ByteArray](hexStringDecoder)
+      evidence <- cursor.downField("evidence_hash").as[ByteArray](hexStringDecoder)
       proposer <- cursor.downField("proposer_address").as[Address]
     } yield {
       Header(
@@ -193,7 +151,7 @@ object CirceDecoders {
       header <- cursor.downField("header").as[Header]
       commit <- cursor.downField("commit").as[Commit]
     } yield {
-      types.SignedHeader(header, commit)
+      SignedHeader(header, commit)
     }
 
   implicit val trustLevelDecoder: Decoder[TrustLevel] = cursor =>

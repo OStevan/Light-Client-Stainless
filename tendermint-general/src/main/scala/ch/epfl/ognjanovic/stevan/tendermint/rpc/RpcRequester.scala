@@ -6,11 +6,7 @@ import stainless.annotation.ignore
 
 @ignore
 class RpcRequester(val peerId: PeerId, nodeClient: TendermintFullNodeClient) extends Requester {
+  override def signedHeader(height: Option[Height]): SignedHeader = nodeClient.commit(height)
 
-  override def signedHeader(height: Option[Height]): SignedHeader =
-    nodeClient.commit(height)
-
-  override def validatorSet(height: Option[Height]): ValidatorSet =
-    nodeClient.validatorSet(height)
-
+  override def validatorSet(height: Option[Height]): ValidatorSet = nodeClient.validatorSet(height)
 }

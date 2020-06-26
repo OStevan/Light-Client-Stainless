@@ -36,27 +36,17 @@ class TendermintFullNodeClient(
 
   def commit(height: Option[Height]): SignedHeader = {
     val ACCEPTED_ENCODING = "application/json"
-    val request = basicRequest
-      .get(commitUri(height.map(_.value.toLong)))
-      .acceptEncoding(ACCEPTED_ENCODING)
+    val request = basicRequest.get(commitUri(height.map(_.value.toLong))).acceptEncoding(ACCEPTED_ENCODING)
     val response = connectionBackend.send(request)
-    assert(
-      response.is200,
-      new RuntimeException("Commit request returned a non 200 error")
-    )
+    assert(response.is200, new RuntimeException("Commit request returned a non 200 error"))
     processResponse[CommitResponse](response).result.signed_header
   }
 
   def validatorSet(height: Option[Height]): ValidatorSet = {
     val ACCEPTED_ENCODING = "application/json"
-    val request = basicRequest
-      .get(validatorSetUri(height.map(_.value.toLong)))
-      .acceptEncoding(ACCEPTED_ENCODING)
+    val request = basicRequest.get(validatorSetUri(height.map(_.value.toLong))).acceptEncoding(ACCEPTED_ENCODING)
     val response = connectionBackend.send(request)
-    assert(
-      response.is200,
-      new RuntimeException("Commit request returned a non 200 error")
-    )
+    assert(response.is200, new RuntimeException("Commit request returned a non 200 error"))
     processResponse[ValidatorSetResponse](response).result.validators
   }
 
