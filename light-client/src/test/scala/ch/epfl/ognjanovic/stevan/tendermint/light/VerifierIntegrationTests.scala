@@ -28,18 +28,15 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
     Thread.sleep(500)
   }
 
+  private val lightBlockProviderFactory = new DefaultLightBlockProviderFactory()
+
   "Verification of a newest light block with a trusted state at height 1 " should "succeed" in withContainers {
     myContainer: TendermintSingleNodeContainer =>
       val timeOfTest = Instant.now()
 
       // Inside your test body you can do with your container whatever you want to
-      val client = new TendermintFullNodeClient(
-        false,
-        myContainer.url,
-        Some(myContainer.rpcPort),
-        HttpURLConnectionBackend())
-
-      val primary = new DefaultProvider("dockerchain", new RpcRequester(null, client))
+      val primary =
+        lightBlockProviderFactory.constructProvider(secure = false, myContainer.url, Some(myContainer.rpcPort))
 
       val votingPowerVerifier = ParameterizedVotingPowerVerifier(TrustLevel(1, 3))
 
@@ -52,8 +49,11 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
             ChronoUnit.SECONDS.between(
               Instant.ofEpochSecond(
                 trustedState.trustedLightBlock.header.time.seconds.toLong,
-                trustedState.trustedLightBlock.header.time.nanos.toLong), Instant.now()),
-          0)
+                trustedState.trustedLightBlock.header.time.nanos.toLong),
+              Instant.now()
+            ),
+          0
+        )
       )
 
       val verifier = DefaultTrustVerifier()
@@ -62,18 +62,12 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
       val commitValidator = DefaultCommitValidator(votingPowerVerifier, commitSignatureVerifier)
 
       val singleStepVerifier = Verifier(
-        DefaultLightBlockValidator(
-          expirationChecker,
-          commitValidator,
-          new DefaultHasher(MerkleRoot.default())),
+        DefaultLightBlockValidator(expirationChecker, commitValidator, new DefaultHasher(MerkleRoot.default())),
         verifier,
         commitValidator
       )
 
-      val multiStepVerifier = MultiStepVerifier(
-        primary,
-        singleStepVerifier,
-        BisectionHeightCalculator)
+      val multiStepVerifier = MultiStepVerifier(primary, singleStepVerifier, BisectionHeightCalculator)
 
       Thread.sleep(500)
 
@@ -93,11 +87,8 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
       val timeOfTest = Instant.now()
 
       // Inside your test body you can do with your container whatever you want to
-      val client = new TendermintFullNodeClient(
-        false,
-        myContainer.url,
-        Some(myContainer.rpcPort),
-        HttpURLConnectionBackend())
+      val client =
+        new TendermintFullNodeClient(false, myContainer.url, Some(myContainer.rpcPort), HttpURLConnectionBackend())
 
       val primary = new DefaultProvider("dockerchain", new RpcRequester(null, client))
 
@@ -112,8 +103,11 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
             ChronoUnit.SECONDS.between(
               Instant.ofEpochSecond(
                 trustedState.trustedLightBlock.header.time.seconds.toLong,
-                trustedState.trustedLightBlock.header.time.nanos.toLong), Instant.now()),
-          0)
+                trustedState.trustedLightBlock.header.time.nanos.toLong),
+              Instant.now()
+            ),
+          0
+        )
       )
 
       val verifier = DefaultTrustVerifier()
@@ -122,18 +116,12 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
       val commitValidator = DefaultCommitValidator(votingPowerVerifier, commitSignatureVerifier)
 
       val singleStepVerifier = Verifier(
-        DefaultLightBlockValidator(
-          expirationChecker,
-          commitValidator,
-          new DefaultHasher(MerkleRoot.default())),
+        DefaultLightBlockValidator(expirationChecker, commitValidator, new DefaultHasher(MerkleRoot.default())),
         verifier,
         commitValidator
       )
 
-      val multiStepVerifier = MultiStepVerifier(
-        primary,
-        singleStepVerifier,
-        BisectionHeightCalculator)
+      val multiStepVerifier = MultiStepVerifier(primary, singleStepVerifier, BisectionHeightCalculator)
 
       Thread.sleep(500)
 
