@@ -9,7 +9,7 @@ import stainless.annotation.ignore
 object circe {
   type ByteArray = Seq[Byte]
 
-  val hexStringDecoder: Decoder[ByteArray] = cursor =>
+  implicit val hexStringDecoder: Decoder[ByteArray] = cursor =>
     for {
       value <- cursor.as[String]
     } yield {

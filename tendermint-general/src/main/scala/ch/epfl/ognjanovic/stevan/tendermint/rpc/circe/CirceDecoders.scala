@@ -3,7 +3,8 @@ package ch.epfl.ognjanovic.stevan.tendermint.rpc.circe
 import java.time.Instant
 import java.util.Base64
 
-import ch.epfl.ognjanovic.stevan.tendermint.rpc.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.rpc.types
+import ch.epfl.ognjanovic.stevan.tendermint.rpc.types.SignedHeader
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustLevel
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.CommitSignatures._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Validators.Validator
