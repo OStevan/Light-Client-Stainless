@@ -73,16 +73,6 @@ object EventLoopClient {
       }
     }
 
-    private def detectForks(
-      trustedLightBlock: LightBlock,
-      targetLightBlock: LightBlock,
-      providers: List[LightBlockProvider]): Unit = {
-      forkDetector.detectForks(
-        targetLightBlock,
-        trustedLightBlock,
-        providers.map(verifierBuilder.constructVerifier(_, votingPowerVerifier, trustDuration)))
-    }
-
   }
 
   private class EventLoopHandle(
