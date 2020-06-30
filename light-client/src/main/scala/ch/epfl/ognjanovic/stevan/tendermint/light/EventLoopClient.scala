@@ -24,7 +24,7 @@ object EventLoopClient {
     private val votingPowerVerifier: VotingPowerVerifier,
     private val verifierBuilder: MultiStepVerifierFactory,
     private val trustDuration: Duration,
-    private var trustedState: TrustedState,
+    private var trustedState: TrustedState, // currently var, but should be changed with store and recreate a trusted state for verification
     private val forkDetector: ForkDetector)
       extends Supervisor {
     // TODO add fork detector and evidence reporter
@@ -55,12 +55,13 @@ object EventLoopClient {
           )
 
           forkDetectionResult match {
+            // TODO report forks and change witness
             case ForkDetection.ForkDetected(detected) ⇒
               Right(new Supervisor.Error() {
                 override def toString: String = "Error:" + forkDetectionResult.toString
               })
-            // TODO report forks and change witness
             case ForkDetection.NoForks ⇒
+              trustedState = primaryResult.trustedState
               Left(primaryResult.trustedState.trustedLightBlock)
           }
         case lang.Right(content) ⇒
