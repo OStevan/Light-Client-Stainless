@@ -1,17 +1,17 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import java.util.concurrent.{ExecutorService, Executors}
+import java.util.concurrent.Executors
 
+import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection.ForkDetector
 import ch.epfl.ognjanovic.stevan.tendermint.light.MultiStepVerifierFactories.MultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock}
 import stainless.lang
 
-import scala.concurrent.{Channel, ExecutionContext, ExecutionContextExecutorService, Future}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
 
 object EventLoopClient {
 
@@ -25,22 +25,22 @@ object EventLoopClient {
     private val verifierBuilder: MultiStepVerifierFactory,
     private val trustDuration: Duration,
     private var trustedState: TrustedState,
-    private val channel: Channel[Option[Long]])
+    private val forkDetector: ForkDetector)
       extends Supervisor {
     // TODO add fork detector and evidence reporter
 
     // TODO probably have to change error
-    override def verifyToHeight(height: Height): Either[LightBlock, VerificationError] = verifyToTarget(Some(height))
+    override def verifyToHeight(height: Height): Either[LightBlock, Supervisor.Error] = verifyToTarget(Some(height))
 
-    override def verifyToHighest(): Either[LightBlock, VerificationError] = verifyToTarget(None)
+    override def verifyToHighest(): Either[LightBlock, Supervisor.Error] = verifyToTarget(None)
 
     override def handle: Handle = {
       val executorContext = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
       new EventLoopHandle(this, executorContext)
     }
 
-    private def verifyToTarget(height: Option[Height]): Either[LightBlock, VerificationError] = {
-      // TODO introduce primary changes
+    private def verifyToTarget(height: Option[Height]): Either[LightBlock, Supervisor.Error] = {
+      // TODO introduce primary changes, with concurrency in mind???
       val primaryVerifier = verifierBuilder.constructVerifier(primary, votingPowerVerifier, trustDuration)
 
       val primaryResult =
@@ -48,13 +48,40 @@ object EventLoopClient {
 
       primaryResult.outcome match {
         case lang.Left(_) ⇒
-          detectForks(primaryResult.trustedState.trustedLightBlock, witnesses)
-          ???
-        case lang.Right(content) ⇒ Right[LightBlock, VerificationError](content)
+          val forkDetectionResult = forkDetector.detectForks(
+            primaryResult.trustedState.trustedLightBlock,
+            trustedState.trustedLightBlock,
+            witnesses.map(verifierBuilder.constructVerifier(_, votingPowerVerifier, trustDuration))
+          )
+
+          forkDetectionResult match {
+            case ForkDetection.ForkDetected(detected) ⇒
+              Right(new Supervisor.Error() {
+                override def toString: String = "Error:" + forkDetectionResult.toString
+              })
+            // TODO report forks and change witness
+            case ForkDetection.NoForks ⇒
+              Left(primaryResult.trustedState.trustedLightBlock)
+          }
+        case lang.Right(content) ⇒
+          // TODO change primary
+          Right(
+            new Supervisor.Error {
+              override def toString: String = "Error:" + content.toString
+            }
+          )
       }
     }
 
-    private def detectForks(block: LightBlock, providers: List[LightBlockProvider]): Unit = ???
+    private def detectForks(
+      trustedLightBlock: LightBlock,
+      targetLightBlock: LightBlock,
+      providers: List[LightBlockProvider]): Unit = {
+      forkDetector.detectForks(
+        targetLightBlock,
+        trustedLightBlock,
+        providers.map(verifierBuilder.constructVerifier(_, votingPowerVerifier, trustDuration)))
+    }
 
   }
 
@@ -63,13 +90,13 @@ object EventLoopClient {
     implicit private val executorExecutionService: ExecutionContextExecutorService)
       extends Handle {
 
-    override def verifyToHighest(): Future[Either[LightBlock, VerificationError]] = {
+    override def verifyToHighest(): Future[Either[LightBlock, Supervisor.Error]] = {
       Future {
         eventLoopSupervisor.verifyToHighest()
       }
     }
 
-    override def verifyToHeight(height: Height): Future[Either[LightBlock, VerificationError]] = {
+    override def verifyToHeight(height: Height): Future[Either[LightBlock, Supervisor.Error]] = {
       Future {
         eventLoopSupervisor.verifyToHeight(height)
       }
