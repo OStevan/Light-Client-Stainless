@@ -14,6 +14,10 @@ case class ListMap[A, B](toList: List[(A, B)]) {
 
   def isEmpty: Boolean = toList.isEmpty
 
+  def keys: List[A] = {
+    toList.map(_._1)
+  }.ensuring(res ⇒ ListOps.noDuplicate(res) && res.forall(contains))
+
   def head: (A, B) = {
     require(!isEmpty)
     toList.head
