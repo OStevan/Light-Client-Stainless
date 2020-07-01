@@ -2,8 +2,8 @@ package utils
 
 import stainless.annotation._
 import stainless.collection._
-import stainless.lang.StaticChecks._
 import stainless.lang._
+import stainless.lang.StaticChecks._
 
 object ListSetUtils {
 
@@ -296,7 +296,7 @@ object ListSetUtils {
   }.ensuring(_ => second -- first == second -- (first - elem))
 
   @opaque
-  def listSetRemoveHeadSameIsSubtraction[T](list: List[T]): Unit = {
+  def listSetRemoveHeadSameAsSubtraction[T](list: List[T]): Unit = {
     require(list.nonEmpty && ListOps.noDuplicate(list))
     list match {
       case Cons(h, t) =>
@@ -308,5 +308,10 @@ object ListSetUtils {
   def removingNonContained[T](@induct list: List[T], elem: T): Unit = {
     require(!list.contains(elem))
   }.ensuring(_ => list == list - elem)
+
+  @opaque
+  def removingFromASetResultsInASet[T](elem: T, @induct list: List[T]): Unit = {
+    require(ListOps.noDuplicate(list))
+  }.ensuring(_ ⇒ ListOps.noDuplicate(list - elem))
 
 }

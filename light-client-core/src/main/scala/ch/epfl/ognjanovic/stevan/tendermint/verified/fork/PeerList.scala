@@ -6,7 +6,7 @@ import stainless.annotation.{induct, opaque}
 import stainless.collection._
 import stainless.lang._
 import stainless.lang.StaticChecks.Ensuring
-import utils.ListMap
+import utils.{ListMap, ListSetUtils}
 
 case class PeerList(
   instances: ListMap[PeerId, LightBlockProvider],
@@ -15,7 +15,8 @@ case class PeerList(
   fullNodeIds: List[PeerId],
   faultyNodeIds: List[PeerId]) {
   require(
-    PeerList.instanceInvariant(instances, primaryId, witnessesIds, fullNodeIds, faultyNodeIds) &&
+    ListOps.noDuplicate(witnessesIds) && ListOps.noDuplicate(fullNodeIds) && ListOps.noDuplicate(faultyNodeIds) &&
+      PeerList.instanceInvariant(instances, primaryId, witnessesIds, fullNodeIds, faultyNodeIds) &&
       (witnessesIds & fullNodeIds).isEmpty && (witnessesIds & faultyNodeIds).isEmpty && (fullNodeIds & faultyNodeIds).isEmpty &&
       !witnessesIds.contains(primaryId) && !faultyNodeIds.contains(primaryId) && !fullNodeIds.contains(primaryId)
   )
@@ -35,12 +36,14 @@ case class PeerList(
     val newFaultyIds = primaryId :: faultyNodeIds
     val newPrimary = witnessesIds.head
     val newWitnesses = witnessesIds - witnessesIds.head
+    ListSetUtils.listSetRemoveHeadSameAsSubtraction(witnessesIds)
     PeerList.removalLemma(witnessesIds.head, instances, witnessesIds)
 
     if (fullNodeIds.isEmpty)
       PeerList(instances, newPrimary, newWitnesses, fullNodeIds, newFaultyIds)
     else {
       val newFullNodes = fullNodeIds - fullNodeIds.head
+      ListSetUtils.listSetRemoveHeadSameAsSubtraction(fullNodeIds)
       PeerList.removalLemma(fullNodeIds.head, instances, fullNodeIds)
 
       PeerList(instances, newPrimary, fullNodeIds.head :: newWitnesses, newFullNodes, newFaultyIds)
@@ -52,6 +55,7 @@ case class PeerList(
 
     val newFaulty = peerId :: faultyNodeIds
     val newWitnessSet = witnessesIds - peerId
+    ListSetUtils.removingFromASetResultsInASet(peerId, witnessesIds)
     PeerList.removalLemma(peerId, instances, witnessesIds)
     PeerList.mapContainmentTransitivity(instances, witnessesIds)
     PeerList.elementSpillLemma(peerId, instances, faultyNodeIds)
@@ -61,7 +65,9 @@ case class PeerList(
     else {
       val fullWitnessSet = fullNodeIds.head :: newWitnessSet
       val newFullNodeIds = fullNodeIds - fullNodeIds.head
+      ListSetUtils.listSetRemoveHeadSameAsSubtraction(fullNodeIds)
       PeerList.removalLemma(fullNodeIds.head, instances, fullNodeIds)
+
       PeerList(instances, primaryId, fullWitnessSet, newFullNodeIds, newFaulty)
     }
   }
