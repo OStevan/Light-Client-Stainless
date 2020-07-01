@@ -16,24 +16,24 @@ sealed class DefaultForkDetector(private val hasher: Hasher) extends ForkDetecto
     witnesses: List[MultiStepVerifier]): ForkDetection.ForkDetectionResult = {
     val expectedHash = hasher.hashHeader(targetLightBlock.header)
 
-    val forks = witnesses.flatMap(witness ⇒ {
+    val forks: List[Fork] = witnesses.flatMap(witness ⇒ {
       val witnessBlock = witness.lightBlockProvider.lightBlock(targetLightBlock.header.height)
 
       val witnessBlockHash = hasher.hashHeader(witnessBlock.header)
 
       if (expectedHash == witnessBlockHash) {
-        return None[Fork]
-      }
+        Option.empty[Fork]
+      } else {
+        // TODO this should change definitely, so that there are no explicit constructors
+        val witnessVerificationResult = witness.verifyUntrusted(
+          SimpleTrustedState(trustedLightBlock, VotingPowerVerifiers.defaultTrustVerifier),
+          UntrustedStates.empty(targetLightBlock.header.height))
 
-      // TODO this should change definitely
-      val witnessVerificationResult = witness.verifyUntrusted(
-        SimpleTrustedState(trustedLightBlock, VotingPowerVerifiers.defaultTrustVerifier),
-        UntrustedStates.empty(targetLightBlock.header.height))
-
-      witnessVerificationResult.outcome match {
-        case lang.Left(_) ⇒ Some(Forked(targetLightBlock, witnessBlock))
-        case lang.Right(content) if content == ExpiredTrustedState ⇒ Some(Forked(targetLightBlock, witnessBlock))
-        case lang.Right(_) ⇒ Some(Faulty(witnessBlock))
+        witnessVerificationResult.outcome match {
+          case lang.Left(_) ⇒ Some(Forked(targetLightBlock, witnessBlock))
+          case lang.Right(content) if content == ExpiredTrustedState ⇒ Some(Forked(targetLightBlock, witnessBlock))
+          case lang.Right(_) ⇒ Some(Faulty(witnessBlock))
+        }
       }
     })
 
