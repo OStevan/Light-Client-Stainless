@@ -22,14 +22,14 @@ object ForkDetection {
   }
 
   // TODO add timeouts
-  trait Fork
+  sealed trait Fork
 
   case class Forked(primary: LightBlock, witness: LightBlock) extends Fork
 
   // TODO add reason for error
   case class Faulty(block: LightBlock) extends Fork
 
-  trait ForkDetectionResult
+  sealed trait ForkDetectionResult
 
   case object NoForks extends ForkDetectionResult
 
