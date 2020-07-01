@@ -21,10 +21,10 @@ case class PeerList(
       !witnessesIds.contains(primaryId) && !faultyNodeIds.contains(primaryId) && !fullNodeIds.contains(primaryId)
   )
 
-  def witnesses: List[(PeerId, LightBlockProvider)] = {
+  def witnesses: List[LightBlockProvider] = {
     witnessesIds.map(witness ⇒ {
       require(instances.contains(witness))
-      (witness, instances(witness))
+      instances(witness)
     })
   }
 

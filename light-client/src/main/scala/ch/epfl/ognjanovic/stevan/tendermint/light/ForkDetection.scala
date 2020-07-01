@@ -21,6 +21,7 @@ object ForkDetection {
 
   }
 
+  // TODO add timeouts
   trait Fork
 
   case class Forked(primary: LightBlock, witness: LightBlock) extends Fork

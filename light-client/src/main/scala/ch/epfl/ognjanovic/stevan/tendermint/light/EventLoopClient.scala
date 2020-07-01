@@ -4,7 +4,7 @@ import java.util.concurrent.Executors
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection.ForkDetector
 import ch.epfl.ognjanovic.stevan.tendermint.light.MultiStepVerifierFactories.MultiStepVerifierFactory
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
+import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.PeerList
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
@@ -19,8 +19,7 @@ object EventLoopClient {
    * Not a real implementation just a sketch of how it should look like
    */
   class EventLoopSupervisor(
-    private val primary: LightBlockProvider,
-    private val witnesses: List[LightBlockProvider],
+    @volatile private var peerList: PeerList,
     private val votingPowerVerifier: VotingPowerVerifier,
     private val verifierBuilder: MultiStepVerifierFactory,
     private val trustDuration: Duration,
@@ -41,17 +40,19 @@ object EventLoopClient {
 
     private def verifyToTarget(height: Option[Height]): Either[LightBlock, Supervisor.Error] = {
       // TODO introduce primary changes, with concurrency in mind???
-      val primaryVerifier = verifierBuilder.constructVerifier(primary, votingPowerVerifier, trustDuration)
+      val primaryVerifier = verifierBuilder.constructVerifier(peerList.primary, votingPowerVerifier, trustDuration)
 
       val primaryResult =
-        primaryVerifier.verifyUntrusted(trustedState, UntrustedStates.empty(height.getOrElse(primary.currentHeight)))
+        primaryVerifier.verifyUntrusted(
+          trustedState,
+          UntrustedStates.empty(height.getOrElse(peerList.primary.currentHeight)))
 
       primaryResult.outcome match {
         case lang.Left(_) ⇒
           val forkDetectionResult = forkDetector.detectForks(
             primaryResult.trustedState.trustedLightBlock,
             trustedState.trustedLightBlock,
-            witnesses.map(verifierBuilder.constructVerifier(_, votingPowerVerifier, trustDuration))
+            peerList.witnesses.map(verifierBuilder.constructVerifier(_, votingPowerVerifier, trustDuration)).toScala
           )
 
           forkDetectionResult match {
