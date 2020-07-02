@@ -4,10 +4,12 @@ import java.util.concurrent.Executors
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection.{ForkDetector, Forked}
 import ch.epfl.ognjanovic.stevan.tendermint.light.MultiStepVerifierFactories.MultiStepVerifierFactory
-import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.{ForkDetected, NoPrimary, NoWitnesses}
+import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.{ForkDetected, NoPrimary, NoTrustedState, NoWitnesses}
+import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStore
+import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.Trusted
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.{PeerList ⇒ GenericPeerList}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.SimpleTrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock, PeerId}
@@ -26,7 +28,7 @@ object EventLoopClient {
     private val votingPowerVerifier: VotingPowerVerifier,
     private val verifierBuilder: MultiStepVerifierFactory,
     private val trustDuration: Duration,
-    private var trustedState: TrustedState, // currently var, but should be changed with store and recreate a trusted state for verification
+    private val lightStore: LightStore,
     private val forkDetector: ForkDetector)
       extends Supervisor {
 
@@ -53,9 +55,16 @@ object EventLoopClient {
       peerList: PeerList): (PeerList, Either[LightBlock, Supervisor.Error]) = {
       val primaryVerifier = verifierBuilder.constructVerifier(peerList.primary, votingPowerVerifier, trustDuration)
 
+      val trustedLightBlock = lightStore.latest(Trusted)
+
+      if (trustedLightBlock.isEmpty)
+        return (peerList, Right(NoTrustedState))
+
+      val immutableSimpleTrustedState = SimpleTrustedState(trustedLightBlock.get, votingPowerVerifier)
+
       val primaryResult =
         primaryVerifier.verifyUntrusted(
-          trustedState,
+          immutableSimpleTrustedState,
           UntrustedStates.empty(height.getOrElse(peerList.primary.currentHeight)))
 
       primaryResult.outcome match {
@@ -65,7 +74,7 @@ object EventLoopClient {
 
           val forkDetectionResult = forkDetector.detectForks(
             primaryResult.trustedState.trustedLightBlock,
-            trustedState.trustedLightBlock,
+            trustedLightBlock.get,
             peerList.witnesses.map(verifierBuilder.constructVerifier(_, votingPowerVerifier, trustDuration)).toScala
           )
 
@@ -76,10 +85,11 @@ object EventLoopClient {
               if (forks.nonEmpty)
                 (newPeerList, Right(ForkDetected(forks.map(_.witness.peerId))))
               else
-                verifyToTarget(height, newPeerList)
+                verifyToTarget(height, newPeerList) // TODO should use the fact that some were downloaded previously, probably pass in the previous trusted state
 
             case ForkDetection.NoForks ⇒
-              trustedState = primaryResult.trustedState
+              // TODO should dump all light blocks which were added to primary trusted state
+              lightStore.update(primaryResult.trustedState.trustedLightBlock, Trusted)
               (peerList, Left(primaryResult.trustedState.trustedLightBlock))
           }
         case lang.Right(_) ⇒
