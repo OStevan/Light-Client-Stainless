@@ -1,90 +1,86 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.fork
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.PeerId
 import stainless.annotation.{induct, opaque}
 import stainless.collection._
 import stainless.lang._
 import stainless.lang.StaticChecks.Ensuring
 import utils.{ListMap, ListSetUtils}
 
-case class PeerList(
-  instances: ListMap[PeerId, LightBlockProvider],
-  primaryId: PeerId,
-  witnessesIds: List[PeerId],
-  fullNodeIds: List[PeerId],
-  faultyNodeIds: List[PeerId]) {
+case class PeerList[Id, Instance](
+  mapping: ListMap[Id, Instance],
+  primaryId: Id,
+  witnessesIds: List[Id],
+  fullNodeIds: List[Id],
+  faultyNodeIds: List[Id]) {
   require(
     ListOps.noDuplicate(witnessesIds) && ListOps.noDuplicate(fullNodeIds) && ListOps.noDuplicate(faultyNodeIds) &&
-      PeerList.instanceInvariant(instances, primaryId, witnessesIds, fullNodeIds, faultyNodeIds) &&
+      PeerList.instanceInvariant(mapping, primaryId, witnessesIds, fullNodeIds, faultyNodeIds) &&
       (witnessesIds & fullNodeIds).isEmpty && (witnessesIds & faultyNodeIds).isEmpty && (fullNodeIds & faultyNodeIds).isEmpty &&
       !witnessesIds.contains(primaryId) && !faultyNodeIds.contains(primaryId) && !fullNodeIds.contains(primaryId)
   )
 
-  def witnesses: List[LightBlockProvider] = {
+  def witnesses: List[Instance] = {
     witnessesIds.map(witness ⇒ {
-      require(instances.contains(witness))
-      instances(witness)
+      require(mapping.contains(witness))
+      mapping(witness)
     })
   }
 
-  def primary: LightBlockProvider = instances(primaryId)
+  def primary: Instance = mapping(primaryId)
 
-  def markPrimaryAsFaulty: PeerList = {
+  def markPrimaryAsFaulty: PeerList[Id, Instance] = {
     require(witnessesIds.nonEmpty)
 
     val newFaultyIds = primaryId :: faultyNodeIds
     val newPrimary = witnessesIds.head
     val newWitnesses = witnessesIds - witnessesIds.head
     ListSetUtils.listSetRemoveHeadSameAsSubtraction(witnessesIds)
-    PeerList.removalLemma(witnessesIds.head, instances, witnessesIds)
+    PeerList.removalLemma(witnessesIds.head, mapping, witnessesIds)
 
     if (fullNodeIds.isEmpty)
-      PeerList(instances, newPrimary, newWitnesses, fullNodeIds, newFaultyIds)
+      PeerList[Id, Instance](mapping, newPrimary, newWitnesses, fullNodeIds, newFaultyIds)
     else {
       val newFullNodes = fullNodeIds - fullNodeIds.head
       ListSetUtils.listSetRemoveHeadSameAsSubtraction(fullNodeIds)
-      PeerList.removalLemma(fullNodeIds.head, instances, fullNodeIds)
+      PeerList.removalLemma(fullNodeIds.head, mapping, fullNodeIds)
 
-      PeerList(instances, newPrimary, fullNodeIds.head :: newWitnesses, newFullNodes, newFaultyIds)
+      PeerList[Id, Instance](mapping, newPrimary, fullNodeIds.head :: newWitnesses, newFullNodes, newFaultyIds)
     }
-  }.ensuring(res ⇒
-    forall((peerId: PeerId) ⇒ PeerList.transitionCheck(peerId, this) == PeerList.transitionCheck(peerId, res)))
+  }.ensuring(res ⇒ forall((peerId: Id) ⇒ PeerList.transitionCheck(peerId, this) == PeerList.transitionCheck(peerId, res)))
 
-  def markWitnessAsFaulty(peerId: PeerId): PeerList = {
+  def markWitnessAsFaulty(peerId: Id): PeerList[Id, Instance] = {
     require(witnessesIds.contains(peerId))
 
     val newFaulty = peerId :: faultyNodeIds
     val newWitnessSet = witnessesIds - peerId
     ListSetUtils.removingFromASetResultsInASet(peerId, witnessesIds)
-    PeerList.removalLemma(peerId, instances, witnessesIds)
-    PeerList.mapContainmentTransitivity(instances, witnessesIds)
-    PeerList.elementSpillLemma(peerId, instances, faultyNodeIds)
+    PeerList.removalLemma(peerId, mapping, witnessesIds)
+    PeerList.mapContainmentTransitivity(mapping, witnessesIds)
+    PeerList.elementSpillLemma(peerId, mapping, faultyNodeIds)
 
     if (fullNodeIds.isEmpty)
-      PeerList(instances, primaryId, newWitnessSet, fullNodeIds, newFaulty)
+      PeerList[Id, Instance](mapping, primaryId, newWitnessSet, fullNodeIds, newFaulty)
     else {
       val fullWitnessSet = fullNodeIds.head :: newWitnessSet
       val newFullNodeIds = fullNodeIds - fullNodeIds.head
       ListSetUtils.listSetRemoveHeadSameAsSubtraction(fullNodeIds)
-      PeerList.removalLemma(fullNodeIds.head, instances, fullNodeIds)
+      PeerList.removalLemma(fullNodeIds.head, mapping, fullNodeIds)
 
-      PeerList(instances, primaryId, fullWitnessSet, newFullNodeIds, newFaulty)
+      PeerList[Id, Instance](mapping, primaryId, fullWitnessSet, newFullNodeIds, newFaulty)
     }
-  }.ensuring(res ⇒
-    forall((peerId: PeerId) ⇒ PeerList.transitionCheck(peerId, this) == PeerList.transitionCheck(peerId, res)))
+  }.ensuring(res ⇒ forall((peerId: Id) ⇒ PeerList.transitionCheck(peerId, this) == PeerList.transitionCheck(peerId, res)))
 
 }
 
 private object PeerList {
 
   @inline
-  def instanceInvariant(
-    instances: ListMap[PeerId, LightBlockProvider],
-    primaryId: PeerId,
-    witnessesIds: List[PeerId],
-    fullNodeIds: List[PeerId],
-    faultyNodeIds: List[PeerId]): Boolean = {
+  def instanceInvariant[Id, Instance](
+    instances: ListMap[Id, Instance],
+    primaryId: Id,
+    witnessesIds: List[Id],
+    fullNodeIds: List[Id],
+    faultyNodeIds: List[Id]): Boolean = {
     // this is a less restrictive invariant which should prevent runtime errors and should be sufficient for verification
     // a stricter invariant should also say that instances contains exactly the same key as the union of all ids
 
@@ -93,7 +89,7 @@ private object PeerList {
   }
 
   @inline
-  def transitionCheck(peer: PeerId, peerList: PeerList): Boolean = {
+  def transitionCheck[Id, T](peer: Id, peerList: PeerList[Id, T]): Boolean = {
     peerList.primaryId == peer ||
     peerList.witnessesIds.contains(peer) ||
     peerList.fullNodeIds.contains(peer) ||
