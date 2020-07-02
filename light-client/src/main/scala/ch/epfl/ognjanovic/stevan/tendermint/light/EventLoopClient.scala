@@ -4,6 +4,7 @@ import java.util.concurrent.Executors
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection.{ForkDetector, Forked}
 import ch.epfl.ognjanovic.stevan.tendermint.light.MultiStepVerifierFactories.MultiStepVerifierFactory
+import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.{ForkDetected, NoPrimary, NoWitnesses}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.{PeerList ⇒ GenericPeerList}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
@@ -19,7 +20,7 @@ object EventLoopClient {
 
   type PeerList = GenericPeerList[PeerId, LightBlockProvider]
 
-  // TODO add evidence reporter, implement real errors for supervisor
+  // TODO add evidence reporter
   class EventLoopSupervisor(
     @volatile private var peerList: PeerList,
     private val votingPowerVerifier: VotingPowerVerifier,
@@ -59,6 +60,9 @@ object EventLoopClient {
 
       primaryResult.outcome match {
         case lang.Left(_) ⇒
+          if (peerList.witnessesIds.isEmpty)
+            return (peerList, Right(NoWitnesses))
+
           val forkDetectionResult = forkDetector.detectForks(
             primaryResult.trustedState.trustedLightBlock,
             trustedState.trustedLightBlock,
@@ -70,12 +74,7 @@ object EventLoopClient {
               val (forks, newPeerList) = processForks(detected)
 
               if (forks.nonEmpty)
-                (
-                  newPeerList,
-                  Right(new Supervisor.Error() {
-                    override def toString: String = "Error:" + forkDetectionResult.toString
-                  })
-                )
+                (newPeerList, Right(ForkDetected(forks.map(_.witness.peerId))))
               else
                 verifyToTarget(height, newPeerList)
 
@@ -83,14 +82,9 @@ object EventLoopClient {
               trustedState = primaryResult.trustedState
               (peerList, Left(primaryResult.trustedState.trustedLightBlock))
           }
-        case lang.Right(content) ⇒
+        case lang.Right(_) ⇒
           if (peerList.witnessesIds.isEmpty)
-            (
-              peerList,
-              Right(new Supervisor.Error() {
-                override def toString: String = "Error:" + content.toString
-              })
-            )
+            (peerList, Right(NoPrimary))
           else
             verifyToTarget(height, peerList.markPrimaryAsFaulty)
       }
@@ -100,7 +94,7 @@ object EventLoopClient {
       var resultingPeerList = peerList
 
       detected.foreach {
-        case ForkDetection.Faulty(block) ⇒
+        case ForkDetection.Faulty(block, _) ⇒
           // TODO might raise an exception if the PeerId is wrong, should be fixed
           resultingPeerList = resultingPeerList.markWitnessAsFaulty(block.peerId)
         case ForkDetection.Forked(_, _) ⇒

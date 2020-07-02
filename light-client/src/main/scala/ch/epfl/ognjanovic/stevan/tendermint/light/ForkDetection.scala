@@ -1,6 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifier
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
 
 object ForkDetection {
@@ -26,8 +27,7 @@ object ForkDetection {
 
   case class Forked(primary: LightBlock, witness: LightBlock) extends Fork
 
-  // TODO add reason for error
-  case class Faulty(block: LightBlock) extends Fork
+  case class Faulty(block: LightBlock, verificationError: VerificationError) extends Fork
 
   sealed trait ForkDetectionResult
 

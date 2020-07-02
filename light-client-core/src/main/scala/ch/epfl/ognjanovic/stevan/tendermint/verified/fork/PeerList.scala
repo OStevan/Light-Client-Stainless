@@ -19,14 +19,14 @@ case class PeerList[Id, Instance](
       !witnessesIds.contains(primaryId) && !faultyNodeIds.contains(primaryId) && !fullNodeIds.contains(primaryId)
   )
 
+  def primary: Instance = mapping(primaryId)
+
   def witnesses: List[Instance] = {
     witnessesIds.map(witness ⇒ {
       require(mapping.contains(witness))
       mapping(witness)
     })
   }
-
-  def primary: Instance = mapping(primaryId)
 
   def markPrimaryAsFaulty: PeerList[Id, Instance] = {
     require(witnessesIds.nonEmpty)

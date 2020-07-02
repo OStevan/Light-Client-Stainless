@@ -32,7 +32,7 @@ sealed class DefaultForkDetector(private val hasher: Hasher) extends ForkDetecto
         witnessVerificationResult.outcome match {
           case lang.Left(_) ⇒ Some(Forked(targetLightBlock, witnessBlock))
           case lang.Right(content) if content == ExpiredTrustedState ⇒ Some(Forked(targetLightBlock, witnessBlock))
-          case lang.Right(_) ⇒ Some(Faulty(witnessBlock))
+          case lang.Right(reason) ⇒ Some(Faulty(witnessBlock, reason))
         }
       }
     })
