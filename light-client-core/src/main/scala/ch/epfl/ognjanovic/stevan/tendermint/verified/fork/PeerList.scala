@@ -48,7 +48,8 @@ case class PeerList(
 
       PeerList(instances, newPrimary, fullNodeIds.head :: newWitnesses, newFullNodes, newFaultyIds)
     }
-  }
+  }.ensuring(res ⇒
+    forall((peerId: PeerId) ⇒ PeerList.transitionCheck(peerId, this) == PeerList.transitionCheck(peerId, res)))
 
   def markWitnessAsFaulty(peerId: PeerId): PeerList = {
     require(witnessesIds.contains(peerId))
@@ -70,7 +71,8 @@ case class PeerList(
 
       PeerList(instances, primaryId, fullWitnessSet, newFullNodeIds, newFaulty)
     }
-  }
+  }.ensuring(res ⇒
+    forall((peerId: PeerId) ⇒ PeerList.transitionCheck(peerId, this) == PeerList.transitionCheck(peerId, res)))
 
 }
 
@@ -88,6 +90,14 @@ private object PeerList {
 
     instances.contains(primaryId) && witnessesIds.forall(instances.contains) && fullNodeIds.forall(
       instances.contains) && faultyNodeIds.forall(instances.contains)
+  }
+
+  @inline
+  def transitionCheck(peer: PeerId, peerList: PeerList): Boolean = {
+    peerList.primaryId == peer ||
+    peerList.witnessesIds.contains(peer) ||
+    peerList.fullNodeIds.contains(peer) ||
+    peerList.faultyNodeIds.contains(peer)
   }
 
   @opaque
