@@ -1,4 +1,4 @@
-ThisBuild / version      := "0.1.0-SNAPSHOT"
+ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "com.example"
 ThisBuild / scalaVersion := "2.12.9"
 
@@ -12,13 +12,14 @@ lazy val circeDependencies = Seq(
 ).map(_ % circeVersion)
 
 val lightClientCoreName = "light-client-core"
+
 lazy val lightClientCore = project
   .in(file(lightClientCoreName))
   .enablePlugins(StainlessPlugin)
   .settings(
     name := lightClientCoreName,
     stainlessEnabled := false
-)
+  )
 
 lazy val tendermintGeneral = project
   .in(file("tendermint-general"))
@@ -41,10 +42,12 @@ lazy val tendermintGeneral = project
         "com.softwaremill.sttp.client" %% "core" % "2.2.1",
         "org.slf4j" % "slf4j-simple" % "1.7.30" % Test,
         "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersScalaVersion % "test"
-      )))
+      ))
+  )
   .dependsOn(lightClientCore)
 
 val lightClientName = "light-client"
+
 lazy val lightClient = project
   .in(file(lightClientName))
   .settings(

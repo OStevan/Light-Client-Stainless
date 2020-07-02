@@ -4,8 +4,8 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Validators.{InfoHasha
 import stainless.annotation._
 import stainless.collection._
 import stainless.lang._
-import utils.ListSetUtils._
 import utils._
+import utils.ListSetUtils._
 
 case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Address, Validator]) {
   require(
@@ -90,7 +90,7 @@ object ValidatorSet {
         val removed = first - h
         removeOne(h, first)
         interestingEquality(h, first, t)
-        listSetRemoveHeadSameIsSubtraction(second)
+        listSetRemoveHeadSameAsSubtraction(second)
         removingContainment(h, first, second)
         sumWithDifferenceIsEqual(removed, t)
 
