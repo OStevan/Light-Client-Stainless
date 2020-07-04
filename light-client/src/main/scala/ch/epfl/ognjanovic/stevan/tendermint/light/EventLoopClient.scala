@@ -5,11 +5,10 @@ import java.util.concurrent.Executors
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection.{ForkDetector, Forked}
 import ch.epfl.ognjanovic.stevan.tendermint.light.MultiStepVerifierFactories.MultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.{ForkDetected, NoPrimary, NoTrustedState, NoWitnesses}
-import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStore
-import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.Trusted
+import ch.epfl.ognjanovic.stevan.tendermint.light.store.{LightStore, LightStoreBackedTrustedState}
+import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.{Trusted, Verified}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.{PeerList ⇒ GenericPeerList}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.SimpleTrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock, PeerId}
@@ -60,11 +59,13 @@ object EventLoopClient {
       if (trustedLightBlock.isEmpty)
         return (peerList, Right(NoTrustedState))
 
-      val immutableSimpleTrustedState = SimpleTrustedState(trustedLightBlock.get, votingPowerVerifier)
+      val inMemoryLightStore: LightStore = ??? // should also contain the trustedLightBlock
+
+      val primaryInMemoryBacked = new LightStoreBackedTrustedState(inMemoryLightStore, votingPowerVerifier)
 
       val primaryResult =
         primaryVerifier.verifyUntrusted(
-          immutableSimpleTrustedState,
+          primaryInMemoryBacked,
           UntrustedStates.empty(height.getOrElse(peerList.primary.currentHeight)))
 
       primaryResult.outcome match {
@@ -89,7 +90,7 @@ object EventLoopClient {
 
             case ForkDetection.NoForks ⇒
               // TODO should dump all light blocks which were added to primary trusted state
-              lightStore.update(primaryResult.trustedState.trustedLightBlock, Trusted)
+              inMemoryLightStore.all(Verified).foreach(lightStore.update(_, Trusted))
               (peerList, Left(primaryResult.trustedState.trustedLightBlock))
           }
         case lang.Right(_) ⇒
