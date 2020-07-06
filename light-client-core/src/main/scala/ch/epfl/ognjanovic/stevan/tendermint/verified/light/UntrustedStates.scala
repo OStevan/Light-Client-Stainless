@@ -16,11 +16,6 @@ object UntrustedStates {
     }
   }
 
-  @pure
-  def empty(targetHeight: Height): UntrustedState = {
-    InMemoryUntrustedState(targetHeight, List.empty)
-  }.ensuring(res => res.bottomHeight().isEmpty && targetHeight == res.targetLimit)
-
   abstract class UntrustedState {
 
     def targetLimit: Height = {

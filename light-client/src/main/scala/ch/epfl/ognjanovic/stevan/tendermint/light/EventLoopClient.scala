@@ -4,18 +4,18 @@ import java.util.concurrent.Executors
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection.{ForkDetector, Forked}
 import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.{ForkDetected, NoPrimary, NoTrustedState, NoWitnesses}
-import ch.epfl.ognjanovic.stevan.tendermint.light.store.{InMemoryLightStore, LightStore}
+import ch.epfl.ognjanovic.stevan.tendermint.light.store.{LightStore, LightStoreFactory}
 import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.{Trusted, Verified}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.{PeerList ⇒ GenericPeerList}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{LightStoreBackedTrustedState, UntrustedStates}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightStoreBackedTrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.MultiStepVerifierFactory
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStateFactories.UntrustedStateFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock, PeerId}
 import stainless.lang
 
 import scala.annotation.tailrec
-import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
 
 object EventLoopClient {
@@ -27,15 +27,12 @@ object EventLoopClient {
     @volatile private var peerList: PeerList,
     private val votingPowerVerifier: VotingPowerVerifier,
     private val verifierBuilder: MultiStepVerifierFactory,
+    private val disposableLightStoreFactory: LightStoreFactory,
+    private val untrustedStateFactory: UntrustedStateFactory,
     private val trustDuration: Duration,
     private val lightStore: LightStore,
     private val forkDetector: ForkDetector)
       extends Supervisor {
-
-    implicit private val heightOrdering: Ordering[Height] = (x: Height, y: Height) => {
-      val diff = x.value - y.value
-      if (diff < 0) -1 else if (diff == 0) 0 else 1
-    }
 
     override def verifyToHeight(height: Height): Either[LightBlock, Supervisor.Error] = {
       val (newPeerList, result) = verifyToTarget(Some(height), peerList)
@@ -65,15 +62,14 @@ object EventLoopClient {
       if (trustedLightBlock.isEmpty)
         return (peerList, Right(NoTrustedState))
 
-      val inMemoryLightStore: LightStore =
-        new InMemoryLightStore(mutable.SortedMap.empty[Height, LightBlock], mutable.SortedMap.empty, mutable.Map.empty)
+      val inMemoryLightStore = disposableLightStoreFactory.lightStore()
 
       val primaryInMemoryBacked = new LightStoreBackedTrustedState(inMemoryLightStore, votingPowerVerifier)
 
       val primaryResult =
         primaryVerifier.verifyUntrusted(
           primaryInMemoryBacked,
-          UntrustedStates.empty(height.getOrElse(peerList.primary.currentHeight)))
+          untrustedStateFactory.emptyWithTarget(height.getOrElse(peerList.primary.currentHeight)))
 
       primaryResult.outcome match {
         case lang.Left(_) ⇒

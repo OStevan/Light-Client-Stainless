@@ -2,13 +2,15 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.Hasher
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{MultiStepVerifier, UntrustedStates, VotingPowerVerifiers}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{MultiStepVerifier, VotingPowerVerifiers}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.SimpleTrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStateFactories.UntrustedStateFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.ExpiredTrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
 import stainless.lang
 
-sealed class DefaultForkDetector(private val hasher: Hasher) extends ForkDetector {
+sealed class DefaultForkDetector(private val hasher: Hasher, private val untrustedStateFactory: UntrustedStateFactory)
+    extends ForkDetector {
 
   override def detectForks(
     targetLightBlock: LightBlock,
@@ -27,7 +29,7 @@ sealed class DefaultForkDetector(private val hasher: Hasher) extends ForkDetecto
         // TODO this should change definitely, so that there are no explicit constructors
         val witnessVerificationResult = witness.verifyUntrusted(
           SimpleTrustedState(trustedLightBlock, VotingPowerVerifiers.defaultTrustVerifier),
-          UntrustedStates.empty(targetLightBlock.header.height))
+          untrustedStateFactory.emptyWithTarget(targetLightBlock.header.height))
 
         witnessVerificationResult.outcome match {
           case lang.Left(_) ⇒ Some(Forked(targetLightBlock, witnessBlock))
