@@ -45,17 +45,9 @@ sealed class InMemoryLightStore(
 
 object InMemoryLightStore {
 
-  implicit private val heightOrdering: Ordering[Height] = (x: Height, y: Height) => {
+  implicit val heightOrdering: Ordering[Height] = (x: Height, y: Height) => {
     val diff = x.value - y.value
     if (diff < 0) -1 else if (diff == 0) 0 else 1
-  }
-
-  sealed class InMemoryLightStoreFactory extends LightStoreFactory {
-
-    override def lightStore(): LightStore = {
-      new InMemoryLightStore(mutable.SortedMap.empty[Height, LightBlock], mutable.SortedMap.empty, mutable.Map.empty)
-    }
-
   }
 
 }
