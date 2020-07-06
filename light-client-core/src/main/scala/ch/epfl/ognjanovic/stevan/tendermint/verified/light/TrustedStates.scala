@@ -33,17 +33,18 @@ object TrustedStates {
      * The height of the last block that we trust.
      */
     @pure
-    sealed def currentHeight(): Height = {
+    def currentHeight(): Height = {
       trustedLightBlock.header.height
     }.ensuring(res => res == trustedLightBlock.header.height)
 
     @pure
-    sealed def isAdjacent(lightBlock: LightBlock): Boolean = {
+    def isAdjacent(lightBlock: LightBlock): Boolean = {
       require(currentHeight() < lightBlock.header.height)
       lightBlock.header.height == trustedLightBlock.header.height + 1
     }.ensuring(res =>
-    (res && currentHeight() + 1 == lightBlock.header.height) ||
-    (!res && currentHeight() + 1 < lightBlock.header.height))
+      (res && currentHeight() + 1 == lightBlock.header.height) ||
+        (!res && currentHeight() + 1 < lightBlock.header.height))
+
   }
 
   case class SimpleTrustedState(trustedLightBlock: LightBlock, trustVerifier: VotingPowerVerifier)
@@ -57,7 +58,6 @@ object TrustedStates {
       require(lightBlock.header.height > this.trustedLightBlock.header.height && trusted(lightBlock))
       SimpleTrustedState(lightBlock, trustVerifier)
     }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
-
 
     @pure
     override def trusted(lightBlock: LightBlock): Boolean = {

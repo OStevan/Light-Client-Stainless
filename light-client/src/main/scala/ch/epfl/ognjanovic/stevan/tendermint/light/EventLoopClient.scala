@@ -5,7 +5,7 @@ import java.util.concurrent.Executors
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection.{ForkDetector, Forked}
 import ch.epfl.ognjanovic.stevan.tendermint.light.MultiStepVerifierFactories.MultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.{ForkDetected, NoPrimary, NoTrustedState, NoWitnesses}
-import ch.epfl.ognjanovic.stevan.tendermint.light.store.{LightStore, LightStoreBackedTrustedState}
+import ch.epfl.ognjanovic.stevan.tendermint.light.store.{InMemoryLightStore, LightStore, LightStoreBackedTrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.{Trusted, Verified}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.{PeerList ⇒ GenericPeerList}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
@@ -15,6 +15,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, Li
 import stainless.lang
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
 
 object EventLoopClient {
@@ -30,6 +31,11 @@ object EventLoopClient {
     private val lightStore: LightStore,
     private val forkDetector: ForkDetector)
       extends Supervisor {
+
+    implicit private val heightOrdering: Ordering[Height] = (x: Height, y: Height) => {
+      val diff = x.value - y.value
+      if (diff < 0) -1 else if (diff == 0) 0 else 1
+    }
 
     override def verifyToHeight(height: Height): Either[LightBlock, Supervisor.Error] = {
       val (newPeerList, result) = verifyToTarget(Some(height), peerList)
@@ -59,7 +65,8 @@ object EventLoopClient {
       if (trustedLightBlock.isEmpty)
         return (peerList, Right(NoTrustedState))
 
-      val inMemoryLightStore: LightStore = ??? // should also contain the trustedLightBlock
+      val inMemoryLightStore: LightStore =
+        new InMemoryLightStore(mutable.SortedMap.empty[Height, LightBlock], mutable.SortedMap.empty, mutable.Map.empty)
 
       val primaryInMemoryBacked = new LightStoreBackedTrustedState(inMemoryLightStore, votingPowerVerifier)
 
@@ -86,10 +93,9 @@ object EventLoopClient {
               if (forks.nonEmpty)
                 (newPeerList, Right(ForkDetected(forks.map(_.witness.peerId))))
               else
-                verifyToTarget(height, newPeerList) // TODO should use the fact that some were downloaded previously, probably pass in the previous trusted state
+                verifyToTarget(height, newPeerList)
 
             case ForkDetection.NoForks ⇒
-              // TODO should dump all light blocks which were added to primary trusted state
               inMemoryLightStore.all(Verified).foreach(lightStore.update(_, Trusted))
               (peerList, Left(primaryResult.trustedState.trustedLightBlock))
           }
