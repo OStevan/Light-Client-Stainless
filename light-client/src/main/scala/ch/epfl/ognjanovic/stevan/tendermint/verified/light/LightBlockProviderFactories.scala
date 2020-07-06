@@ -1,7 +1,6 @@
-package ch.epfl.ognjanovic.stevan.tendermint.light
+package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.{RpcRequester, TendermintFullNodeClient}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.DefaultProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.PeerId
 import sttp.client.HttpURLConnectionBackend

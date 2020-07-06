@@ -1,9 +1,8 @@
-package ch.epfl.ognjanovic.stevan.tendermint.light
+package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.light.VerifierFactories.VerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.VerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Duration
 
