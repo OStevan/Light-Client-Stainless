@@ -71,7 +71,7 @@ object TrustedStates {
     @pure
     private def internalAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
       require(isAdjacent(lightBlock))
-      trustedLightBlock.header.nextValidators == lightBlock.header.validators
+      trustedLightBlock.nextValidatorSet.toInfoHashable == lightBlock.validatorSet.toInfoHashable
     }
 
     @pure
