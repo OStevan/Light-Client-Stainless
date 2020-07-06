@@ -1,4 +1,4 @@
-package ch.epfl.ognjanovic.stevan.tendermint.light
+package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Requester
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider

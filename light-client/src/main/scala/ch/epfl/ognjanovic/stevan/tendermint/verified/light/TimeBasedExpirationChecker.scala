@@ -1,9 +1,8 @@
-package ch.epfl.ognjanovic.stevan.tendermint.light
+package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationChecker
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, LightBlock}
 
 class TimeBasedExpirationChecker(timeProvider: () => Instant, trustingPeriod: Duration) extends ExpirationChecker {

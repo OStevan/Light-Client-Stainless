@@ -3,15 +3,15 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-import ch.epfl.ognjanovic.stevan.tendermint.light.ExpirationCheckerFactories.FixedTimeExpirationCheckerFactory
-import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockProviderFactories.DefaultLightBlockProviderFactory
-import ch.epfl.ognjanovic.stevan.tendermint.light.MultiStepVerifierFactories.DefaultMultiStepVerifierFactory
-import ch.epfl.ognjanovic.stevan.tendermint.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.TendermintSingleNodeContainer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.TendermintSingleNodeContainer.Def
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFactories.FixedTimeExpirationCheckerFactory
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviderFactories.DefaultLightBlockProviderFactory
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.DefaultMultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.SimpleTrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.InMemoryUntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height}
 import com.dimafeng.testcontainers.scalatest.TestContainerForAll

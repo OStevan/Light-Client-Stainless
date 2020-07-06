@@ -5,13 +5,16 @@ import java.time.Instant
 import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.DefaultHasher
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.{ParameterizedVotingPowerVerifier, VotingPowerVerifier}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{MultiStepVerifier, Verifier}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.{
+  ParameterizedVotingPowerVerifier,
+  VotingPowerVerifier
+}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock}
 import io.circe.Decoder
 
@@ -23,7 +26,8 @@ object MultiStepVerifierTests {
 
   def getContent(path: String): String = {
     val source = Source.fromURL(getClass.getResource(path))
-    try source.mkString finally source.close()
+    try source.mkString
+    finally source.close()
   }
 
   private def createDefaultVerifier(
@@ -48,18 +52,13 @@ object MultiStepVerifierTests {
 
     val trustVerifier = ParameterizedVotingPowerVerifier(trustOptions.trustLevel)
     val verifier =
-      createDefaultVerifier(
-        trustVerifier,
-        trustOptions.trustPeriod,
-        now)
+      createDefaultVerifier(trustVerifier, trustOptions.trustPeriod, now)
 
     (
-      MultiStepVerifier(
-        primary,
-        verifier,
-        BisectionHeightCalculator),
+      MultiStepVerifier(primary, verifier, BisectionHeightCalculator),
       SimpleTrustedState(primary.lightBlock(trustOptions.trustedHeight), trustVerifier),
       heightToVerify
     )
   }
+
 }

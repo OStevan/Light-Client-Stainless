@@ -1,11 +1,11 @@
-package ch.epfl.ognjanovic.stevan.tendermint.light
+package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import java.io.ByteArrayOutputStream
 import java.time.Instant
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitSignatureVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.CommitSignatures.{BlockIDFlagCommit, CommitSignature}
+import ch.epfl.ognjanovic.stevan.tendermint.light.SignatureVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{BlockId, Commit, CommitSignatures, LightBlock}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.CommitSignatures.{BlockIDFlagCommit, CommitSignature}
 import com.google.protobuf.ByteString
 import com.google.protobuf.timestamp.Timestamp
 import tendermint.proto.types.canonical.{CanonicalBlockID, CanonicalPartSetHeader, CanonicalVote}

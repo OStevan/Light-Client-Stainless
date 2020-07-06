@@ -1,10 +1,9 @@
-package ch.epfl.ognjanovic.stevan.tendermint.light
+package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.Hasher
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.CommitValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockValidators.LightBlockValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
 import stainless.lang.{Either, Right}
 
