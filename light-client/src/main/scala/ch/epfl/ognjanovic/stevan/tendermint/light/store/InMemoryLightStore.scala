@@ -10,6 +10,10 @@ sealed class InMemoryLightStore(
   private val trusted: mutable.SortedMap[Height, LightBlock],
   private val inverse: mutable.Map[Height, LightBlockStatus]
 ) extends LightStore {
+  require(
+    verified.keys.forall(inverse(_) == Verified) &&
+      trusted.keys.forall(inverse(_) == Trusted) &&
+      verified.keySet.union(trusted.keySet) == inverse.keySet)
 
   override def get(height: Height, status: LightBlockStatus): Option[LightBlock] = {
     statusNamespace(status).get(height)
