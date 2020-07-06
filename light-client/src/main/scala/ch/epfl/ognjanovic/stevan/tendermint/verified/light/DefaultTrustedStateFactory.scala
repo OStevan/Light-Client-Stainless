@@ -11,9 +11,12 @@ class DefaultTrustedStateFactory(private val lightStoreFactory: LightStoreFactor
       case TrustedStateFactory.LightStoreBackedTrustedStateConfiguration(
             trustedLightBlock,
             votingPowerVerifier,
-            lightStoreConfiguration,
-            lightStore) ⇒
-        val store = lightStore.getOrElse(lightStoreFactory.lightStore(lightStoreConfiguration))
+            lightStoreConfiguration) ⇒
+        val store = lightStoreConfiguration match {
+          case Left(value) ⇒ lightStoreFactory.lightStore(value)
+          case Right(value) ⇒ value
+        }
+
         store.update(trustedLightBlock, Trusted)
         new LightStoreBackedTrustedState(store, votingPowerVerifier)
 

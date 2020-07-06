@@ -25,14 +25,12 @@ object TrustedStateFactory {
    * Configuration for `LightStoreBackedTrustedState`
    * @param trustedLightBlock initial trusted light block
    * @param votingPowerVerifier to be used with trusted states
-   * @param lightStoreConfiguration configuration for the backing `LightStore`
-   * @param lightStore if set ignores the configuration and uses the supplied instance
+   * @param lightStoreConfiguration configuration for the backing `LightStore` or a specific instance to be used
    */
   case class LightStoreBackedTrustedStateConfiguration(
     trustedLightBlock: LightBlock,
     votingPowerVerifier: VotingPowerVerifier,
-    lightStoreConfiguration: LightStoreConfiguration,
-    lightStore: Option[LightStore])
+    lightStoreConfiguration: Either[LightStoreConfiguration, LightStore])
       extends TrustedStateConfiguration
 
 }

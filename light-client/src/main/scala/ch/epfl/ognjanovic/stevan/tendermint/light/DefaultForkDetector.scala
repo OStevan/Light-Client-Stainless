@@ -2,19 +2,19 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.Hasher
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{MultiStepVerifier, VotingPowerVerifiers}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.SimpleTrustedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStateFactories.UntrustedStateFactory
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifier
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.ExpiredTrustedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 import stainless.lang
 
-sealed class DefaultForkDetector(private val hasher: Hasher, private val untrustedStateFactory: UntrustedStateFactory)
+sealed class DefaultForkDetector(private val hasher: Hasher, private val untrustedStateSupplier: Height ⇒ UntrustedState)
     extends ForkDetector {
 
   override def detectForks(
+    trustedStateSupplier: PeerId ⇒ TrustedState,
     targetLightBlock: LightBlock,
-    trustedLightBlock: LightBlock,
     witnesses: List[MultiStepVerifier]): ForkDetection.ForkDetectionResult = {
     val expectedHash = hasher.hashHeader(targetLightBlock.header)
 
@@ -23,13 +23,13 @@ sealed class DefaultForkDetector(private val hasher: Hasher, private val untrust
 
       val witnessBlockHash = hasher.hashHeader(witnessBlock.header)
 
-      if (expectedHash == witnessBlockHash) {
+      if (expectedHash == witnessBlockHash)
         Option.empty[Fork]
-      } else {
-        // TODO this should change definitely, so that there are no explicit constructors
+      else {
         val witnessVerificationResult = witness.verifyUntrusted(
-          SimpleTrustedState(trustedLightBlock, VotingPowerVerifiers.defaultTrustVerifier),
-          untrustedStateFactory.emptyWithTarget(targetLightBlock.header.height))
+          trustedStateSupplier(witnessBlock.peerId),
+          untrustedStateSupplier(targetLightBlock.header.height)
+        )
 
         witnessVerificationResult.outcome match {
           case lang.Left(_) ⇒ Some(Forked(targetLightBlock, witnessBlock))

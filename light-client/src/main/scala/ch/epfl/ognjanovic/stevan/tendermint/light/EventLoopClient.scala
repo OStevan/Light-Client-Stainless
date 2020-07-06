@@ -3,14 +3,14 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 import java.util.concurrent.Executors
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection.{ForkDetector, Forked}
-import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.{ForkDetected, NoPrimary, NoTrustedState, NoWitnesses}
-import ch.epfl.ognjanovic.stevan.tendermint.light.store.{LightStore, LightStoreFactory}
-import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.{Trusted, Verified}
+import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor._
+import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStore
+import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.Trusted
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.{PeerList ⇒ GenericPeerList}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightStoreBackedTrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.MultiStepVerifierFactory
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStateFactories.UntrustedStateFactory
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock, PeerId}
 import stainless.lang
@@ -27,11 +27,12 @@ object EventLoopClient {
     @volatile private var peerList: PeerList,
     private val votingPowerVerifier: VotingPowerVerifier,
     private val verifierBuilder: MultiStepVerifierFactory,
-    private val disposableLightStoreFactory: LightStoreFactory,
-    private val untrustedStateFactory: UntrustedStateFactory,
+    private val untrustedStateSupplier: Height ⇒ UntrustedState,
     private val trustDuration: Duration,
     private val lightStore: LightStore,
-    private val forkDetector: ForkDetector)
+    private val forkDetector: ForkDetector,
+    private val primaryStateSupplier: (LightBlock, VotingPowerVerifier) ⇒ (() ⇒ Iterable[LightBlock], TrustedState),
+    private val witnessTrustedStateSupplier: (LightBlock, VotingPowerVerifier) ⇒ PeerId ⇒ TrustedState)
       extends Supervisor {
 
     override def verifyToHeight(height: Height): Either[LightBlock, Supervisor.Error] = {
@@ -62,14 +63,12 @@ object EventLoopClient {
       if (trustedLightBlock.isEmpty)
         return (peerList, Right(NoTrustedState))
 
-      val inMemoryLightStore = disposableLightStoreFactory.lightStore()
-
-      val primaryInMemoryBacked = new LightStoreBackedTrustedState(inMemoryLightStore, votingPowerVerifier)
+      val (verificationCollector, primaryTrustedState) = primaryStateSupplier(trustedLightBlock.get, votingPowerVerifier)
 
       val primaryResult =
         primaryVerifier.verifyUntrusted(
-          primaryInMemoryBacked,
-          untrustedStateFactory.emptyWithTarget(height.getOrElse(peerList.primary.currentHeight)))
+          primaryTrustedState,
+          untrustedStateSupplier(height.getOrElse(peerList.primary.currentHeight)))
 
       primaryResult.outcome match {
         case lang.Left(_) ⇒
@@ -77,8 +76,8 @@ object EventLoopClient {
             return (peerList, Right(NoWitnesses))
 
           val forkDetectionResult = forkDetector.detectForks(
+            witnessTrustedStateSupplier(trustedLightBlock.get, votingPowerVerifier),
             primaryResult.trustedState.trustedLightBlock,
-            trustedLightBlock.get,
             peerList.witnesses.map(verifierBuilder.constructVerifier(_, votingPowerVerifier, trustDuration)).toScala
           )
 
@@ -92,7 +91,7 @@ object EventLoopClient {
                 verifyToTarget(height, newPeerList)
 
             case ForkDetection.NoForks ⇒
-              inMemoryLightStore.all(Verified).foreach(lightStore.update(_, Trusted))
+              verificationCollector().foreach(lightStore.update(_, Trusted))
               (peerList, Left(primaryResult.trustedState.trustedLightBlock))
           }
         case lang.Right(_) ⇒
