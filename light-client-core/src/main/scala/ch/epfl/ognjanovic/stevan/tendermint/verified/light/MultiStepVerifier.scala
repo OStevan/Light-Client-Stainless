@@ -9,8 +9,8 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.Ve
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
-import stainless.lang.StaticChecks.Ensuring
 import stainless.lang._
+import stainless.lang.StaticChecks.Ensuring
 
 case class MultiStepVerifier(
   lightBlockProvider: LightBlockProvider,
@@ -19,20 +19,25 @@ case class MultiStepVerifier(
 
   def verifyUntrusted(trustedState: TrustedState, untrustedState: UntrustedState): Finished = {
     require(
-      trustedState.currentHeight() < untrustedState.targetLimit &&
+      trustedState.currentHeight() <= untrustedState.targetLimit &&
         untrustedState.bottomHeight().isEmpty &&
         untrustedState.targetLimit <= lightBlockProvider.currentHeight)
 
-    val nextHeight =
-      if (trustedState.currentHeight() + 1 == untrustedState.targetLimit)
-        untrustedState.targetLimit
-      else
-        heightCalculator.nextHeight(trustedState.currentHeight(), untrustedState.targetLimit)
+    if (trustedState.currentHeight() == untrustedState.targetLimit)
+      Finished(Left(()), trustedState, untrustedState)
+    else {
 
-    assert(untrustedState.bottomHeight().map(nextHeight < _).getOrElse(true))
-    assert(trustedState.currentHeight() < nextHeight)
-    assert(nextHeight <= untrustedState.targetLimit)
-    verify(WaitingForHeader(nextHeight, trustedState, untrustedState))
+      val nextHeight =
+        if (trustedState.currentHeight() + 1 == untrustedState.targetLimit)
+          untrustedState.targetLimit
+        else
+          heightCalculator.nextHeight(trustedState.currentHeight(), untrustedState.targetLimit)
+
+      assert(untrustedState.bottomHeight().map(nextHeight < _).getOrElse(true))
+      assert(trustedState.currentHeight() < nextHeight)
+      assert(nextHeight <= untrustedState.targetLimit)
+      verify(WaitingForHeader(nextHeight, trustedState, untrustedState))
+    }
   }
 
   @scala.annotation.tailrec

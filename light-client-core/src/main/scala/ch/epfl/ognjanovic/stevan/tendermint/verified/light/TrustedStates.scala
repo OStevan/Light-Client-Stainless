@@ -8,13 +8,14 @@ object TrustedStates {
 
   abstract class TrustedState {
 
-    /**
-     * The height of the last block that we trust.
-     */
     @pure
-    def currentHeight(): Height = {
-      ??? : Height
-    }.ensuring(res => res == trustedLightBlock.header.height)
+    def trusted(lightBlock: LightBlock): Boolean = {
+      require(lightBlock.header.height > currentHeight())
+      ??? : Boolean
+    }
+
+    @pure
+    def trustedLightBlock: LightBlock
 
     /**
      * Tries to "improve" the current trusted state with addition of a new signed header of a greater height.
@@ -28,22 +29,21 @@ object TrustedStates {
       ??? : TrustedState
     }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
 
+    /**
+     * The height of the last block that we trust.
+     */
+    @pure
+    def currentHeight(): Height = {
+      trustedLightBlock.header.height
+    }.ensuring(res => res == trustedLightBlock.header.height)
+
     @pure
     def isAdjacent(lightBlock: LightBlock): Boolean = {
       require(currentHeight() < lightBlock.header.height)
-      ??? : Boolean
+      lightBlock.header.height == trustedLightBlock.header.height + 1
     }.ensuring(res =>
       (res && currentHeight() + 1 == lightBlock.header.height) ||
         (!res && currentHeight() + 1 < lightBlock.header.height))
-
-    @pure
-    def trusted(lightBlock: LightBlock): Boolean = {
-      require(lightBlock.header.height > currentHeight())
-      ??? : Boolean
-    }
-
-    @pure
-    def trustedLightBlock: LightBlock
 
   }
 
@@ -60,10 +60,6 @@ object TrustedStates {
     }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
 
     @pure
-    override def isAdjacent(lightBlock: LightBlock): Boolean =
-      lightBlock.header.height == trustedLightBlock.header.height + 1
-
-    @pure
     override def trusted(lightBlock: LightBlock): Boolean = {
       require(lightBlock.header.height > currentHeight())
       if (isAdjacent(lightBlock))
@@ -74,13 +70,13 @@ object TrustedStates {
 
     @pure
     private def internalAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
-      require(isAdjacent(lightBlock))
+      require(currentHeight() < lightBlock.header.height && isAdjacent(lightBlock))
       trustedLightBlock.nextValidatorSet.toInfoHashable == lightBlock.validatorSet.toInfoHashable
     }
 
     @pure
     private def internalNonAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
-      require(lightBlock.header.height > this.trustedLightBlock.header.height && !isAdjacent(lightBlock))
+      require(currentHeight() < lightBlock.header.height && !isAdjacent(lightBlock))
 
       trustVerifier.trustedCommit(trustedLightBlock.nextValidatorSet, lightBlock.commit)
     }
