@@ -20,8 +20,8 @@ class LightStoreBackedTrustedState(private val lightStore: LightStore, private v
   }
 
   override def trustedLightBlock: LightBlock = {
-    val possibleTrusted = lightStore.latest(Verified)
-    val possibleVerified = lightStore.latest(Trusted)
+    val possibleTrusted = lightStore.latest(Trusted)
+    val possibleVerified = lightStore.latest(Verified)
 
     (possibleTrusted, possibleVerified) match {
       case (Some(trusted), Some(verified)) if trusted.header.height < verified.header.height ⇒

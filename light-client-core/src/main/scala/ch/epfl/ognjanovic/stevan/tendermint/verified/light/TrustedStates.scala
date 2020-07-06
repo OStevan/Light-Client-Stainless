@@ -38,7 +38,7 @@ object TrustedStates {
     }.ensuring(res => res == trustedLightBlock.header.height)
 
     @pure
-    def isAdjacent(lightBlock: LightBlock): Boolean = {
+    sealed def isAdjacent(lightBlock: LightBlock): Boolean = {
       require(currentHeight() < lightBlock.header.height)
       lightBlock.header.height == trustedLightBlock.header.height + 1
     }.ensuring(res =>
