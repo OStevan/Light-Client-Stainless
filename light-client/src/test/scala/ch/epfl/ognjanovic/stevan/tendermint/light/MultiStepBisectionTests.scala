@@ -41,8 +41,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec {
 
     val result = verifier.verifyUntrusted(trustedState, untrustedStateFactory.emptyWithTarget(heightToVerify))
 
-    // this test should fail with InsufficientCommitPower but it fails with InvalidNextValidatorSet
-    assert(result.outcome.isRight && result.outcome.get == InvalidNextValidatorSet)
+    assert(result.outcome.isRight && result.outcome.get == InsufficientCommitPower)
   }
 
   "Worst case scenario for bisection" should "not influence the successful outcome" in {
