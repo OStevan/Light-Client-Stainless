@@ -6,23 +6,23 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Duration
 
 object ExpirationCheckerFactories {
 
+  trait ExpirationCheckerConfiguration
+
+  case class TimeBasedExpirationCheckerConfig(timeSupplier: () ⇒ Instant, duration: Duration)
+      extends ExpirationCheckerConfiguration
+
   trait ExpirationCheckerFactory {
-    def constructChecker(duration: Duration): ExpirationChecker
+    def constructChecker(expirationCheckerConfiguration: ExpirationCheckerConfiguration): ExpirationChecker
   }
 
-  class FixedTimeExpirationCheckerFactory(private val time: Instant) extends ExpirationCheckerFactory {
+  object DefaultExpirationCheckerFactory extends ExpirationCheckerFactory {
 
-    override def constructChecker(duration: Duration): ExpirationChecker = {
-      new TimeBasedExpirationChecker(() ⇒ time, duration)
-    }
-
-  }
-
-  object CurrentTimeExpirationCheckerFactory extends ExpirationCheckerFactory {
-
-    override def constructChecker(duration: Duration): ExpirationChecker = {
-      new TimeBasedExpirationChecker(() ⇒ Instant.now(), duration)
-    }
+    override def constructChecker(checkerConfiguration: ExpirationCheckerConfiguration): ExpirationChecker =
+      checkerConfiguration match {
+        case TimeBasedExpirationCheckerConfig(timeSupplier, duration) ⇒
+          new TimeBasedExpirationChecker(timeSupplier, duration)
+        case _ ⇒ ???
+      }
 
   }
 

@@ -30,7 +30,8 @@ object ModelIntegration {
     val soundSignedHeaderProvider = BlockchainLightBlockProviders(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
 
-    val trustedState: TrustedState = SimpleTrustedState(trustedSignedHeader, VotingPowerVerifiers.defaultTrustVerifier)
+    val trustedState: TrustedState =
+      SimpleTrustedState(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
     val untrustedState = InMemoryUntrustedState(heightToVerify, List.empty)
     assert(untrustedState.bottomHeight().forall(heightToVerify < _))
     assert(trustedState.currentHeight() < heightToVerify)
@@ -43,7 +44,7 @@ object ModelIntegration {
       Verifier(
         DummyLightBlockValidator(),
         lightBlockVerifier,
-        DefaultCommitValidator(VotingPowerVerifiers.defaultTrustVerifier, DummyCommitSignatureVerifier())),
+        DefaultCommitValidator(VotingPowerVerifiers.defaultVotingPowerVerifier, DummyCommitSignatureVerifier())),
       nextHeightCalculator
     )
       .verifyUntrusted(trustedState, untrustedState)

@@ -119,7 +119,7 @@ object BlockchainStates {
               lastCommit.forBlock.nonEmpty /* obvious from AppendBlock adt invariant times-out */ =>
           val lastBlock = blockchain.chain.head
           if (
-            VotingPowerVerifiers.defaultTrustVerifier.consensusObtained(lastBlock.validatorSet, lastCommit) &&
+            VotingPowerVerifiers.defaultVotingPowerVerifier.consensusObtained(lastBlock.validatorSet, lastCommit) &&
             blockchain.faultChecker.isCorrect(nextValidatorSet, faulty)
           ) {
             val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
