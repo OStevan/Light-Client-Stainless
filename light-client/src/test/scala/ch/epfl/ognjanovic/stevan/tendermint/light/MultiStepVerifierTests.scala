@@ -3,6 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 import java.time.Instant
 
 import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.DefaultHasher
+import ch.epfl.ognjanovic.stevan.tendermint.light.cases.TrustOptions
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._

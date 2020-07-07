@@ -2,38 +2,22 @@ package ch.epfl.ognjanovic.stevan.tendermint
 
 import java.time.Instant
 
-import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.circe
-import ch.epfl.ognjanovic.stevan.tendermint.rpc.types.SignedHeader
+import ch.epfl.ognjanovic.stevan.tendermint.light.cases.{MultiStepTestCase, SingleStepTestCase, TrustOptions}
+import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.circe.instantDecoder
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock, ValidatorSet}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock}
 import io.circe.Decoder
-import io.circe.generic.semiauto._
 
 package object light {
-
-  implicit val lightBlockProviderDecoder: Decoder[LightBlockProvider] =
-    InMemoryProvider.defaultChainDecoder(VerifierTests.lightBlockDecoder)
-
-  case class TrustedInitialState(
-    signed_header: SignedHeader,
-    next_validator_set: ValidatorSet,
-    now: Instant,
-    trusting_period: Long)
-
-  case class SingleStepTestCase(initial: TrustedInitialState, input: LightBlockProvider)
-
-  implicit val trustedInitialStateDecoder: Decoder[TrustedInitialState] = deriveDecoder
-
-  implicit val singleStepTestCase: Decoder[SingleStepTestCase] = deriveDecoder
 
   implicit val singleStepTestCaseDecoder
     : Decoder[(TrustedState, VotingPowerVerifier, Duration, Instant, LightBlockProvider)] =
     cursor =>
       for {
-        testCase ← cursor.as[SingleStepTestCase]
+        testCase ← cursor.as[SingleStepTestCase](SingleStepTestCase.decoder)
       } yield {
         val trustVerifier = VotingPowerVerifiers.defaultTrustVerifier
 
@@ -56,15 +40,9 @@ package object light {
 
   implicit val multiStepTestCaseDecoder: Decoder[(TrustOptions, LightBlockProvider, Height, Instant)] = cursor =>
     for {
-      trustOptions <- cursor.downField("trust_options").as[TrustOptions](TrustOptions.decoder)
-      primary <-
-        cursor
-          .downField("primary")
-          .as[LightBlockProvider](InMemoryProvider.decoder(VerifierTests.lightBlockDecoder))
-      heightToVerify <- cursor.downField("height_to_verify").as[Long]
-      now <- cursor.downField("now").as[Instant](circe.instantDecoder)
+      testCase <- cursor.as[MultiStepTestCase](MultiStepTestCase.decoder)
     } yield {
-      (trustOptions, primary, Height(heightToVerify), now)
+      (testCase.trust_options, testCase.primary, Height(testCase.height_to_verify), testCase.now)
     }
 
 }
