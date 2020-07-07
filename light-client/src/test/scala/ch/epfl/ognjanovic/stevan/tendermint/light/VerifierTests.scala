@@ -1,7 +1,5 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import java.util.Base64
-
 import ch.epfl.ognjanovic.stevan.tendermint.light.cases.{MultiStepTestCase, SingleStepTestCase}
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
@@ -15,8 +13,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.
   ParameterizedVotingPowerVerifier,
   VotingPowerVerifier
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, Key, LightBlock, PeerId}
-import io.circe.Decoder
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock, PeerId}
 
 import scala.io.Source
 
@@ -34,13 +31,15 @@ trait VerifierTests {
       () ⇒ singleStepTestCase.initial.now,
       Duration(0, singleStepTestCase.initial.trusting_period))
 
+    val peerId = PeerId(singleStepTestCase.initial.next_validator_set.values.head.publicKey)
+
     val trustedState = SimpleTrustedState(
       LightBlock(
         singleStepTestCase.initial.signed_header.header,
         singleStepTestCase.initial.signed_header.commit,
         singleStepTestCase.initial.next_validator_set,
         singleStepTestCase.initial.next_validator_set,
-        VerifierTests.defaultProvider
+        peerId
       ),
       votingPowerVerifier
     )
@@ -48,7 +47,10 @@ trait VerifierTests {
     (
       verifierFactory.constructInstance(votingPowerVerifier, expirationCheckerConfig),
       trustedState,
-      singleStepTestCase.input
+      InMemoryProvider.fromInput(
+        singleStepTestCase.initial.signed_header.header.chainId,
+        peerId,
+        singleStepTestCase.input)
     )
   }
 
@@ -59,11 +61,14 @@ trait VerifierTests {
     val expirationCheckerConfig =
       TimeBasedExpirationCheckerConfig(() ⇒ multiStepTestCase.now, multiStepTestCase.trust_options.trustPeriod)
 
+    val peerId = PeerId(multiStepTestCase.primary.lite_blocks(0).validator_set.values.head.publicKey)
+
+    val primary =
+      InMemoryProvider.fromInput(multiStepTestCase.primary.chain_id, peerId, multiStepTestCase.primary.lite_blocks)
+
     (
-      multiStepVerifierFactory.constructVerifier(multiStepTestCase.primary, votingPowerVerifier, expirationCheckerConfig),
-      SimpleTrustedState(
-        multiStepTestCase.primary.lightBlock(multiStepTestCase.trust_options.trustedHeight),
-        trustVerifier),
+      multiStepVerifierFactory.constructVerifier(primary, votingPowerVerifier, expirationCheckerConfig),
+      SimpleTrustedState(primary.lightBlock(multiStepTestCase.trust_options.trustedHeight), trustVerifier),
       Height(multiStepTestCase.height_to_verify)
     )
   }
@@ -71,14 +76,6 @@ trait VerifierTests {
 }
 
 object VerifierTests {
-
-  val defaultProvider: PeerId =
-    PeerId(
-      Key(
-        "tendermint/PubKeyEd25519",
-        Base64.getDecoder.decode("OAaNq3DX/15fGJP2MI6bujt1GRpvjwrqIevChirJsbc=".getBytes).toVector))
-
-  implicit val lightBlockDecoder: Decoder[LightBlock] = LightBlockDecoder.decoder(defaultProvider)
 
   private def content(path: String): String = {
     val source = Source.fromURL(getClass.getResource(path))

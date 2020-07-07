@@ -2,11 +2,9 @@ package ch.epfl.ognjanovic.stevan.tendermint.light.cases
 
 import java.time.Instant
 
-import ch.epfl.ognjanovic.stevan.tendermint.light.{InMemoryProvider, VerifierTests}
 import ch.epfl.ognjanovic.stevan.tendermint.light.cases.SingleStepTestCase.TrustedInitialState
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.circe.instantDecoder
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.types.SignedHeader
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.ValidatorSet
 import io.circe.generic.semiauto.deriveDecoder
 import io.circe.Decoder
@@ -15,7 +13,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDecoders.{
   signedHeaderDecoder
 }
 
-case class SingleStepTestCase(initial: TrustedInitialState, input: LightBlockProvider)
+case class SingleStepTestCase(initial: TrustedInitialState, input: Array[InputFormat])
 
 object SingleStepTestCase {
 
@@ -24,9 +22,6 @@ object SingleStepTestCase {
     next_validator_set: ValidatorSet,
     now: Instant,
     trusting_period: Long)
-
-  implicit private val lightBlockProviderDecoder: Decoder[LightBlockProvider] =
-    InMemoryProvider.defaultChainDecoder(VerifierTests.lightBlockDecoder)
 
   implicit private val trustedInitialStateDecoder: Decoder[TrustedInitialState] = deriveDecoder
 

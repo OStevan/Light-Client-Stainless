@@ -1,8 +1,8 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
+import ch.epfl.ognjanovic.stevan.tendermint.light.cases.InputFormat
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
-import io.circe.Decoder
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 
 sealed class InMemoryProvider(override val chainId: String, private val map: Map[Height, LightBlock])
     extends LightBlockProvider {
@@ -16,23 +16,21 @@ sealed class InMemoryProvider(override val chainId: String, private val map: Map
 }
 
 object InMemoryProvider {
-  val defaultChainId: String = "test-chain-01"
 
-  def defaultChainDecoder(implicit lightBlockDeserializer: Decoder[LightBlock]): Decoder[LightBlockProvider] = cursor =>
-    for {
-      lightBlocks <- cursor.as[Array[LightBlock]]
-    } yield {
-      val zipped: Array[(Height, LightBlock)] = lightBlocks.map(block => (block.header.height, block))
-      new InMemoryProvider(defaultChainId, zipped.toMap)
-    }
-
-  def decoder(implicit lightBlockDeserializer: Decoder[LightBlock]): Decoder[LightBlockProvider] = cursor =>
-    for {
-      lightBlocks <- cursor.downField("lite_blocks").as[Array[LightBlock]]
-      chainId <- cursor.downField("chain_id").as[String]
-    } yield {
-      val zipped: Array[(Height, LightBlock)] = lightBlocks.map(block => (block.header.height, block))
-      new InMemoryProvider(chainId, zipped.toMap)
-    }
+  def fromInput(chainId: String, peerId: PeerId, input: Array[InputFormat]): LightBlockProvider = {
+    new InMemoryProvider(
+      chainId,
+      input
+        .map(input ⇒
+          (
+            input.signed_header.header.height,
+            LightBlock(
+              input.signed_header.header,
+              input.signed_header.commit,
+              input.validator_set,
+              input.next_validator_set,
+              peerId)))
+        .toMap)
+  }
 
 }
