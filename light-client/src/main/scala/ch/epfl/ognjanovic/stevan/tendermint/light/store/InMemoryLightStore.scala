@@ -33,7 +33,9 @@ sealed class InMemoryLightStore(
 
   override def latest(status: LightBlockStatus): Option[LightBlock] = {
     val map = statusNamespace(status)
-    map.get(map.lastKey)
+    if (map.isEmpty)
+      Option.empty
+    else map.get(map.lastKey)
   }
 
   override def all(status: LightBlockStatus): Iterable[LightBlock] = statusNamespace(status).values
