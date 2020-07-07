@@ -73,7 +73,6 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
 
     val result = supervisor.verifyToHeight(heightToVerify)
 
-    println(result)
     assert(result.isRight)
   }
 
@@ -100,7 +99,58 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
 
     val result = supervisor.verifyToHeight(heightToVerify)
 
-    println(result)
+    assert(result.isRight)
+  }
+
+  "Conflicting commit from the only witnesses" should "result in a failed synchronization" in {
+    val (peerList, trustedState, expirationCheckerConfiguration, heightToVerify) =
+      buildTest(VerifierTests.testCase("/bisection/multi-peer/conflicting_valid_commits_from_the_only_witness.json"))
+
+    val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
+    lightStore.update(trustedState.trustedLightBlock, Trusted)
+
+    val supervisor = new EventLoopSupervisor(
+      peerList,
+      votingPowerVerifier,
+      multiStepVerifierFactory,
+      height ⇒ untrustedStateFactory.emptyWithTarget(height),
+      expirationCheckerConfiguration,
+      lightStore,
+      new DefaultForkDetector(
+        new DefaultHasher(MerkleRoot.default()),
+        height ⇒ untrustedStateFactory.emptyWithTarget(height)),
+      primaryTrustedStateBuilder,
+      witnessTrustedStateBuilder
+    )
+
+    val result = supervisor.verifyToHeight(heightToVerify)
+
+    assert(result.isRight)
+  }
+
+  "Malicious validator set" should "result in a failed synchronization" in {
+    val (peerList, trustedState, expirationCheckerConfiguration, heightToVerify) =
+      buildTest(VerifierTests.testCase("/bisection/multi-peer/malicious_validator_set.json"))
+
+    val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
+    lightStore.update(trustedState.trustedLightBlock, Trusted)
+
+    val supervisor = new EventLoopSupervisor(
+      peerList,
+      votingPowerVerifier,
+      multiStepVerifierFactory,
+      height ⇒ untrustedStateFactory.emptyWithTarget(height),
+      expirationCheckerConfiguration,
+      lightStore,
+      new DefaultForkDetector(
+        new DefaultHasher(MerkleRoot.default()),
+        height ⇒ untrustedStateFactory.emptyWithTarget(height)),
+      primaryTrustedStateBuilder,
+      witnessTrustedStateBuilder
+    )
+
+    val result = supervisor.verifyToHeight(heightToVerify)
+
     assert(result.isRight)
   }
 
