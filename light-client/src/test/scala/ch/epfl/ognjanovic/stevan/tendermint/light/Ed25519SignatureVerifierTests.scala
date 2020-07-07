@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Key
 import org.scalatest.funsuite.AnyFunSuite
 
-class Ed25519SignatureVerifierTests extends AnyFunSuite {
+sealed class Ed25519SignatureVerifierTests extends AnyFunSuite {
   private val ed25519Identifier = "tendermint/PubKeyEd25519"
 
   private def hexToByteArray(string: String): Seq[Byte] =
@@ -89,7 +89,7 @@ class Ed25519SignatureVerifierTests extends AnyFunSuite {
 
     val signature = hexToByteArray(
       "0aab4c900501b3e24d7cdf4663326a3a87df5e4843b2cbdb67cbf6e460fec350"
-      + "aa5371b1508f9f4528ecea23c436d94b5e8fcd4f681e30a6ac00a9704a188a03").toArray
+        + "aa5371b1508f9f4528ecea23c436d94b5e8fcd4f681e30a6ac00a9704a188a03").toArray
 
     assert(SignatureVerifier.forPublicKey(publicKey).verify(message, signature))
   }
@@ -101,7 +101,7 @@ class Ed25519SignatureVerifierTests extends AnyFunSuite {
     )
     val message = hexToByteArray(
       "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a"
-      + "2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f").toArray
+        + "2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f").toArray
     val signature = hexToByteArray(
       "dc2a4459e7369633a52b1bf277839a00201009a3efbf3ecb69bea2186c26b589"
         + "09351fc9ac90b3ecfdfbc7c66431e0303dca179c138ac17ad9bef1177331a704").toArray

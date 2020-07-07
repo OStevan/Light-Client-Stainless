@@ -11,8 +11,11 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFact
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Key, LightBlock, PeerId}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.{
+  ParameterizedVotingPowerVerifier,
+  VotingPowerVerifier
+}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, Key, LightBlock, PeerId}
 import io.circe.Decoder
 
 import scala.io.Source
@@ -46,6 +49,22 @@ trait VerifierTests {
       verifierFactory.constructInstance(votingPowerVerifier, expirationCheckerConfig),
       trustedState,
       singleStepTestCase.input
+    )
+  }
+
+  def buildTest(
+    multiStepTestCase: MultiStepTestCase,
+    votingPowerVerifier: VotingPowerVerifier): (MultiStepVerifier, SimpleTrustedState, Height) = {
+    val trustVerifier = ParameterizedVotingPowerVerifier(multiStepTestCase.trust_options.trustLevel)
+    val expirationCheckerConfig =
+      TimeBasedExpirationCheckerConfig(() ⇒ multiStepTestCase.now, multiStepTestCase.trust_options.trustPeriod)
+
+    (
+      multiStepVerifierFactory.constructVerifier(multiStepTestCase.primary, votingPowerVerifier, expirationCheckerConfig),
+      SimpleTrustedState(
+        multiStepTestCase.primary.lightBlock(multiStepTestCase.trust_options.trustedHeight),
+        trustVerifier),
+      Height(multiStepTestCase.height_to_verify)
     )
   }
 

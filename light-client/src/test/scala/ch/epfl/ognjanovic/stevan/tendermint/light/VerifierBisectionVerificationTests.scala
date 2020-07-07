@@ -3,10 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 import ch.epfl.ognjanovic.stevan.tendermint.light.cases.SingleStepTestCase
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.{
-  ExpiredTrustedState,
-  InsufficientCommitPower
-}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
