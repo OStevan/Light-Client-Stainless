@@ -77,4 +77,31 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
     assert(result.isRight)
   }
 
+  "Conflicting commit from one of the witnesses" should "result in a failed synchronization" in {
+    val (peerList, trustedState, expirationCheckerConfiguration, heightToVerify) =
+      buildTest(VerifierTests.testCase("/bisection/multi-peer/conflicting_valid_commits_from_one_of_the_witnesses.json"))
+
+    val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
+    lightStore.update(trustedState.trustedLightBlock, Trusted)
+
+    val supervisor = new EventLoopSupervisor(
+      peerList,
+      votingPowerVerifier,
+      multiStepVerifierFactory,
+      height ⇒ untrustedStateFactory.emptyWithTarget(height),
+      expirationCheckerConfiguration,
+      lightStore,
+      new DefaultForkDetector(
+        new DefaultHasher(MerkleRoot.default()),
+        height ⇒ untrustedStateFactory.emptyWithTarget(height)),
+      primaryTrustedStateBuilder,
+      witnessTrustedStateBuilder
+    )
+
+    val result = supervisor.verifyToHeight(heightToVerify)
+
+    println(result)
+    assert(result.isRight)
+  }
+
 }
