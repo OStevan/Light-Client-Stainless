@@ -10,6 +10,10 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.L
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.ValidatorSet
 import io.circe.generic.semiauto.deriveDecoder
 import io.circe.Decoder
+import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDecoders.{
+  conformanceTestValidatorSetDecoder,
+  signedHeaderDecoder
+}
 
 case class SingleStepTestCase(initial: TrustedInitialState, input: LightBlockProvider)
 
