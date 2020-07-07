@@ -1,10 +1,10 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFactories.ExpirationCheckerConfiguration
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.VerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Duration
 
 object MultiStepVerifierFactories {
 
@@ -13,7 +13,7 @@ object MultiStepVerifierFactories {
     def constructVerifier(
       lightBlockProvider: LightBlockProvider,
       votingPowerVerifier: VotingPowerVerifier,
-      trustDuration: Duration): MultiStepVerifier
+      expirationCheckerConfig: ExpirationCheckerConfiguration): MultiStepVerifier
 
   }
 
@@ -25,8 +25,8 @@ object MultiStepVerifierFactories {
     override def constructVerifier(
       lightBlockProvider: LightBlockProvider,
       votingPowerVerifier: VotingPowerVerifier,
-      trustDuration: Duration): MultiStepVerifier = {
-      val singleStepVerifier = verifierFactory.constructInstance(votingPowerVerifier, trustDuration)
+      expirationCheckerConfig: ExpirationCheckerConfiguration): MultiStepVerifier = {
+      val singleStepVerifier = verifierFactory.constructInstance(votingPowerVerifier, expirationCheckerConfig)
 
       MultiStepVerifier(lightBlockProvider, singleStepVerifier, nextHeightCalculator)
     }

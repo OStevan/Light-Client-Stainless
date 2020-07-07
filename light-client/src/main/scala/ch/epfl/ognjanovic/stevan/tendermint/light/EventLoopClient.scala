@@ -7,12 +7,13 @@ import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor._
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStore
 import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.Trusted
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.{PeerList ⇒ GenericPeerList}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFactories.ExpirationCheckerConfiguration
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.MultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock, PeerId}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 import stainless.lang
 
 import scala.annotation.tailrec
@@ -28,7 +29,7 @@ object EventLoopClient {
     private val votingPowerVerifier: VotingPowerVerifier,
     private val verifierBuilder: MultiStepVerifierFactory,
     private val untrustedStateSupplier: Height ⇒ UntrustedState,
-    private val trustDuration: Duration,
+    private val expirationCheckerConfiguration: ExpirationCheckerConfiguration,
     private val lightStore: LightStore,
     private val forkDetector: ForkDetector,
     private val primaryStateSupplier: (LightBlock, VotingPowerVerifier) ⇒ (() ⇒ Iterable[LightBlock], TrustedState),
@@ -56,7 +57,8 @@ object EventLoopClient {
     private def verifyToTarget(
       height: Option[Height],
       peerList: PeerList): (PeerList, Either[LightBlock, Supervisor.Error]) = {
-      val primaryVerifier = verifierBuilder.constructVerifier(peerList.primary, votingPowerVerifier, trustDuration)
+      val primaryVerifier =
+        verifierBuilder.constructVerifier(peerList.primary, votingPowerVerifier, expirationCheckerConfiguration)
 
       val trustedLightBlock = lightStore.latest(Trusted)
 
@@ -78,7 +80,9 @@ object EventLoopClient {
           val forkDetectionResult = forkDetector.detectForks(
             witnessTrustedStateSupplier(trustedLightBlock.get, votingPowerVerifier),
             primaryResult.trustedState.trustedLightBlock,
-            peerList.witnesses.map(verifierBuilder.constructVerifier(_, votingPowerVerifier, trustDuration)).toScala
+            peerList.witnesses
+              .map(verifierBuilder.constructVerifier(_, votingPowerVerifier, expirationCheckerConfiguration))
+              .toScala
           )
 
           forkDetectionResult match {

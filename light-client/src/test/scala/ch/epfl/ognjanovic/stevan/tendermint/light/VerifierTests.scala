@@ -15,14 +15,20 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{
   VotingPowerVerifiers
 }
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFactories.DefaultExpirationCheckerFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Key, LightBlock, PeerId}
 import io.circe.Decoder
 
 import scala.io.Source
+
+trait VerifierTests {
+  val verifierFactory = new DefaultVerifierFactory(DefaultExpirationCheckerFactory)
+}
 
 object VerifierTests {
 

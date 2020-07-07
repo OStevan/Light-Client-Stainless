@@ -15,14 +15,11 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.
   ParameterizedVotingPowerVerifier,
   VotingPowerVerifier
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock}
-import io.circe.Decoder
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height}
 
 import scala.io.Source
 
 object MultiStepVerifierTests {
-
-  implicit val lightBlockDecoder: Decoder[LightBlock] = LightBlockDecoder.decoder(VerifierTests.defaultProvider)
 
   def getContent(path: String): String = {
     val source = Source.fromURL(getClass.getResource(path))
