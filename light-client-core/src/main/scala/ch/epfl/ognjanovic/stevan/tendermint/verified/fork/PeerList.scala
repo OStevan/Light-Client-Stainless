@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.fork
 
-import stainless.annotation.{induct, opaque}
+import stainless.annotation.{ignore, induct, opaque}
 import stainless.collection._
 import stainless.lang._
 import stainless.lang.StaticChecks.Ensuring
@@ -72,10 +72,25 @@ case class PeerList[Id, Instance](
 
 }
 
-private object PeerList {
+object PeerList {
+
+  @ignore
+  def fromScala[Id, Instance](
+    mapping: scala.collection.Map[Id, Instance],
+    primaryId: Id,
+    witnessesIds: scala.List[Id],
+    fullNodeIds: scala.List[Id],
+    faultyNodeIds: scala.List[Id]): PeerList[Id, Instance] = {
+    PeerList(
+      ListMap(List.fromScala(mapping.toList)),
+      primaryId,
+      List.fromScala(witnessesIds),
+      List.fromScala(fullNodeIds),
+      List.fromScala(faultyNodeIds))
+  }
 
   @inline
-  def instanceInvariant[Id, Instance](
+  private def instanceInvariant[Id, Instance](
     instances: ListMap[Id, Instance],
     primaryId: Id,
     witnessesIds: List[Id],
@@ -89,7 +104,7 @@ private object PeerList {
   }
 
   @inline
-  def transitionCheck[Id, T](peer: Id, peerList: PeerList[Id, T]): Boolean = {
+  private def transitionCheck[Id, T](peer: Id, peerList: PeerList[Id, T]): Boolean = {
     peerList.primaryId == peer ||
     peerList.witnessesIds.contains(peer) ||
     peerList.fullNodeIds.contains(peer) ||
@@ -97,17 +112,17 @@ private object PeerList {
   }
 
   @opaque
-  def elementSpillLemma[T, B](element: T, map: ListMap[T, B], @induct second: List[T]): Unit = {
+  private def elementSpillLemma[T, B](element: T, map: ListMap[T, B], @induct second: List[T]): Unit = {
     require(map.contains(element) && second.forall(map.contains))
   }.ensuring(_ ⇒ (element :: second).forall(map.contains))
 
   @opaque
-  def removalLemma[T, B](element: T, map: ListMap[T, B], @induct list: List[T]): Unit = {
+  private def removalLemma[T, B](element: T, map: ListMap[T, B], @induct list: List[T]): Unit = {
     require(list.forall(map.contains))
   }.ensuring(_ ⇒ (list - element).forall(map.contains))
 
   @opaque
-  def mapContainmentTransitivity[T, K](map: ListMap[T, K], @induct list: List[T]): Unit = {
+  private def mapContainmentTransitivity[T, K](map: ListMap[T, K], @induct list: List[T]): Unit = {
     require(list.forall(map.contains))
   }.ensuring(_ ⇒ forall((elem: T) ⇒ list.contains(elem) ==> map.contains(elem)))
 

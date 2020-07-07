@@ -2,6 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.cases.{MultiStepTestCase, SingleStepTestCase}
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
+import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.PeerList
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFactories._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
@@ -54,12 +55,9 @@ trait VerifierTests {
     )
   }
 
-  def buildTest(
-    multiStepTestCase: MultiStepTestCase,
-    votingPowerVerifier: VotingPowerVerifier): (MultiStepVerifier, SimpleTrustedState, Height) = {
+  def buildTest(multiStepTestCase: MultiStepTestCase)
+    : (PeerList[PeerId, LightBlockProvider], SimpleTrustedState, ExpirationCheckerConfiguration, Height) = {
     val trustVerifier = ParameterizedVotingPowerVerifier(multiStepTestCase.trust_options.trustLevel)
-    val expirationCheckerConfig =
-      TimeBasedExpirationCheckerConfig(() ⇒ multiStepTestCase.now, multiStepTestCase.trust_options.trustPeriod)
 
     val peerId = PeerId(multiStepTestCase.primary.lite_blocks(0).validator_set.values.head.publicKey)
 
@@ -67,8 +65,9 @@ trait VerifierTests {
       InMemoryProvider.fromInput(multiStepTestCase.primary.chain_id, peerId, multiStepTestCase.primary.lite_blocks)
 
     (
-      multiStepVerifierFactory.constructVerifier(primary, votingPowerVerifier, expirationCheckerConfig),
+      PeerList.fromScala(Map((peerId, primary)), peerId, List.empty, List.empty, List.empty),
       SimpleTrustedState(primary.lightBlock(multiStepTestCase.trust_options.trustedHeight), trustVerifier),
+      TimeBasedExpirationCheckerConfig(() ⇒ multiStepTestCase.now, multiStepTestCase.trust_options.trustPeriod),
       Height(multiStepTestCase.height_to_verify)
     )
   }

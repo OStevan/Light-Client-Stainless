@@ -18,8 +18,11 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec with VerifierTests {
   private val votingPowerVerifier = VotingPowerVerifiers.defaultVotingPowerVerifier
 
   "Happy path bisection" should "succeed" in {
-    val (verifier, trustedState, heightToVerify) =
-      buildTest(VerifierTests.testCase("/bisection/single-peer/happy_path.json"), votingPowerVerifier)
+    val (peerList, trustedState, expirationCheckerConfiguration, heightToVerify) =
+      buildTest(VerifierTests.testCase("/bisection/single-peer/happy_path.json"))
+
+    val verifier =
+      multiStepVerifierFactory.constructVerifier(peerList.primary, votingPowerVerifier, expirationCheckerConfiguration)
 
     val result = verifier.verifyUntrusted(trustedState, untrustedStateFactory.emptyWithTarget(heightToVerify))
 
@@ -27,8 +30,11 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec with VerifierTests {
   }
 
   "Trusted state expired" should "fail verification" in {
-    val (verifier, trustedState, heightToVerify) =
-      buildTest(VerifierTests.testCase("/bisection/single-peer/header_out_of_trusting_period.json"), votingPowerVerifier)
+    val (peerList, trustedState, expirationCheckerConfiguration, heightToVerify) =
+      buildTest(VerifierTests.testCase("/bisection/single-peer/header_out_of_trusting_period.json"))
+
+    val verifier =
+      multiStepVerifierFactory.constructVerifier(peerList.primary, votingPowerVerifier, expirationCheckerConfiguration)
 
     val result = verifier.verifyUntrusted(trustedState, untrustedStateFactory.emptyWithTarget(heightToVerify))
 
@@ -45,8 +51,11 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec with VerifierTests {
   //  }
 
   "Not enough commits" should "fail verification" in {
-    val (verifier, trustedState, heightToVerify) =
-      buildTest(VerifierTests.testCase("/bisection/single-peer/not_enough_commits.json"), votingPowerVerifier)
+    val (peerList, trustedState, expirationCheckerConfiguration, heightToVerify) =
+      buildTest(VerifierTests.testCase("/bisection/single-peer/not_enough_commits.json"))
+
+    val verifier =
+      multiStepVerifierFactory.constructVerifier(peerList.primary, votingPowerVerifier, expirationCheckerConfiguration)
 
     val result = verifier.verifyUntrusted(trustedState, untrustedStateFactory.emptyWithTarget(heightToVerify))
 
@@ -54,8 +63,12 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec with VerifierTests {
   }
 
   "Worst case scenario for bisection" should "not influence the successful outcome" in {
-    val (verifier, trustedState, heightToVerify) =
-      buildTest(VerifierTests.testCase("/bisection/single-peer/worst_case.json"), votingPowerVerifier)
+    val (peerList, trustedState, expirationCheckerConfiguration, heightToVerify) =
+      buildTest(VerifierTests.testCase("/bisection/single-peer/worst_case.json"))
+
+    val verifier =
+      multiStepVerifierFactory.constructVerifier(peerList.primary, votingPowerVerifier, expirationCheckerConfiguration)
+    buildTest(VerifierTests.testCase("/bisection/single-peer/worst_case.json"))
 
     val result = verifier.verifyUntrusted(trustedState, untrustedStateFactory.emptyWithTarget(heightToVerify))
 
