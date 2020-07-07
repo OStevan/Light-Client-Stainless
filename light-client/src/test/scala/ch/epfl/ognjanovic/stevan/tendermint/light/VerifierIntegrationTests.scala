@@ -38,7 +38,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
     myContainer: TendermintSingleNodeContainer =>
       val primary =
         lightBlockProviderFactory.constructProvider(secure = false, myContainer.url, Some(myContainer.rpcPort))
-      val votingPowerVerifier = VotingPowerVerifiers.defaultTrustVerifier
+      val votingPowerVerifier = VotingPowerVerifiers.defaultVotingPowerVerifier
       val trustedLightBlock = primary.lightBlock(Height(1))
       val now = Instant.now()
       val trustDuration =
@@ -78,7 +78,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
     myContainer: TendermintSingleNodeContainer =>
       val primary =
         lightBlockProviderFactory.constructProvider(secure = false, myContainer.url, Some(myContainer.rpcPort))
-      val votingPowerVerifier = VotingPowerVerifiers.defaultTrustVerifier
+      val votingPowerVerifier = VotingPowerVerifiers.defaultVotingPowerVerifier
       val trustedLightBlock = primary.lightBlock(Height(1))
       val now = Instant.now()
       val trustDuration =

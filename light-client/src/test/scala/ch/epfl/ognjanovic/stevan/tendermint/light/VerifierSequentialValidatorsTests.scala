@@ -1,15 +1,24 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.{InsufficientCommitPower, InvalidCommitVoteSignature, InvalidNextValidatorSet}
+import ch.epfl.ognjanovic.stevan.tendermint.light.cases.SingleStepTestCase
+import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
+import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.{Failure, Success}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import org.scalatest.flatspec.AnyFlatSpec
 
-sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
+sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec with VerifierTests {
+
+  implicit private val testCaseDeserializer: Deserializer[SingleStepTestCase] =
+    new CirceDeserializer(SingleStepTestCase.decoder)
+
+  private val votingPowerVerifier = VotingPowerVerifiers.defaultVotingPowerVerifier
 
   "Single step sequential with one validator" should "succeed for height 2" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/1_validator.json")
+    val (verifier, trustedState, provider) =
+      buildTest(VerifierTests.testCase("/single-step/sequential/validator_set/1_validator.json"), votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -18,8 +27,8 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "Single step sequential with 8 validators" should "succeed for height 2" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/8_validators.json")
+    val (verifier, trustedState, provider) =
+      buildTest(VerifierTests.testCase("/single-step/sequential/validator_set/8_validators.json"), votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -28,8 +37,8 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "Single step sequential with 128 validators" should "succeed for height 2" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/128_validators.json")
+    val (verifier, trustedState, provider) =
+      buildTest(VerifierTests.testCase("/single-step/sequential/validator_set/128_validators.json"), votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -38,8 +47,8 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "A missing validator in an adjacent block" should "fail with invalid commit" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/faulty_signer.json")
+    val (verifier, trustedState, provider) =
+      buildTest(VerifierTests.testCase("/single-step/sequential/validator_set/faulty_signer.json"), votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -49,8 +58,10 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "Half of the validators changing between two adjacent blocks" should "not influence verification" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/half_valset_changes.json")
+    val (verifier, trustedState, provider) =
+      buildTest(
+        VerifierTests.testCase("/single-step/sequential/validator_set/half_valset_changes.json"),
+        votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -59,8 +70,10 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "Less than one third of validators changing between two adjacent blocks" should "not influence verification" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/less_than_one_third_valset_changes.json")
+    val (verifier, trustedState, provider) =
+      buildTest(
+        VerifierTests.testCase("/single-step/sequential/validator_set/less_than_one_third_valset_changes.json"),
+        votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -69,8 +82,10 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "More than two thirds of validators changing between two adjacent blocks" should "not influence verification" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/more_than_two_thirds_valset_changes.json")
+    val (verifier, trustedState, provider) =
+      buildTest(
+        VerifierTests.testCase("/single-step/sequential/validator_set/more_than_two_thirds_valset_changes.json"),
+        votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -79,8 +94,10 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "One third of validators changing between two adjacent blocks" should "not influence verification" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/one_third_valset_changes.json")
+    val (verifier, trustedState, provider) =
+      buildTest(
+        VerifierTests.testCase("/single-step/sequential/validator_set/one_third_valset_changes.json"),
+        votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -89,8 +106,10 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "Two thirds of validators changing between two adjacent blocks" should "not influence verification" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/two_thirds_valset_changes.json")
+    val (verifier, trustedState, provider) =
+      buildTest(
+        VerifierTests.testCase("/single-step/sequential/validator_set/two_thirds_valset_changes.json"),
+        votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -99,8 +118,10 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "Complete change of validator sets for two adjacent blocks" should "not influence verification" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/valset_changes_fully.json")
+    val (verifier, trustedState, provider) =
+      buildTest(
+        VerifierTests.testCase("/single-step/sequential/validator_set/valset_changes_fully.json"),
+        votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -109,8 +130,10 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "Doubling of validator set size between two adjacent blocks" should "not influence verification" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/valset_size_doubles.json")
+    val (verifier, trustedState, provider) =
+      buildTest(
+        VerifierTests.testCase("/single-step/sequential/validator_set/valset_size_doubles.json"),
+        votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -119,8 +142,10 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "Halving of validator set size between two adjacent blocks" should "not influence verification" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/valset_size_halves.json")
+    val (verifier, trustedState, provider) =
+      buildTest(
+        VerifierTests.testCase("/single-step/sequential/validator_set/valset_size_halves.json"),
+        votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -129,8 +154,8 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "Wrong validator sets" should "result in failed verification" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/validator_set/wrong_valset.json")
+    val (verifier, trustedState, provider) =
+      buildTest(VerifierTests.testCase("/single-step/sequential/validator_set/wrong_valset.json"), votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))
@@ -139,8 +164,8 @@ sealed class VerifierSequentialValidatorsTests extends AnyFlatSpec {
   }
 
   "Wrong vote signatures" should "result in failed verification" in {
-    val (verifier, trustedState, provider) = VerifierTests.deserializeSingleStepTestCase(
-      "/single-step/sequential/commit/wrong_vote_signature.json")
+    val (verifier, trustedState, provider) =
+      buildTest(VerifierTests.testCase("/single-step/sequential/commit/wrong_vote_signature.json"), votingPowerVerifier)
 
     val requestHeight = Height(2)
     val result = verifier.verify(trustedState, provider.lightBlock(requestHeight))

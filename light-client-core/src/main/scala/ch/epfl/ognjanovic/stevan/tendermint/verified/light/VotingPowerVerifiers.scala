@@ -5,7 +5,7 @@ import stainless.annotation.pure
 
 object VotingPowerVerifiers {
 
-  val defaultTrustVerifier: VotingPowerVerifier = ParameterizedVotingPowerVerifier(TrustLevel.default)
+  val defaultVotingPowerVerifier: VotingPowerVerifier = ParameterizedVotingPowerVerifier(TrustLevel.default)
 
   abstract class VotingPowerVerifier {
 
