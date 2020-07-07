@@ -4,17 +4,19 @@ import java.time.Instant
 import java.util.Base64
 
 import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.DefaultHasher
+import ch.epfl.ognjanovic.stevan.tendermint.light.cases.SingleStepTestCase
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{
   DefaultCommitSignatureVerifier,
   DefaultLightBlockValidator,
   TimeBasedExpirationChecker,
-  Verifier
+  Verifier,
+  VotingPowerVerifiers
 }
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Key, LightBlock, PeerId}
@@ -55,12 +57,24 @@ object VerifierTests {
 
   def deserializeSingleStepTestCase(path: String): (Verifier, TrustedState, LightBlockProvider) = {
     val content = VerifierTests.content(path)
-    val (trustedState, trustVerifier, trustingPeriod, now, provider) =
-      new CirceDeserializer(singleStepTestCaseDecoder)(content)
+    val singleStepTestCase = new CirceDeserializer(SingleStepTestCase.decoder)(content)
 
-    val verifier = createDefaultVerifier(trustVerifier, trustingPeriod, now)
+    val trustVerifier = VotingPowerVerifiers.defaultTrustVerifier
+    val trustingPeriod = Duration(0, singleStepTestCase.initial.trusting_period)
+    val trustedState = SimpleTrustedState(
+      LightBlock(
+        singleStepTestCase.initial.signed_header.header,
+        singleStepTestCase.initial.signed_header.commit,
+        singleStepTestCase.initial.next_validator_set,
+        singleStepTestCase.initial.next_validator_set,
+        VerifierTests.defaultProvider
+      ),
+      trustVerifier
+    )
 
-    (verifier, trustedState, provider)
+    val verifier = createDefaultVerifier(trustVerifier, trustingPeriod, singleStepTestCase.initial.now)
+
+    (verifier, trustedState, singleStepTestCase.input)
   }
 
 }
