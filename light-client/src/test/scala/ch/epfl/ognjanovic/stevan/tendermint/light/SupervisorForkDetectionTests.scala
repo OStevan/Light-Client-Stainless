@@ -6,6 +6,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.light.EventLoopClient.EventLoopSuper
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.DefaultLightStoreFactory
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStoreFactory.InMemoryLightStoreConfiguration
 import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.{Trusted, Verified}
+import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.ForkDetected
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
@@ -73,7 +74,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
 
     val result = supervisor.verifyToHeight(heightToVerify)
 
-    assert(result.isRight)
+    assert(result.isRight && result.asInstanceOf[Right[LightBlock, Supervisor.Error]].value.isInstanceOf[ForkDetected])
   }
 
   "Conflicting commit from one of the witnesses" should "result in a failed synchronization" in {
@@ -99,7 +100,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
 
     val result = supervisor.verifyToHeight(heightToVerify)
 
-    assert(result.isRight)
+    assert(result.isRight && result.asInstanceOf[Right[LightBlock, Supervisor.Error]].value.isInstanceOf[ForkDetected])
   }
 
   "Conflicting commit from the only witnesses" should "result in a failed synchronization" in {
@@ -125,7 +126,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
 
     val result = supervisor.verifyToHeight(heightToVerify)
 
-    assert(result.isRight)
+    assert(result.isRight && result.asInstanceOf[Right[LightBlock, Supervisor.Error]].value.isInstanceOf[ForkDetected])
   }
 
   "Malicious validator set" should "result in a failed synchronization" in {
@@ -151,7 +152,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
 
     val result = supervisor.verifyToHeight(heightToVerify)
 
-    assert(result.isRight)
+    assert(result.isRight && result.asInstanceOf[Right[LightBlock, Supervisor.Error]].value.isInstanceOf[ForkDetected])
   }
 
 }
