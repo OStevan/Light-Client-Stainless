@@ -11,7 +11,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.Defaul
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.InMemoryUntrustedTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
-import stainless.annotation.pure
+import stainless.annotation.{ignore, pure}
 import stainless.collection._
 import stainless.lang._
 
@@ -79,7 +79,9 @@ object ModelIntegration {
 
     override def latestLightBlock: LightBlock = blockchainState.lightBlock(currentHeight)
 
+    @ignore
     override def peerId: PeerId = PeerId(Key("ignore", "ingnore".getBytes()))
+
   }
 
 }
