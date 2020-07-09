@@ -6,7 +6,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.light.EventLoopClient.EventLoopSuper
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.DefaultLightStoreFactory
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStoreFactory.InMemoryLightStoreConfiguration
 import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.{Trusted, Verified}
-import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.{ForkDetected, NoWitnesses}
+import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.ForkDetected
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
@@ -152,7 +152,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
 
     val result = supervisor.verifyToHeight(heightToVerify)
 
-    assert(result.isRight && result.asInstanceOf[Right[LightBlock, Supervisor.Error]].value == NoWitnesses)
+    assert(result.isRight && result.asInstanceOf[Right[LightBlock, Supervisor.Error]].value.isInstanceOf[ForkDetected])
   }
 
 }

@@ -27,11 +27,7 @@ case class MultiStepVerifier(
       Finished(Left(()), trustedState, untrustedState)
     else {
 
-      val nextHeight =
-        if (trustedState.currentHeight() + 1 == untrustedState.targetLimit)
-          untrustedState.targetLimit
-        else
-          heightCalculator.nextHeight(trustedState.currentHeight(), untrustedState.targetLimit)
+      val nextHeight = untrustedState.targetLimit
 
       assert(untrustedState.bottomHeight().map(nextHeight < _).getOrElse(true))
       assert(trustedState.currentHeight() < nextHeight)
