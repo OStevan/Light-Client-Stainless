@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 import stainless.annotation._
 
 object LightBlockProviders {
@@ -19,6 +19,8 @@ object LightBlockProviders {
 
     @pure
     def chainId: String
+
+    def peerId: PeerId
 
   }
 

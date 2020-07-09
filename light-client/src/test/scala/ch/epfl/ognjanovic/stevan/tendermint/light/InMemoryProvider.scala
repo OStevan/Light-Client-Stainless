@@ -4,7 +4,10 @@ import ch.epfl.ognjanovic.stevan.tendermint.light.cases.InputFormat
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 
-sealed class InMemoryProvider(override val chainId: String, private val map: Map[Height, LightBlock])
+sealed class InMemoryProvider(
+  override val chainId: String,
+  override val peerId: PeerId,
+  private val map: Map[Height, LightBlock])
     extends LightBlockProvider {
 
   override def lightBlock(height: Height): LightBlock = map(height)
@@ -20,6 +23,7 @@ object InMemoryProvider {
   def fromInput(chainId: String, peerId: PeerId, input: Array[InputFormat]): LightBlockProvider = {
     new InMemoryProvider(
       chainId,
+      peerId,
       input
         .map(input ⇒
           (
