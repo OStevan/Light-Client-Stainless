@@ -12,7 +12,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFact
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviderFactories.DefaultLightBlockProviderFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.DefaultMultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.SimpleTrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleTrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.InMemoryUntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers

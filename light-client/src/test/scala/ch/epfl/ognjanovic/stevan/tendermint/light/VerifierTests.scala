@@ -1,7 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.cases.{MultiStepTestCase, SingleStepTestCase}
-import ch.epfl.ognjanovic.stevan.tendermint.light.cases.MultiStepTestCase.WitnessInput
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.PeerList
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
@@ -9,7 +8,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFact
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.DefaultMultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.{
   ParameterizedVotingPowerVerifier,

@@ -4,7 +4,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.pure
 
-object TrustedStates {
+object VerifiedStates {
 
   abstract class TrustedState {
 

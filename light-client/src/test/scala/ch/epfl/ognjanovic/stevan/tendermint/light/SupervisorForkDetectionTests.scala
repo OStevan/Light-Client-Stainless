@@ -15,7 +15,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStateFactory.{
   LightStoreBackedTrustedStateConfiguration,
   SimpleTrustedStateConfiguration
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.TrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStateFactories.InMemoryUntrustedStateFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{LightBlock, PeerId}

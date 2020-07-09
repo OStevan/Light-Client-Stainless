@@ -2,7 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStoreFactory
 import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.Trusted
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.{SimpleTrustedState, TrustedState}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.{SimpleTrustedState, TrustedState}
 
 class DefaultTrustedStateFactory(private val lightStoreFactory: LightStoreFactory) extends TrustedStateFactory {
 
