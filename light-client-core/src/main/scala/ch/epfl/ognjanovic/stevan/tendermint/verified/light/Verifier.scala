@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.CommitValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockValidators.LightBlockValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.TrustVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.TrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes.{
   Failure,
   InsufficientTrust,
@@ -17,13 +17,13 @@ import stainless.lang._
 case class Verifier(validator: LightBlockValidator, trustVerifier: TrustVerifier, commitValidators: CommitValidator) {
 
   @pure
-  def verify(trustedState: TrustedState, untrustedLightBlock: LightBlock): VerificationOutcome = {
-    require(trustedState.currentHeight() < untrustedLightBlock.header.height)
-    val validationResult = validator.validateUntrustedBlock(trustedState.trustedLightBlock, untrustedLightBlock)
+  def verify(verifiedState: VerifiedState, untrustedLightBlock: LightBlock): VerificationOutcome = {
+    require(verifiedState.currentHeight() < untrustedLightBlock.header.height)
+    val validationResult = validator.validateUntrustedBlock(verifiedState.verified, untrustedLightBlock)
     if (validationResult.isRight)
       Failure(validationResult.get)
     else {
-      val verificationResult = trustVerifier.verify(trustedState, untrustedLightBlock)
+      val verificationResult = trustVerifier.verify(verifiedState, untrustedLightBlock)
       if (verificationResult != Success)
         verificationResult
       else
@@ -33,7 +33,7 @@ case class Verifier(validator: LightBlockValidator, trustVerifier: TrustVerifier
         }
     }
   }.ensuring(res =>
-    ((res == Success) ==> trustedState.trusted(untrustedLightBlock)) &&
-      ((res == InsufficientTrust) ==> (trustedState.currentHeight() + 1 < untrustedLightBlock.header.height)))
+    ((res == Success) ==> verifiedState.isTrusted(untrustedLightBlock)) &&
+      ((res == InsufficientTrust) ==> (verifiedState.currentHeight() + 1 < untrustedLightBlock.header.height)))
 
 }

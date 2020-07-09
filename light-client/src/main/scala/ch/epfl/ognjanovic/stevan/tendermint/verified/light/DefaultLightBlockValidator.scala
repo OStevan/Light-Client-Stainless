@@ -17,7 +17,7 @@ case class DefaultLightBlockValidator(
     trustedLightBlock: LightBlock,
     untrustedLightBlock: LightBlock): Either[Unit, VerificationErrors.VerificationError] = {
     if (expirationChecker.isExpired(trustedLightBlock))
-      Right(ExpiredTrustedState)
+      Right(ExpiredVerifiedState)
     else if (trustedLightBlock.header.chainId != untrustedLightBlock.header.chainId)
       Right(InvalidHeader)
     else if (untrustedLightBlock.header.validators != headerHasher.hashValidatorSet(untrustedLightBlock.validatorSet))

@@ -12,7 +12,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFact
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviderFactories.DefaultLightBlockProviderFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.DefaultMultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleTrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleVerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.InMemoryUntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
@@ -57,7 +57,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
         primary,
         votingPowerVerifier,
         TimeBasedExpirationCheckerConfig(() ⇒ now, trustDuration))
-      val trustedState = SimpleTrustedState(trustedLightBlock, votingPowerVerifier)
+      val verifiedState = SimpleVerifiedState(trustedLightBlock, votingPowerVerifier)
 
       while (primary.currentHeight == Height(1)) {
         Thread.sleep(1000)
@@ -66,11 +66,11 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
       val heightToVerify = primary.currentHeight
 
       val result = multiStepVerifier.verifyUntrusted(
-        trustedState,
+        verifiedState,
         InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
-      assert(result.trustedState.currentHeight() == heightToVerify)
+      assert(result.verifiedState.currentHeight() == heightToVerify)
       assert(result.untrustedState.bottomHeight().isEmpty)
   }
 
@@ -97,7 +97,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
         primary,
         votingPowerVerifier,
         TimeBasedExpirationCheckerConfig(() ⇒ now, trustDuration))
-      val trustedState = SimpleTrustedState(trustedLightBlock, votingPowerVerifier)
+      val verifiedState = SimpleVerifiedState(trustedLightBlock, votingPowerVerifier)
 
       while (primary.currentHeight == Height(1)) {
         Thread.sleep(1000)
@@ -105,25 +105,25 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
       var heightToVerify = primary.currentHeight
 
       var result = multiStepVerifier.verifyUntrusted(
-        trustedState,
+        verifiedState,
         InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
-      assert(result.trustedState.currentHeight() == heightToVerify)
+      assert(result.verifiedState.currentHeight() == heightToVerify)
       assert(result.untrustedState.bottomHeight().isEmpty)
 
-      while (primary.currentHeight == result.trustedState.currentHeight()) {
+      while (primary.currentHeight == result.verifiedState.currentHeight()) {
         Thread.sleep(1000)
       }
 
       heightToVerify = primary.currentHeight
 
       result = multiStepVerifier.verifyUntrusted(
-        result.trustedState,
+        result.verifiedState,
         InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
-      assert(result.trustedState.currentHeight() == heightToVerify)
+      assert(result.verifiedState.currentHeight() == heightToVerify)
       assert(result.untrustedState.bottomHeight().isEmpty)
   }
 }

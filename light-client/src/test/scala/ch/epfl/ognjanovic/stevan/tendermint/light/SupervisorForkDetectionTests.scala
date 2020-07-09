@@ -10,12 +10,12 @@ import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.ForkDetected
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{DefaultTrustedStateFactory, VotingPowerVerifiers}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStateFactory.{
-  LightStoreBackedTrustedStateConfiguration,
-  SimpleTrustedStateConfiguration
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{DefaultVerifiedStateFactory, VotingPowerVerifiers}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStateFactory.{
+  LightStoreBackedVerifiedStateConfiguration,
+  SimpleVerifiedStateConfiguration
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.TrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStateFactories.InMemoryUntrustedStateFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{LightBlock, PeerId}
@@ -32,31 +32,31 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
 
   private val votingPowerVerifier = VotingPowerVerifiers.defaultVotingPowerVerifier
 
-  private val trustedStateFactory = new DefaultTrustedStateFactory(lightStoreFactory)
+  private val verifiedStateFactory = new DefaultVerifiedStateFactory(lightStoreFactory)
 
-  private val primaryTrustedStateBuilder
-    : (LightBlock, VotingPowerVerifier) ⇒ (() ⇒ Iterable[LightBlock], TrustedState) = (lightBlock, verifier) ⇒ {
-    val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
-    lightStore.update(lightBlock, Trusted)
+  private val primaryVerifiedStateBuilder: (LightBlock, VotingPowerVerifier) ⇒ (() ⇒ Iterable[LightBlock], VerifiedState) =
+    (lightBlock, verifier) ⇒ {
+      val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
+      lightStore.update(lightBlock, Trusted)
 
-    val trustedState = trustedStateFactory.trustedState(
-      LightStoreBackedTrustedStateConfiguration(lightBlock, verifier, Right(lightStore)))
+      val verifiedState = verifiedStateFactory.verifiedState(
+        LightStoreBackedVerifiedStateConfiguration(lightBlock, verifier, Right(lightStore)))
 
-    (() ⇒ lightStore.all(Verified), trustedState)
-  }
+      (() ⇒ lightStore.all(Verified), verifiedState)
+    }
 
-  private val witnessTrustedStateBuilder =
+  private val witnessVerifiedStateBuilder =
     (lightBlock: LightBlock, votingPowerVerifier: VotingPowerVerifier) ⇒
       (_: PeerId) ⇒ {
-        trustedStateFactory.trustedState(SimpleTrustedStateConfiguration(lightBlock, votingPowerVerifier))
+        verifiedStateFactory.verifiedState(SimpleVerifiedStateConfiguration(lightBlock, votingPowerVerifier))
       }
 
   "Receiving conflicting headers from witnesses" should "result in a failed synchronization" in {
-    val (peerList, trustedState, expirationCheckerConfiguration, heightToVerify) =
+    val (peerList, verifiedState, expirationCheckerConfiguration, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/conflicting_headers.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
-    lightStore.update(trustedState.trustedLightBlock, Trusted)
+    lightStore.update(verifiedState.verified, Trusted)
 
     val supervisor = new EventLoopSupervisor(
       peerList,
@@ -68,8 +68,8 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
         height ⇒ untrustedStateFactory.emptyWithTarget(height)),
-      primaryTrustedStateBuilder,
-      witnessTrustedStateBuilder
+      primaryVerifiedStateBuilder,
+      witnessVerifiedStateBuilder
     )
 
     val result = supervisor.verifyToHeight(heightToVerify)
@@ -78,11 +78,11 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
   }
 
   "Conflicting commit from one of the witnesses" should "result in a failed synchronization" in {
-    val (peerList, trustedState, expirationCheckerConfiguration, heightToVerify) =
+    val (peerList, verifiedState, expirationCheckerConfiguration, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/conflicting_valid_commits_from_one_of_the_witnesses.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
-    lightStore.update(trustedState.trustedLightBlock, Trusted)
+    lightStore.update(verifiedState.verified, Trusted)
 
     val supervisor = new EventLoopSupervisor(
       peerList,
@@ -94,8 +94,8 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
         height ⇒ untrustedStateFactory.emptyWithTarget(height)),
-      primaryTrustedStateBuilder,
-      witnessTrustedStateBuilder
+      primaryVerifiedStateBuilder,
+      witnessVerifiedStateBuilder
     )
 
     val result = supervisor.verifyToHeight(heightToVerify)
@@ -104,11 +104,11 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
   }
 
   "Conflicting commit from the only witnesses" should "result in a failed synchronization" in {
-    val (peerList, trustedState, expirationCheckerConfiguration, heightToVerify) =
+    val (peerList, verifiedState, expirationCheckerConfiguration, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/conflicting_valid_commits_from_the_only_witness.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
-    lightStore.update(trustedState.trustedLightBlock, Trusted)
+    lightStore.update(verifiedState.verified, Trusted)
 
     val supervisor = new EventLoopSupervisor(
       peerList,
@@ -120,8 +120,8 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
         height ⇒ untrustedStateFactory.emptyWithTarget(height)),
-      primaryTrustedStateBuilder,
-      witnessTrustedStateBuilder
+      primaryVerifiedStateBuilder,
+      witnessVerifiedStateBuilder
     )
 
     val result = supervisor.verifyToHeight(heightToVerify)
@@ -130,11 +130,11 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
   }
 
   "Malicious validator set" should "result in a failed synchronization" in {
-    val (peerList, trustedState, expirationCheckerConfiguration, heightToVerify) =
+    val (peerList, verifiedState, expirationCheckerConfiguration, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/malicious_validator_set.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
-    lightStore.update(trustedState.trustedLightBlock, Trusted)
+    lightStore.update(verifiedState.verified, Trusted)
 
     val supervisor = new EventLoopSupervisor(
       peerList,
@@ -146,8 +146,8 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
         height ⇒ untrustedStateFactory.emptyWithTarget(height)),
-      primaryTrustedStateBuilder,
-      witnessTrustedStateBuilder
+      primaryVerifiedStateBuilder,
+      witnessVerifiedStateBuilder
     )
 
     val result = supervisor.verifyToHeight(heightToVerify)

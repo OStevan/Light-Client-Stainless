@@ -6,7 +6,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.Defa
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockValidators.DummyLightBlockValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.{SimpleTrustedState, TrustedState}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.{SimpleVerifiedState, VerifiedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.InMemoryUntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
@@ -30,11 +30,11 @@ object ModelIntegration {
     val soundSignedHeaderProvider = BlockchainLightBlockProviders(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
 
-    val trustedState: TrustedState =
-      SimpleTrustedState(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
+    val verifiedState: VerifiedState =
+      SimpleVerifiedState(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
     val untrustedState = InMemoryUntrustedState(heightToVerify, List.empty)
     assert(untrustedState.bottomHeight().forall(heightToVerify < _))
-    assert(trustedState.currentHeight() < heightToVerify)
+    assert(verifiedState.currentHeight() < heightToVerify)
     assert(heightToVerify <= untrustedState.targetLimit)
 
     val lightBlockVerifier = DefaultTrustVerifier()
@@ -47,7 +47,7 @@ object ModelIntegration {
         DefaultCommitValidator(VotingPowerVerifiers.defaultVotingPowerVerifier, DummyCommitSignatureVerifier())),
       nextHeightCalculator
     )
-      .verifyUntrusted(trustedState, untrustedState)
+      .verifyUntrusted(verifiedState, untrustedState)
       .outcome
   }
 
