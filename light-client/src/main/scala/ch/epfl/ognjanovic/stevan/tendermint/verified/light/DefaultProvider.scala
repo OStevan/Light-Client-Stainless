@@ -2,7 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Requester
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 
 /**
  * Only does the fetching and of the necessary data using a requester of a specified peer. Doesn't validate hashes, etc.
@@ -33,4 +33,5 @@ sealed class DefaultProvider(override val chainId: String, private val requester
     LightBlock(signedHeader.header, signedHeader.commit, validatorSet, nextValidatorSet, requester.peerId)
   }
 
+  override def peerId: PeerId = requester.peerId
 }

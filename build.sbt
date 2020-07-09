@@ -56,6 +56,7 @@ lazy val lightClient = project
       libraryDependencies ++= circeDependencies ++ Seq(
         "org.scalamock" %% "scalamock" % "4.4.0" % Test,
         "org.scalactic" %% "scalactic" % "3.1.1",
+        "com.github.blemale" %% "scaffeine" % "3.1.0" % "compile",
         "org.scalatest" %% "scalatest" % "3.1.1" % Test,
         "com.google.crypto.tink" % "tink" % "1.4.0-rc2",
         "com.softwaremill.sttp.client" %% "core" % "2.2.1",

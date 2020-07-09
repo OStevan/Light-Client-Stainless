@@ -78,6 +78,8 @@ object ModelIntegration {
     override def chainId: String = "verified-chain-01"
 
     override def latestLightBlock: LightBlock = blockchainState.lightBlock(currentHeight)
+
+    override def peerId: PeerId = PeerId(Key("ignore", "ingnore".getBytes()))
   }
 
 }
