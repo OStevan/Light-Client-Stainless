@@ -48,6 +48,7 @@ case class MultiStepVerifier(
   }
 
   private def processHeader(waitingForHeader: WaitingForHeader): VerifierState = {
+    require(waitingForHeader.untrustedState.targetLimit <= lightBlockProvider.currentHeight)
     stepByStepVerification(
       waitingForHeader.requestHeight,
       waitingForHeader.verifiedState,
@@ -74,7 +75,8 @@ case class MultiStepVerifier(
     verifiedState: VerifiedState,
     untrustedState: UntrustedState): VerifierState = {
     require(
-      next <= untrustedState.targetLimit &&
+      untrustedState.targetLimit <= lightBlockProvider.currentHeight &&
+        next <= untrustedState.targetLimit &&
         verifiedState.currentHeight() < next &&
         untrustedState.bottomHeight().map(next < _).getOrElse(true))
     decreases(untrustedState.targetLimit.value - verifiedState.currentHeight().value)
