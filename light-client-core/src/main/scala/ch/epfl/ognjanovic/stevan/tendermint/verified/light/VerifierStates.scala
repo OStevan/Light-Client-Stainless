@@ -1,7 +1,7 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.UntrustedTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import stainless.annotation.inlineInvariant
@@ -16,20 +16,20 @@ object VerifierStates {
   case class Finished(
     outcome: Either[Unit, VerificationError],
     verifiedState: VerifiedState,
-    untrustedState: UntrustedState)
+    untrustedTrace: UntrustedTrace)
       extends VerifierState {
     require(
-      (outcome.isLeft && verifiedState.currentHeight() == untrustedState.targetLimit) ||
-        (outcome.isRight && verifiedState.currentHeight() < untrustedState.targetLimit))
+      (outcome.isLeft && verifiedState.currentHeight() == untrustedTrace.targetLimit) ||
+        (outcome.isRight && verifiedState.currentHeight() < untrustedTrace.targetLimit))
   }
 
   @inlineInvariant
-  case class WaitingForHeader(requestHeight: Height, verifiedState: VerifiedState, untrustedState: UntrustedState)
+  case class WaitingForHeader(requestHeight: Height, verifiedState: VerifiedState, untrustedTrace: UntrustedTrace)
       extends VerifierState {
     require(
-      untrustedState.bottomHeight().map(requestHeight < _).getOrElse(true) &&
+      untrustedTrace.bottomHeight().map(requestHeight < _).getOrElse(true) &&
         verifiedState.currentHeight() < requestHeight &&
-        requestHeight <= untrustedState.targetLimit)
+        requestHeight <= untrustedTrace.targetLimit)
   }
 
 }

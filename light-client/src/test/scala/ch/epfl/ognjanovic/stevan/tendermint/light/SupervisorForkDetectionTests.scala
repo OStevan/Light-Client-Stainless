@@ -11,12 +11,12 @@ import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{DefaultVerifiedStateFactory, VotingPowerVerifiers}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraceFactories.InMemoryUntrustedTraceFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStateFactory.{
   LightStoreBackedVerifiedStateConfiguration,
   SimpleVerifiedStateConfiguration
 }
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStateFactories.InMemoryUntrustedStateFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{LightBlock, PeerId}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -25,7 +25,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
 
   private val lightStoreFactory = new DefaultLightStoreFactory()
 
-  private val untrustedStateFactory = new InMemoryUntrustedStateFactory()
+  private val untrustedTraceFactory = new InMemoryUntrustedTraceFactory()
 
   implicit private val testCaseDeserializer: Deserializer[MultiStepTestCase] =
     new CirceDeserializer(MultiStepTestCase.decoder)
@@ -62,12 +62,12 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       peerList,
       votingPowerVerifier,
       multiStepVerifierFactory,
-      height ⇒ untrustedStateFactory.emptyWithTarget(height),
+      height ⇒ untrustedTraceFactory.emptyWithTarget(height),
       expirationCheckerConfiguration,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
-        height ⇒ untrustedStateFactory.emptyWithTarget(height)),
+        height ⇒ untrustedTraceFactory.emptyWithTarget(height)),
       primaryVerifiedStateBuilder,
       witnessVerifiedStateBuilder
     )
@@ -88,12 +88,12 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       peerList,
       votingPowerVerifier,
       multiStepVerifierFactory,
-      height ⇒ untrustedStateFactory.emptyWithTarget(height),
+      height ⇒ untrustedTraceFactory.emptyWithTarget(height),
       expirationCheckerConfiguration,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
-        height ⇒ untrustedStateFactory.emptyWithTarget(height)),
+        height ⇒ untrustedTraceFactory.emptyWithTarget(height)),
       primaryVerifiedStateBuilder,
       witnessVerifiedStateBuilder
     )
@@ -114,12 +114,12 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       peerList,
       votingPowerVerifier,
       multiStepVerifierFactory,
-      height ⇒ untrustedStateFactory.emptyWithTarget(height),
+      height ⇒ untrustedTraceFactory.emptyWithTarget(height),
       expirationCheckerConfiguration,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
-        height ⇒ untrustedStateFactory.emptyWithTarget(height)),
+        height ⇒ untrustedTraceFactory.emptyWithTarget(height)),
       primaryVerifiedStateBuilder,
       witnessVerifiedStateBuilder
     )
@@ -140,12 +140,12 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       peerList,
       votingPowerVerifier,
       multiStepVerifierFactory,
-      height ⇒ untrustedStateFactory.emptyWithTarget(height),
+      height ⇒ untrustedTraceFactory.emptyWithTarget(height),
       expirationCheckerConfiguration,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
-        height ⇒ untrustedStateFactory.emptyWithTarget(height)),
+        height ⇒ untrustedTraceFactory.emptyWithTarget(height)),
       primaryVerifiedStateBuilder,
       witnessVerifiedStateBuilder
     )

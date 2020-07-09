@@ -10,7 +10,7 @@ object LightClientLemmas {
   @pure
   def terminationMeasure(waitingForHeader: WaitingForHeader): (BigInt, BigInt) = {
     val res: (BigInt, BigInt) = (
-      waitingForHeader.untrustedState.targetLimit.value - waitingForHeader.verifiedState.currentHeight().value,
+      waitingForHeader.untrustedTrace.targetLimit.value - waitingForHeader.verifiedState.currentHeight().value,
       waitingForHeader.requestHeight.value - waitingForHeader.verifiedState.currentHeight().value
     )
     res
@@ -19,7 +19,7 @@ object LightClientLemmas {
   @opaque
   def sameVerifiedStateTerminationMeasure(previous: WaitingForHeader, current: WaitingForHeader): Unit = {
     require(
-      previous.untrustedState.targetLimit == current.untrustedState.targetLimit &&
+      previous.untrustedTrace.targetLimit == current.untrustedTrace.targetLimit &&
         previous.verifiedState.currentHeight() == current.verifiedState.currentHeight() &&
         previous.requestHeight > current.requestHeight)
   }.ensuring { _ =>
@@ -33,7 +33,7 @@ object LightClientLemmas {
   @opaque
   def improvedVerifiedStateLemma(previous: WaitingForHeader, current: WaitingForHeader): Unit = {
     require(
-      previous.untrustedState.targetLimit == current.untrustedState.targetLimit &&
+      previous.untrustedTrace.targetLimit == current.untrustedTrace.targetLimit &&
         previous.verifiedState.currentHeight() < current.verifiedState.currentHeight())
   }.ensuring { _ =>
     val previousTerminationMeasure = terminationMeasure(previous)
