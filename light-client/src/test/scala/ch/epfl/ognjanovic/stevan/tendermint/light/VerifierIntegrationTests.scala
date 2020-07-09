@@ -2,6 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.TimeUnit
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.TendermintSingleNodeContainer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.TendermintSingleNodeContainer.Def
@@ -9,7 +10,10 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFact
   DefaultExpirationCheckerFactory,
   TimeBasedExpirationCheckerConfig
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviderFactories.DefaultLightBlockProviderFactory
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviderFactories.{
+  CachingLightBlockProviderFactory,
+  DefaultLightBlockProviderFactory
+}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.DefaultMultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleVerifiedState
@@ -20,6 +24,8 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height}
 import com.dimafeng.testcontainers.scalatest.TestContainerForAll
 import org.scalatest.flatspec.AnyFlatSpec
 
+import scala.concurrent.duration.{Duration ⇒ ScalaDuration}
+
 sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForAll {
 
   override val containerDef: Def = TendermintSingleNodeContainer.Def()
@@ -29,7 +35,11 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
     Thread.sleep(500)
   }
 
-  private val lightBlockProviderFactory = new DefaultLightBlockProviderFactory()
+  private val lightBlockProviderFactory = new CachingLightBlockProviderFactory(
+    ScalaDuration.apply(1, TimeUnit.HOURS),
+    500,
+    new DefaultLightBlockProviderFactory())
+
   private val expirationCheckerFactory = DefaultExpirationCheckerFactory
   private val verifierFactory = new DefaultVerifierFactory(expirationCheckerFactory)
   private val multiStepVerifierFactory = new DefaultMultiStepVerifierFactory(verifierFactory, BisectionHeightCalculator)
