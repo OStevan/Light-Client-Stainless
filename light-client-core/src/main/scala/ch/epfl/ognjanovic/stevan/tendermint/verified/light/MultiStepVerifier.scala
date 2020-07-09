@@ -8,7 +8,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.Untru
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.lang._
 import stainless.lang.StaticChecks.Ensuring
 
@@ -41,16 +41,17 @@ case class MultiStepVerifier(
     require(waitingForHeader.untrustedState.targetLimit <= lightBlockProvider.currentHeight)
     decreases(LightClientLemmas.terminationMeasure(waitingForHeader))
 
-    processHeader(waitingForHeader, lightBlockProvider.lightBlock(waitingForHeader.requestHeight)) match {
+    processHeader(waitingForHeader) match {
       case state: WaitingForHeader => verify(state)
       case state: Finished => state
     }
   }
 
-  private def processHeader(waitingForHeader: WaitingForHeader, lightBlock: LightBlock): VerifierState = {
-    require(lightBlock.header.height == waitingForHeader.requestHeight)
-
-    stepByStepVerification(lightBlock, waitingForHeader.verifiedState, waitingForHeader.untrustedState)
+  private def processHeader(waitingForHeader: WaitingForHeader): VerifierState = {
+    stepByStepVerification(
+      waitingForHeader.requestHeight,
+      waitingForHeader.verifiedState,
+      waitingForHeader.untrustedState)
   }.ensuring {
     case state: WaitingForHeader =>
       if (waitingForHeader.verifiedState.currentHeight() == state.verifiedState.currentHeight())
@@ -69,15 +70,19 @@ case class MultiStepVerifier(
   }
 
   private def stepByStepVerification(
-    lightBlock: LightBlock,
+    next: Height,
     verifiedState: VerifiedState,
     untrustedState: UntrustedState): VerifierState = {
     require(
-      lightBlock.header.height <= untrustedState.targetLimit &&
-        verifiedState.currentHeight() < lightBlock.header.height &&
-        untrustedState.bottomHeight().map(lightBlock.header.height < _).getOrElse(true))
+      next <= untrustedState.targetLimit &&
+        verifiedState.currentHeight() < next &&
+        untrustedState.bottomHeight().map(next < _).getOrElse(true))
     decreases(untrustedState.targetLimit.value - verifiedState.currentHeight().value)
 
+    val lightBlock = lightBlockProvider.lightBlock(next)
+    assert(lightBlock.header.height == next)
+
+    // without a caching light block provider this is extremely wasteful but the algorithm is simpler.
     verifier.verify(verifiedState, lightBlock) match {
       case VerificationOutcomes.Success =>
         val newVerifiedState = verifiedState.increaseTrust(lightBlock)
@@ -97,13 +102,13 @@ case class MultiStepVerifier(
         }
 
       case VerificationOutcomes.InsufficientTrust =>
-        val nextHeight = heightCalculator.nextHeight(verifiedState.currentHeight(), lightBlock.header.height)
-        val nextUntrustedState = untrustedState.insertLightBlock(lightBlock)
+        val nextHeight = heightCalculator.nextHeight(verifiedState.currentHeight(), next)
+        val nextUntrustedState = untrustedState.insertLightBlock(next)
         WaitingForHeader(nextHeight, verifiedState, nextUntrustedState)
 
       case Failure(reason) =>
         val error = Right[Unit, VerificationError](reason)
-        val newUntrustedState = untrustedState.insertLightBlock(lightBlock)
+        val newUntrustedState = untrustedState.insertLightBlock(next)
 
         Finished(error, verifiedState, newUntrustedState)
     }
@@ -112,7 +117,7 @@ case class MultiStepVerifier(
       waitingForHeader.untrustedState.targetLimit == untrustedState.targetLimit &&
         waitingForHeader.verifiedState.currentHeight() >= verifiedState.currentHeight() &&
         (waitingForHeader.verifiedState.currentHeight() > verifiedState.currentHeight() ||
-          waitingForHeader.requestHeight < lightBlock.header.height)
+          waitingForHeader.requestHeight < next)
     case _ => true
   }
 
