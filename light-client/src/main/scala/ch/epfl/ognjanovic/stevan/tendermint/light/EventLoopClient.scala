@@ -117,7 +117,7 @@ object EventLoopClient {
         // TODO report forks
       }
 
-      (detected.filter(_.isInstanceOf[Forked]).asInstanceOf, resultingPeerList)
+      (detected.filter(_.isInstanceOf[Forked]).asInstanceOf[List[ForkDetection.Forked]], resultingPeerList)
     }
 
   }

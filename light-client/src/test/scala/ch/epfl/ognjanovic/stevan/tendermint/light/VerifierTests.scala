@@ -1,7 +1,9 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.cases.{MultiStepTestCase, SingleStepTestCase}
+import ch.epfl.ognjanovic.stevan.tendermint.light.cases.MultiStepTestCase.WitnessInput
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
+import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.PeerList
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFactories._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
@@ -54,21 +56,27 @@ trait VerifierTests {
     )
   }
 
-  def buildTest(
-    multiStepTestCase: MultiStepTestCase,
-    votingPowerVerifier: VotingPowerVerifier): (MultiStepVerifier, SimpleTrustedState, Height) = {
+  def buildTest(multiStepTestCase: MultiStepTestCase)
+    : (PeerList[PeerId, LightBlockProvider], SimpleTrustedState, ExpirationCheckerConfiguration, Height) = {
     val trustVerifier = ParameterizedVotingPowerVerifier(multiStepTestCase.trust_options.trustLevel)
-    val expirationCheckerConfig =
-      TimeBasedExpirationCheckerConfig(() ⇒ multiStepTestCase.now, multiStepTestCase.trust_options.trustPeriod)
 
     val peerId = PeerId(multiStepTestCase.primary.lite_blocks(0).validator_set.values.head.publicKey)
+    val witnessIds =
+      multiStepTestCase.primary.lite_blocks(0).validator_set.values.tail.map(vals ⇒ PeerId(vals.publicKey)).toScala
 
     val primary =
       InMemoryProvider.fromInput(multiStepTestCase.primary.chain_id, peerId, multiStepTestCase.primary.lite_blocks)
 
+    val witnesses: Map[PeerId, LightBlockProvider] =
+      witnessIds
+        .zip(multiStepTestCase.witnesses.getOrElse(Array.empty))
+        .map(pair ⇒ (pair._1, InMemoryProvider.fromInput(pair._2.value.chain_id, pair._1, pair._2.value.lite_blocks)))
+        .toMap
+
     (
-      multiStepVerifierFactory.constructVerifier(primary, votingPowerVerifier, expirationCheckerConfig),
+      PeerList.fromScala(witnesses.updated(peerId, primary), peerId, witnesses.keys.toList, List.empty, List.empty),
       SimpleTrustedState(primary.lightBlock(multiStepTestCase.trust_options.trustedHeight), trustVerifier),
+      TimeBasedExpirationCheckerConfig(() ⇒ multiStepTestCase.now, multiStepTestCase.trust_options.trustPeriod),
       Height(multiStepTestCase.height_to_verify)
     )
   }
