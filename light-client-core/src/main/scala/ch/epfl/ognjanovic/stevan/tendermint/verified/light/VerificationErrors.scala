@@ -22,6 +22,6 @@ object VerificationErrors {
 
   case object InvalidCommitVoteSignature extends VerificationError
 
-  case object ExpiredTrustedState extends VerificationError
+  case object ExpiredVerifiedState extends VerificationError
 
 }

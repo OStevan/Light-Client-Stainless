@@ -60,11 +60,11 @@ object Supervisor {
     override def toString: String = "Verification can not proceed with no Trusted or Verified light block."
   }
 
-  case object NoTrustedState extends Error {
+  case object NoVerifiedState extends Error {
     override def toString: String = "Fork detection can not proceed if there are no trusted light blocks."
   }
 
-  case class TargetLowerThanTrustedState(targetHeight: Height, trustedHeight: Height) extends Error {
+  case class TargetLowerThanVerifiedState(targetHeight: Height, trustedHeight: Height) extends Error {
 
     override def toString: String =
       "Forward verification can not proceed with a target header lower than the current trusted"

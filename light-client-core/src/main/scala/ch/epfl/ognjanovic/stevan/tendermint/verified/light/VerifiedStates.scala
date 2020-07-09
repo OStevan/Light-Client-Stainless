@@ -4,29 +4,29 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.pure
 
-object TrustedStates {
+object VerifiedStates {
 
-  abstract class TrustedState {
+  abstract class VerifiedState {
 
     @pure
-    def trusted(lightBlock: LightBlock): Boolean = {
+    def isTrusted(lightBlock: LightBlock): Boolean = {
       require(lightBlock.header.height > currentHeight())
       ??? : Boolean
     }
 
     @pure
-    def trustedLightBlock: LightBlock
+    def verified: LightBlock
 
     /**
-     * Tries to "improve" the current trusted state with addition of a new signed header of a greater height.
+     * Tries to "improve" the current verified state with addition of a new signed header of a greater height.
      *
-     * @param lightBlock which will be the new trusted header if it can be trusted
-     * @return new trusted state or the old one if the trust is not reachable
+     * @param lightBlock which will be the new verified header if it can be trusted
+     * @return new verified state
      */
     @pure
-    def increaseTrust(lightBlock: LightBlock): TrustedState = {
-      require(lightBlock.header.height > currentHeight() && trusted(lightBlock))
-      ??? : TrustedState
+    def increaseTrust(lightBlock: LightBlock): VerifiedState = {
+      require(lightBlock.header.height > currentHeight() && isTrusted(lightBlock))
+      ??? : VerifiedState
     }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
 
     /**
@@ -34,33 +34,32 @@ object TrustedStates {
      */
     @pure
     def currentHeight(): Height = {
-      trustedLightBlock.header.height
-    }.ensuring(res => res == trustedLightBlock.header.height)
+      verified.header.height
+    }.ensuring(res => res == verified.header.height)
 
     @pure
     def isAdjacent(lightBlock: LightBlock): Boolean = {
       require(currentHeight() < lightBlock.header.height)
-      lightBlock.header.height == trustedLightBlock.header.height + 1
+      lightBlock.header.height == verified.header.height + 1
     }.ensuring(res =>
       (res && currentHeight() + 1 == lightBlock.header.height) ||
         (!res && currentHeight() + 1 < lightBlock.header.height))
 
   }
 
-  case class SimpleTrustedState(trustedLightBlock: LightBlock, trustVerifier: VotingPowerVerifier)
-      extends TrustedState {
+  case class SimpleVerifiedState(verified: LightBlock, trustVerifier: VotingPowerVerifier) extends VerifiedState {
 
     @pure
-    override def currentHeight(): Height = trustedLightBlock.header.height
+    override def currentHeight(): Height = verified.header.height
 
     @pure
-    override def increaseTrust(lightBlock: LightBlock): TrustedState = {
-      require(lightBlock.header.height > this.trustedLightBlock.header.height && trusted(lightBlock))
-      SimpleTrustedState(lightBlock, trustVerifier)
+    override def increaseTrust(lightBlock: LightBlock): VerifiedState = {
+      require(lightBlock.header.height > this.verified.header.height && isTrusted(lightBlock))
+      SimpleVerifiedState(lightBlock, trustVerifier)
     }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
 
     @pure
-    override def trusted(lightBlock: LightBlock): Boolean = {
+    override def isTrusted(lightBlock: LightBlock): Boolean = {
       require(lightBlock.header.height > currentHeight())
       if (isAdjacent(lightBlock))
         internalAdjacentHeaderTrust(lightBlock)
@@ -71,14 +70,14 @@ object TrustedStates {
     @pure
     private def internalAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
       require(currentHeight() < lightBlock.header.height && isAdjacent(lightBlock))
-      trustedLightBlock.nextValidatorSet.toInfoHashable == lightBlock.validatorSet.toInfoHashable
+      verified.nextValidatorSet.toInfoHashable == lightBlock.validatorSet.toInfoHashable
     }
 
     @pure
     private def internalNonAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
       require(currentHeight() < lightBlock.header.height && !isAdjacent(lightBlock))
 
-      trustVerifier.trustedCommit(trustedLightBlock.nextValidatorSet, lightBlock.commit)
+      trustVerifier.trustedCommit(verified.nextValidatorSet, lightBlock.commit)
     }
 
   }

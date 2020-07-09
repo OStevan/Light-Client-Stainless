@@ -3,9 +3,9 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.Hasher
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustedStates.TrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.ExpiredTrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.ExpiredVerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 import stainless.lang
 
@@ -13,7 +13,7 @@ sealed class DefaultForkDetector(private val hasher: Hasher, private val untrust
     extends ForkDetector {
 
   override def detectForks(
-    trustedStateSupplier: PeerId ⇒ TrustedState,
+    verifiedStateSupplier: PeerId ⇒ VerifiedState,
     targetLightBlock: LightBlock,
     witnesses: List[MultiStepVerifier]): ForkDetection.ForkDetectionResult = {
     val expectedHash = hasher.hashHeader(targetLightBlock.header)
@@ -27,13 +27,13 @@ sealed class DefaultForkDetector(private val hasher: Hasher, private val untrust
         Option.empty[Fork]
       else {
         val witnessVerificationResult = witness.verifyUntrusted(
-          trustedStateSupplier(witnessBlock.peerId),
+          verifiedStateSupplier(witnessBlock.peerId),
           untrustedStateSupplier(targetLightBlock.header.height)
         )
 
         witnessVerificationResult.outcome match {
           case lang.Left(_) ⇒ Some(Forked(targetLightBlock, witnessBlock))
-          case lang.Right(content) if content == ExpiredTrustedState ⇒ Some(Forked(targetLightBlock, witnessBlock))
+          case lang.Right(content) if content == ExpiredVerifiedState ⇒ Some(Forked(targetLightBlock, witnessBlock))
           case lang.Right(reason) ⇒ Some(Faulty(witnessBlock, reason))
         }
       }
