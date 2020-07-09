@@ -3,14 +3,14 @@ package ch.epfl.ognjanovic.stevan.tendermint.light
 import ch.epfl.ognjanovic.stevan.tendermint.light.cases.MultiStepTestCase
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStateFactories.InMemoryUntrustedStateFactory
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraceFactories.InMemoryUntrustedTraceFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import org.scalatest.flatspec.AnyFlatSpec
 import stainless.lang._
 
 sealed class MultiStepBisectionTests extends AnyFlatSpec with VerifierTests {
-  private val untrustedStateFactory = new InMemoryUntrustedStateFactory()
+  private val untrustedStateFactory = new InMemoryUntrustedTraceFactory()
 
   implicit private val testCaseDeserializer: Deserializer[MultiStepTestCase] =
     new CirceDeserializer(MultiStepTestCase.decoder)

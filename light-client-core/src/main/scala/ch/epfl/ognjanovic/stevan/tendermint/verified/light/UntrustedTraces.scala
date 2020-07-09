@@ -5,7 +5,7 @@ import stainless.annotation.pure
 import stainless.collection.{Cons, List}
 import stainless.lang._
 
-object UntrustedStates {
+object UntrustedTraces {
 
   @scala.annotation.tailrec
   private def pendingInvariant(pending: List[Height]): Boolean = {
@@ -16,7 +16,7 @@ object UntrustedStates {
     }
   }
 
-  abstract class UntrustedState {
+  abstract class UntrustedTrace {
 
     def targetLimit: Height = {
       ??? : Height
@@ -31,20 +31,20 @@ object UntrustedStates {
         (!res && bottomHeight().map(target < _).getOrElse(true) && (target == targetLimit) ==> bottomHeight().isEmpty))
 
     @pure
-    def removeBottom(): (Height, UntrustedState) = {
+    def removeBottom(): (Height, UntrustedTrace) = {
       require(bottomHeight().isDefined)
-      ??? : (Height, UntrustedState)
+      ??? : (Height, UntrustedTrace)
     }.ensuring(res =>
       res._2.targetLimit == targetLimit &&
         res._1 == bottomHeight().get &&
         res._2.bottomHeight().map(bottomHeight().get < _).getOrElse(true))
 
     @pure
-    def insertLightBlock(height: Height): UntrustedState = {
+    def insertLightBlock(height: Height): UntrustedTrace = {
       require(
         bottomHeight().map(height < _).getOrElse(true) &&
           height <= targetLimit)
-      ??? : UntrustedState
+      ??? : UntrustedTrace
     }.ensuring(res =>
       res.targetLimit == targetLimit &&
         res.bottomHeight().isDefined &&
@@ -58,7 +58,7 @@ object UntrustedStates {
 
   }
 
-  case class InMemoryUntrustedState(override val targetLimit: Height, pending: List[Height]) extends UntrustedState {
+  case class InMemoryUntrustedTrace(override val targetLimit: Height, pending: List[Height]) extends UntrustedTrace {
     require(pendingInvariant(pending) && pending.forall(_ <= targetLimit))
 
     @pure
@@ -72,17 +72,17 @@ object UntrustedStates {
     }
 
     @pure
-    override def removeBottom(): (Height, UntrustedState) = {
+    override def removeBottom(): (Height, UntrustedTrace) = {
       require(bottomHeight().isDefined)
-      (pending.head, InMemoryUntrustedState(targetLimit, pending.tail))
+      (pending.head, InMemoryUntrustedTrace(targetLimit, pending.tail))
     }
 
     @pure
-    override def insertLightBlock(height: Height): UntrustedState = {
+    override def insertLightBlock(height: Height): UntrustedTrace = {
       require(
         bottomHeight().map(height < _).getOrElse(true)
           && height <= targetLimit)
-      InMemoryUntrustedState(targetLimit, height :: pending)
+      InMemoryUntrustedTrace(targetLimit, height :: pending)
     }.ensuring(res =>
       res.targetLimit == targetLimit &&
         res.bottomHeight().isDefined &&

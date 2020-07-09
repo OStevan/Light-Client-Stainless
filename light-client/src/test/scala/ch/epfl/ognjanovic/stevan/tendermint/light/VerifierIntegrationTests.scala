@@ -13,7 +13,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviderFac
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.DefaultMultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleVerifiedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.InMemoryUntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.InMemoryUntrustedTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height}
@@ -67,7 +67,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
 
       val result = multiStepVerifier.verifyUntrusted(
         verifiedState,
-        InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
+        InMemoryUntrustedTrace(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
       assert(result.verifiedState.currentHeight() == heightToVerify)
@@ -106,7 +106,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
 
       var result = multiStepVerifier.verifyUntrusted(
         verifiedState,
-        InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
+        InMemoryUntrustedTrace(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
       assert(result.verifiedState.currentHeight() == heightToVerify)
@@ -120,7 +120,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
 
       result = multiStepVerifier.verifyUntrusted(
         result.verifiedState,
-        InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
+        InMemoryUntrustedTrace(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
       assert(result.verifiedState.currentHeight() == heightToVerify)

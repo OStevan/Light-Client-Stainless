@@ -11,7 +11,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFact
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.MultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.UntrustedTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 import stainless.lang
@@ -28,7 +28,7 @@ object EventLoopClient {
     @volatile private var peerList: PeerList,
     private val votingPowerVerifier: VotingPowerVerifier,
     private val verifierBuilder: MultiStepVerifierFactory,
-    private val untrustedStateSupplier: Height ⇒ UntrustedState,
+    private val untrustedStateSupplier: Height ⇒ UntrustedTrace,
     private val expirationCheckerConfiguration: ExpirationCheckerConfiguration,
     private val lightStore: LightStore,
     private val forkDetector: ForkDetector,

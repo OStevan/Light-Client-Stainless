@@ -4,7 +4,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.L
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClientLemmas._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.UntrustedTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
@@ -17,7 +17,7 @@ case class MultiStepVerifier(
   verifier: Verifier,
   heightCalculator: NextHeightCalculator) {
 
-  def verifyUntrusted(verifiedState: VerifiedState, untrustedState: UntrustedState): Finished = {
+  def verifyUntrusted(verifiedState: VerifiedState, untrustedState: UntrustedTrace): Finished = {
     require(
       verifiedState.currentHeight() <= untrustedState.targetLimit &&
         untrustedState.bottomHeight().isEmpty &&
@@ -73,7 +73,7 @@ case class MultiStepVerifier(
   private def stepByStepVerification(
     next: Height,
     verifiedState: VerifiedState,
-    untrustedState: UntrustedState): VerifierState = {
+    untrustedState: UntrustedTrace): VerifierState = {
     require(
       untrustedState.targetLimit <= lightBlockProvider.currentHeight &&
         next <= untrustedState.targetLimit &&

@@ -4,12 +4,12 @@ import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.Hasher
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.UntrustedTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.ExpiredVerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 import stainless.lang
 
-sealed class DefaultForkDetector(private val hasher: Hasher, private val untrustedStateSupplier: Height ⇒ UntrustedState)
+sealed class DefaultForkDetector(private val hasher: Hasher, private val untrustedStateSupplier: Height ⇒ UntrustedTrace)
     extends ForkDetector {
 
   override def detectForks(
