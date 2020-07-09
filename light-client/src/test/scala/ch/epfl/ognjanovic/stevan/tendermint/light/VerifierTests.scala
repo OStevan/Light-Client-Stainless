@@ -74,7 +74,7 @@ trait VerifierTests {
         .toMap
 
     (
-      PeerList.fromScala(witnesses.updated(peerId, primary), peerId, witnessIds, List.empty, List.empty),
+      PeerList.fromScala(witnesses.updated(peerId, primary), peerId, witnesses.keys.toList, List.empty, List.empty),
       SimpleTrustedState(primary.lightBlock(multiStepTestCase.trust_options.trustedHeight), trustVerifier),
       TimeBasedExpirationCheckerConfig(() ⇒ multiStepTestCase.now, multiStepTestCase.trust_options.trustPeriod),
       Height(multiStepTestCase.height_to_verify)
