@@ -71,7 +71,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
 
       assert(result.outcome.isLeft)
       assert(result.verifiedState.currentHeight() == heightToVerify)
-      assert(result.untrustedState.bottomHeight().isEmpty)
+      assert(result.untrustedTrace.bottomHeight().isEmpty)
   }
 
   "Verifying one highest block with the state after verifying previous highest one" should "succeed" in withContainers {
@@ -110,7 +110,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
 
       assert(result.outcome.isLeft)
       assert(result.verifiedState.currentHeight() == heightToVerify)
-      assert(result.untrustedState.bottomHeight().isEmpty)
+      assert(result.untrustedTrace.bottomHeight().isEmpty)
 
       while (primary.currentHeight == result.verifiedState.currentHeight()) {
         Thread.sleep(1000)
@@ -124,6 +124,6 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
 
       assert(result.outcome.isLeft)
       assert(result.verifiedState.currentHeight() == heightToVerify)
-      assert(result.untrustedState.bottomHeight().isEmpty)
+      assert(result.untrustedTrace.bottomHeight().isEmpty)
   }
 }

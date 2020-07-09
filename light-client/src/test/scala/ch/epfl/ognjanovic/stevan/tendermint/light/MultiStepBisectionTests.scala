@@ -10,7 +10,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import stainless.lang._
 
 sealed class MultiStepBisectionTests extends AnyFlatSpec with VerifierTests {
-  private val untrustedStateFactory = new InMemoryUntrustedTraceFactory()
+  private val untrustedTraceFactory = new InMemoryUntrustedTraceFactory()
 
   implicit private val testCaseDeserializer: Deserializer[MultiStepTestCase] =
     new CirceDeserializer(MultiStepTestCase.decoder)
@@ -24,7 +24,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec with VerifierTests {
     val verifier =
       multiStepVerifierFactory.constructVerifier(peerList.primary, votingPowerVerifier, expirationCheckerConfiguration)
 
-    val result = verifier.verifyUntrusted(verifiedState, untrustedStateFactory.emptyWithTarget(heightToVerify))
+    val result = verifier.verifyUntrusted(verifiedState, untrustedTraceFactory.emptyWithTarget(heightToVerify))
 
     assert(result.outcome.isLeft)
   }
@@ -36,7 +36,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec with VerifierTests {
     val verifier =
       multiStepVerifierFactory.constructVerifier(peerList.primary, votingPowerVerifier, expirationCheckerConfiguration)
 
-    val result = verifier.verifyUntrusted(verifiedState, untrustedStateFactory.emptyWithTarget(heightToVerify))
+    val result = verifier.verifyUntrusted(verifiedState, untrustedTraceFactory.emptyWithTarget(heightToVerify))
 
     assert(result.outcome.isRight && result.outcome.get == ExpiredVerifiedState)
   }
@@ -45,7 +45,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec with VerifierTests {
   //    val (verifier, verifiedState, heightToVerify) = MultiStepVerifierTests.deserializeMultiStepTestCase(
   //      "/bisection/single-peer/invalid_validator_set.json")
   //
-  //    val result = verifier.verifyUntrusted(verifiedState, untrustedStateFactory.emptyWithTarget(heightToVerify))
+  //    val result = verifier.verifyUntrusted(verifiedState, untrustedTraceFactory.emptyWithTarget(heightToVerify))
   //
   //    assert(result == ExpiredVerifiedState)
   //  }
@@ -57,7 +57,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec with VerifierTests {
     val verifier =
       multiStepVerifierFactory.constructVerifier(peerList.primary, votingPowerVerifier, expirationCheckerConfiguration)
 
-    val result = verifier.verifyUntrusted(verifiedState, untrustedStateFactory.emptyWithTarget(heightToVerify))
+    val result = verifier.verifyUntrusted(verifiedState, untrustedTraceFactory.emptyWithTarget(heightToVerify))
 
     assert(result.outcome.isRight && result.outcome.get == InsufficientCommitPower)
   }
@@ -70,7 +70,7 @@ sealed class MultiStepBisectionTests extends AnyFlatSpec with VerifierTests {
       multiStepVerifierFactory.constructVerifier(peerList.primary, votingPowerVerifier, expirationCheckerConfiguration)
     buildTest(VerifierTests.testCase("/bisection/single-peer/worst_case.json"))
 
-    val result = verifier.verifyUntrusted(verifiedState, untrustedStateFactory.emptyWithTarget(heightToVerify))
+    val result = verifier.verifyUntrusted(verifiedState, untrustedTraceFactory.emptyWithTarget(heightToVerify))
 
     assert(result.outcome == Left[Unit, VerificationError](()))
   }
