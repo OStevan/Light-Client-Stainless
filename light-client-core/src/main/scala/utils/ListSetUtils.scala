@@ -23,7 +23,7 @@ object ListSetUtils {
     require(!list.map(_._1).contains(elem._1) && ListOps.noDuplicate(list))
   }.ensuring(_ => !list.contains(elem))
 
-  def listSetSubsetEquivalence[T](set: Set[T]): List[T] = {
+  def listSetSubsetEquivalence[T](set: ListSet[T]): List[T] = {
     val list = set.toList
     selfContainment(list)
     equivalentPredicate(list, list.contains, set.contains)
@@ -53,22 +53,22 @@ object ListSetUtils {
 
   @opaque
   def subsetRemovingLemma[T](original: List[T], first: List[T], second: List[T]): Unit = {
-    require(ListOps.noDuplicate(original) && first.forall(second.contains))
+    require(first.forall(second.contains))
     decreases(original.size)
     original match {
       case Nil() => ()
       case Cons(h, t) if first.contains(h) && second.contains(h) =>
         subsetRemovingLemma(t, first, second)
 
-      case Cons(h, t) if second.contains(h) && !first.contains(h) => {
-        val removedFirst = removingFromSet(original, first)
-        val removedSecond = removingFromSet(original, second)
+      case Cons(h, t) if second.contains(h) && !first.contains(h) =>
+        val removedFirst = listDifference(original, first)
+        val removedSecond = listDifference(original, second)
         subsetRemovingLemma(t, first, second)
         redundantHead(removedSecond, removedFirst)
-      }
+
       case Cons(h, t) =>
-        val removedFirst = removingFromSet(original, first)
-        val removeTailSecond = removingFromSet(t, second)
+        val removedFirst = listDifference(original, first)
+        val removeTailSecond = listDifference(t, second)
         subsetRemovingLemma(t, first, second)
 
         transitivityOfContainment(h, first, second)
@@ -78,12 +78,12 @@ object ListSetUtils {
         redundantHead(removeTailSecond, removedFirst)
         prependMaintainsCondition(h, removeTailSecond, removedFirst.contains)
     }
-  }.ensuring(_ => removingFromSet(original, second).forall(removingFromSet(original, first).contains))
+  }.ensuring(_ => listDifference(original, second).forall(listDifference(original, first).contains))
 
   @opaque
   def filteringWithoutHead[T](original: List[T], @induct filter: List[T]): Unit = {
-    require(ListOps.noDuplicate(original) && original.nonEmpty && !filter.contains(original.head))
-  }.ensuring(_ => removingFromSet(original, filter) == original.head :: removingFromSet(original.tail, filter))
+    require(original.nonEmpty && !filter.contains(original.head))
+  }.ensuring(_ => listDifference(original, filter) == original.head :: listDifference(original.tail, filter))
 
   @opaque
   def transitivityOfContainment[T](elem: T, @induct first: List[T], second: List[T]): Unit = {
@@ -176,9 +176,14 @@ object ListSetUtils {
     first -- second
   }.ensuring(res => ListOps.noDuplicate(res) && (res & second).isEmpty && res.forall(first.contains))
 
+  @pure
+  def listDifference[T](@induct first: List[T], second: List[T]): List[T] = {
+    restOfSetIsSubset(first, second)
+    first -- second
+  }.ensuring(res => (res & second).isEmpty && res.forall(first.contains))
+
   @opaque
   def restOfSetIsSubset[T](first: List[T], second: List[T]): Unit = {
-    require(ListOps.noDuplicate(first))
     val diff = first -- second
     first match {
       case Nil() => assert(diff.isEmpty)
@@ -216,7 +221,7 @@ object ListSetUtils {
     }
   }.ensuring { _ =>
     val intersection = first & second
-    intersection.forall(first.contains) && intersection.forall(second.contains) && ListOps.noDuplicate(intersection)
+    intersection.forall(first.contains) && intersection.forall(second.contains)
   }
 
   @opaque
@@ -232,11 +237,7 @@ object ListSetUtils {
 
   @opaque
   def uniqueNotAvailable[T](elem: T, @induct first: List[T], second: List[T]): Unit = {
-    require(
-      ListOps.noDuplicate(first) &&
-        ListOps.noDuplicate(second) &&
-        first.forall(second.contains) &&
-        !second.contains(elem))
+    require(first.forall(second.contains) && !second.contains(elem))
   }.ensuring(_ => !first.contains(elem))
 
   @opaque
@@ -313,5 +314,31 @@ object ListSetUtils {
   def removingFromASetResultsInASet[T](elem: T, @induct list: List[T]): Unit = {
     require(ListOps.noDuplicate(list))
   }.ensuring(_ ⇒ ListOps.noDuplicate(list - elem))
+
+  @opaque
+  def removeDuplicates[T](list: List[T]): List[T] = {
+    list match {
+      case Cons(h, t) ⇒ if (t.contains(h)) removeDuplicates(t) else h :: removeDuplicates(t)
+      case Nil() ⇒ Nil[T]()
+    }
+  }.ensuring(res ⇒ ListOps.noDuplicate(res) && forall((elem: T) ⇒ list.contains(elem) == res.contains(elem)))
+
+  @opaque
+  def listSetDiff[T](@induct first: List[T], second: List[T]): Unit = {
+    require(ListOps.noDuplicate(first) && ListOps.noDuplicate(second))
+  }.ensuring(_ ⇒ ListOps.noDuplicate(first -- second))
+
+  @opaque
+  def listSetIntersection[T](@induct first: List[T], second: List[T]): Unit = {
+    require(ListOps.noDuplicate(first) && ListOps.noDuplicate(second))
+  }.ensuring(_ ⇒ ListOps.noDuplicate(first & second))
+
+  @opaque
+  def prependSubset[T](elem: T, @induct list: List[T]): Unit = {}.ensuring { _ ⇒
+    selfContainment(list)
+    val appended = elem :: list
+    expandPredicate(list, list.contains, appended.contains)
+    list.forall((elem :: list).contains)
+  }
 
 }
