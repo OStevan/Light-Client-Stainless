@@ -12,12 +12,10 @@ case class FaultChecker() {
 
   @pure
   def isCorrect(validatorSet: ValidatorSet, faultyNodes: ListSet[Address]): Boolean = {
-    val keySet = validatorSet.powerAssignments.toList.map(_._1)
-    val faultyNodesSet = faultyNodes.toList
-    val difference = removingFromSet(keySet, faultyNodesSet)
-    val intersection = keySet & faultyNodesSet
-    setIntersectionLemma(keySet, faultyNodesSet)
-    validatorSet.nodesPower(difference) > validatorSet.nodesPower(intersection) * VotingPower(2)
+    val keySet = ListSet(validatorSet.powerAssignments.toList.map(_._1))
+    val difference = keySet -- faultyNodes
+    val intersection = keySet & faultyNodes
+    validatorSet.nodesPower(difference.toList) > validatorSet.nodesPower(intersection.toList) * VotingPower(2)
   }
 
 }
