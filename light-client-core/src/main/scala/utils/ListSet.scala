@@ -28,16 +28,21 @@ case class ListSet[T](toList: List[T]) {
 
   def --(other: ListSet[T]): ListSet[T] = {
     ListSetUtils.listSetDiff(toList, other.toList)
+    ListSetUtils.restOfSetIsSubset(toList, other.toList)
     ListSet(toList -- other.toList)
-  }.ensuring(res ⇒ forall((elem: T) ⇒ (this.contains(elem) && !other.contains(elem)) == res.contains(elem)))
+  }.ensuring(res ⇒
+    forall((elem: T) ⇒ (this.contains(elem) && !other.contains(elem)) == res.contains(elem)) &&
+      (res & other).isEmpty &&
+      res.subsetOf(this))
 
   def &(other: ListSet[T]): ListSet[T] = {
     ListSetUtils.setIntersectionLemma(toList, other.toList)
     ListSetUtils.intersectionContainmentLemma(toList, other.toList)
     ListSet(toList & other.toList)
   }.ensuring(res ⇒
-    forall((elem: T) ⇒ (this.contains(elem) && other.contains(elem)) == res.contains(elem)) && res.subsetOf(this) && res
-      .subsetOf(other))
+    forall((elem: T) ⇒ (this.contains(elem) && other.contains(elem)) == res.contains(elem)) &&
+      res.subsetOf(this) &&
+      res.subsetOf(other))
 
   def size: BigInt = toList.size
   def isEmpty: Boolean = toList.isEmpty
