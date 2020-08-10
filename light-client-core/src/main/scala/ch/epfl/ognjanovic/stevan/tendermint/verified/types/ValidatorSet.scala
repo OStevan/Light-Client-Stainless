@@ -15,8 +15,8 @@ case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Addre
 
   @pure
   @extern
-  def keys: Set[Address] = {
-    powerAssignments.toList.map(_._1).content
+  def keys: ListSet[Address] = {
+    ListSet(powerAssignments.toList.map(_._1))
   }.ensuring(res => res.nonEmpty)
 
   def values: List[Validator] = powerAssignments.toList.map(_._2)

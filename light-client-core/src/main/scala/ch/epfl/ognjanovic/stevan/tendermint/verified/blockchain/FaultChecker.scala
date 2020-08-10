@@ -1,16 +1,17 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.ValidatorSet.{correctLemma, subsetPowerLemma}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Address, ValidatorSet, VotingPower}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.ValidatorSet.{correctLemma, subsetPowerLemma}
 import stainless.annotation.{extern, ghost, opaque, pure}
 import stainless.lang._
 import stainless.proof.check
+import utils.ListSet
 import utils.ListSetUtils._
 
 case class FaultChecker() {
 
   @pure
-  def isCorrect(validatorSet: ValidatorSet, faultyNodes: Set[Address]): Boolean = {
+  def isCorrect(validatorSet: ValidatorSet, faultyNodes: ListSet[Address]): Boolean = {
     val keySet = validatorSet.powerAssignments.toList.map(_._1)
     val faultyNodesSet = faultyNodes.toList
     val difference = removingFromSet(keySet, faultyNodesSet)
@@ -25,7 +26,7 @@ case class FaultChecker() {
 object FaultChecker {
 
   @opaque
-  def moreFaultyDoesNotHelp(faultChecker: FaultChecker, current: Set[Address], next: Set[Address]): Unit = {
+  def moreFaultyDoesNotHelp(faultChecker: FaultChecker, current: ListSet[Address], next: ListSet[Address]): Unit = {
     require(current.subsetOf(next))
   }.ensuring(_ =>
     forall((validator: ValidatorSet) => {
@@ -37,8 +38,8 @@ object FaultChecker {
   @extern
   def faultyExpansion(
     faultChecker: FaultChecker,
-    next: Set[Address],
-    current: Set[Address],
+    next: ListSet[Address],
+    current: ListSet[Address],
     validatorSet: ValidatorSet): Unit = {
     require(current.subsetOf(next))
     val keys = validatorSet.powerAssignments.toList.map(_._1)

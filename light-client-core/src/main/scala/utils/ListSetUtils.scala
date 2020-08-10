@@ -23,7 +23,7 @@ object ListSetUtils {
     require(!list.map(_._1).contains(elem._1) && ListOps.noDuplicate(list))
   }.ensuring(_ => !list.contains(elem))
 
-  def listSetSubsetEquivalence[T](set: Set[T]): List[T] = {
+  def listSetSubsetEquivalence[T](set: ListSet[T]): List[T] = {
     val list = set.toList
     selfContainment(list)
     equivalentPredicate(list, list.contains, set.contains)
@@ -331,5 +331,13 @@ object ListSetUtils {
   def listSetIntersection[T](@induct first: List[T], second: List[T]): Unit = {
     require(ListOps.noDuplicate(first) && ListOps.noDuplicate(second))
   }.ensuring(_ ⇒ ListOps.noDuplicate(first & second))
+
+  @opaque
+  def prependSubset[T](elem: T, @induct list: List[T]): Unit = {}.ensuring { _ ⇒
+    selfContainment(list)
+    val appended = elem :: list
+    expandPredicate(list, list.contains, appended.contains)
+    list.forall((elem :: list).contains)
+  }
 
 }

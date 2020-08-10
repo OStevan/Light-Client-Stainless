@@ -4,16 +4,16 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.{Sys
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation._
-import stainless.lang.StaticChecks.assert
 import stainless.lang._
-import utils.SetInvariants
+import stainless.lang.StaticChecks.assert
+import utils.ListSet
 
 object BlockchainStates {
 
   @inline
   private def runningStateInvariant(
-    allNodes: Set[Address],
-    faulty: Set[Address],
+    allNodes: ListSet[Address],
+    faulty: ListSet[Address],
     maxVotingPower: VotingPower,
     blockchain: Blockchain): Boolean = {
     blockchain.faultAssumption() &&
@@ -24,8 +24,8 @@ object BlockchainStates {
 
   @inline
   private def faultyStateInvariant(
-    allNodes: Set[Address],
-    faulty: Set[Address],
+    allNodes: ListSet[Address],
+    faulty: ListSet[Address],
     maxVotingPower: VotingPower,
     blockchain: Blockchain): Boolean = {
     !blockchain.faultAssumption() &&
@@ -35,7 +35,10 @@ object BlockchainStates {
   }
 
   @inline
-  private def finishedStateInvariant(allNodes: Set[Address], faulty: Set[Address], blockchain: Blockchain): Boolean = {
+  private def finishedStateInvariant(
+    allNodes: ListSet[Address],
+    faulty: ListSet[Address],
+    blockchain: Blockchain): Boolean = {
     blockchain.faultAssumption() &&
     blockchain.finished &&
     globalStateInvariant(allNodes, faulty, blockchain)
@@ -43,7 +46,10 @@ object BlockchainStates {
 
   // state invariant forced in TLA
   @inline
-  private def globalStateInvariant(allNodes: Set[Address], faulty: Set[Address], blockchain: Blockchain): Boolean = {
+  private def globalStateInvariant(
+    allNodes: ListSet[Address],
+    faulty: ListSet[Address],
+    blockchain: Blockchain): Boolean = {
     allNodes.nonEmpty && // makes no sense to have no nodes
     faulty.subsetOf(allNodes) && // faulty nodes need to be from the set of existing nodes
     faulty == blockchain.faulty &&
@@ -70,7 +76,7 @@ object BlockchainStates {
     @pure
     def currentHeight(): Height
 
-    def faulty: Set[Address]
+    def faulty: ListSet[Address]
 
     def header(height: Height): BlockHeader = {
       require(height <= blockchain.height)
@@ -86,7 +92,11 @@ object BlockchainStates {
   }
 
   @inlineInvariant
-  case class Running(allNodes: Set[Address], faulty: Set[Address], maxVotingPower: VotingPower, blockchain: Blockchain)
+  case class Running(
+    allNodes: ListSet[Address],
+    faulty: ListSet[Address],
+    maxVotingPower: VotingPower,
+    blockchain: Blockchain)
       extends BlockchainState {
     require(runningStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
 
@@ -98,7 +108,8 @@ object BlockchainStates {
         case Fault(faultyNode)
             if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
           val newFaulty = faulty + faultyNode
-          SetInvariants.setAdd(faulty, faultyNode, allNodes)
+          assert(newFaulty.subsetOf(allNodes))
+//          SetInvariants.setAdd(faulty, faultyNode, allNodes)
           val newChain = blockchain.setFaulty(newFaulty)
 
           if (newChain.faultAssumption())
@@ -148,7 +159,11 @@ object BlockchainStates {
   }
 
   @inlineInvariant
-  case class Faulty(allNodes: Set[Address], faulty: Set[Address], maxVotingPower: VotingPower, blockchain: Blockchain)
+  case class Faulty(
+    allNodes: ListSet[Address],
+    faulty: ListSet[Address],
+    maxVotingPower: VotingPower,
+    blockchain: Blockchain)
       extends BlockchainState {
     require(faultyStateInvariant(allNodes, faulty, maxVotingPower, blockchain))
 
@@ -167,7 +182,9 @@ object BlockchainStates {
 
         case Fault(faultyNode)
             if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
-          val newFaulty = SetInvariants.setAdd(faulty, faultyNode, allNodes)
+          val newFaulty = faulty + faultyNode
+          assert(newFaulty.subsetOf(allNodes))
+//            SetInvariants.setAdd(faulty, faultyNode, allNodes)
           Faulty(allNodes, newFaulty, maxVotingPower, blockchain.setFaulty(newFaulty))
 
         case _ => this
@@ -188,7 +205,8 @@ object BlockchainStates {
   }
 
   @inlineInvariant
-  case class Finished(allNodes: Set[Address], faulty: Set[Address], blockchain: Blockchain) extends BlockchainState {
+  case class Finished(allNodes: ListSet[Address], faulty: ListSet[Address], blockchain: Blockchain)
+      extends BlockchainState {
     require(finishedStateInvariant(allNodes, faulty, blockchain))
 
     @pure

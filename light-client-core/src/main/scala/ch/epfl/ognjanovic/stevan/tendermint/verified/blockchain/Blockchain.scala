@@ -1,16 +1,17 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Chain ⇒ _, _}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Chain => _, _}
 import stainless.annotation.{extern, induct, opaque, pure}
 import stainless.lang._
+import utils.ListSet
 
 case class Blockchain(
   maxHeight: Height,
   now: Timestamp,
   trustingPeriod: Duration,
   chain: Chain,
-  faulty: Set[Address],
+  faulty: ListSet[Address],
   faultChecker: FaultChecker) {
   require(chain.height <= maxHeight)
 
@@ -58,7 +59,7 @@ case class Blockchain(
   def height: Height = chain.height
 
   @inline
-  def setFaulty(newFaulty: Set[Address]): Blockchain = {
+  def setFaulty(newFaulty: ListSet[Address]): Blockchain = {
     require(faulty.subsetOf(newFaulty))
     Blockchain.faultyChainDoesNotRecoverWithNewFault(faultChecker, now, trustingPeriod, chain, faulty, newFaulty)
     Blockchain(maxHeight, now, trustingPeriod, chain, newFaulty, faultChecker)
@@ -114,8 +115,8 @@ object Blockchain {
     now: Timestamp,
     duration: Duration,
     @induct chain: Chain,
-    faulty: Set[Address],
-    newFaulty: Set[Address]): Unit = {
+    faulty: ListSet[Address],
+    newFaulty: ListSet[Address]): Unit = {
     require(faulty.subsetOf(newFaulty))
   }.ensuring { _ =>
     FaultChecker.moreFaultyDoesNotHelp(faultChecker, faulty, newFaulty)
@@ -132,7 +133,7 @@ object Blockchain {
     now: Timestamp,
     duration: Duration,
     @induct chain: Chain,
-    faulty: Set[Address]): Unit = {
+    faulty: ListSet[Address]): Unit = {
     require(now <= newNow)
   }.ensuring { _ =>
     chain.forAll(header =>
