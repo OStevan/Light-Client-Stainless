@@ -56,7 +56,7 @@ object ValidatorSet {
         ListOps.noDuplicate(first) &&
         ListOps.noDuplicate(second)
     )
-    transitivityLemma(first, second, validatorSet.powerAssignments.toList.map(_._1))
+    ListUtils.transitivityLemma(first, second, validatorSet.powerAssignments.toList.map(_._1))
     val firstFiltered = validatorSet.powerAssignments.toList.filter(node => first.contains(node._1))
     uniquenessTransitivity(validatorSet.powerAssignments.toList)
     filteringPreservesPredicate(first, validatorSet.powerAssignments.toList)
@@ -89,7 +89,7 @@ object ValidatorSet {
       case Cons(h, t) if first.contains(h) =>
         val removed = first - h
         removeOne(h, first)
-        interestingEquality(h, first, t)
+        ListUtils.nonContainedElementDoesNotInfluenceDifference(h, first, t)
         listSetRemoveHeadSameAsSubtraction(second)
         ListUtils.removingContainment(h, first, second)
         sumWithDifferenceIsEqual(removed, t)
