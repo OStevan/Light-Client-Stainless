@@ -18,7 +18,7 @@ lazy val lightClientCore = project
   .enablePlugins(StainlessPlugin)
   .settings(
     name := lightClientCoreName,
-    stainlessEnabled := true
+    stainlessEnabled := false
   )
 
 lazy val tendermintGeneral = project

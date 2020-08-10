@@ -1,7 +1,9 @@
 package utils
 
-import stainless.collection._
+import stainless.annotation.opaque
+import stainless.collection.{ListOps, _}
 import stainless.lang._
+import utils.ListSetUtils.subsetRemovingLemma
 
 case class ListSet[T](toList: List[T]) {
   require(ListOps.noDuplicate(toList))
@@ -36,6 +38,7 @@ case class ListSet[T](toList: List[T]) {
       res.subsetOf(this))
 
   def &(other: ListSet[T]): ListSet[T] = {
+    ListSetUtils.listSetIntersection(toList, other.toList)
     ListSetUtils.setIntersectionLemma(toList, other.toList)
     ListSetUtils.intersectionContainmentLemma(toList, other.toList)
     ListSet(toList & other.toList)
@@ -54,4 +57,15 @@ case class ListSet[T](toList: List[T]) {
 
 object ListSet {
   def empty[T]: ListSet[T] = ListSet(List.empty[T])
+
+  object lemmas {
+
+    @opaque
+    def subsetRemovalLemma[T](original: ListSet[T], first: ListSet[T], second: ListSet[T]): Unit = {
+      require(first.subsetOf(second))
+      subsetRemovingLemma(original.toList, first.toList, second.toList)
+    }.ensuring(_ => (original -- second).subsetOf(original -- first))
+
+  }
+
 }
