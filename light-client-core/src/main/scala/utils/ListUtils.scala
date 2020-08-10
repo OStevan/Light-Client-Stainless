@@ -2,6 +2,7 @@ package utils
 
 import stainless.annotation._
 import stainless.collection._
+import stainless.lang.StaticChecks.require
 import stainless.proof._
 
 /**
@@ -164,6 +165,11 @@ object ListUtils {
   }.ensuring(_ => l1.forall(l2.contains))
 
   @opaque
+  def doesNotHaveHeadContainedInTail[T](@induct first: List[T], second: List[T]): Unit = {
+    require(second.nonEmpty && !first.contains(second.head) && first.forall(second.contains))
+  }.ensuring(_ => first.forall(second.tail.contains))
+
+  @opaque
   def subsetRefl[T](l: List[T]): Unit = {
     if (!l.isEmpty) {
       subsetRefl(l.tail)
@@ -179,5 +185,15 @@ object ListUtils {
       assert(l1.tail.content.subsetOf(l2.content))
     }
   }.ensuring(_ => l1.content.subsetOf(l2.content))
+
+  @opaque
+  def removingNonContained[T](@induct list: List[T], elem: T): Unit = {
+    require(!list.contains(elem))
+  }.ensuring(_ => list == list - elem)
+
+  @opaque
+  def removingContainment[T](elem: T, @induct first: List[T], second: List[T]): Unit = {
+    require(first.forall(second.contains))
+  }.ensuring(_ => (first - elem).forall((second - elem).contains))
 
 }

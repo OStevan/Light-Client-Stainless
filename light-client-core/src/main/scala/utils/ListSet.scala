@@ -3,6 +3,7 @@ package utils
 import stainless.annotation.opaque
 import stainless.collection.{ListOps, _}
 import stainless.lang._
+import stainless.lang.StaticChecks.require
 import utils.ListSetUtils.subsetRemovingLemma
 
 case class ListSet[T](toList: List[T]) {

@@ -23,13 +23,6 @@ object ListSetUtils {
     require(!list.map(_._1).contains(elem._1) && ListOps.noDuplicate(list))
   }.ensuring(_ => !list.contains(elem))
 
-  def listSetSubsetEquivalence[T](set: ListSet[T]): List[T] = {
-    val list = set.toList
-    selfContainment(list)
-    equivalentPredicate(list, list.contains, set.contains)
-    list
-  }.ensuring(res => res.forall(set.contains))
-
   @opaque
   def selfContainment[T](list: List[T]): Unit = {
     list match {
@@ -44,11 +37,6 @@ object ListSetUtils {
   @opaque
   def expandPredicate[T](@induct list: List[T], p1: T => Boolean, p2: T => Boolean): Unit = {
     require(forall((elem: T) => p1(elem) ==> p2(elem)) && list.forall(p1))
-  }.ensuring(_ => list.forall(p2))
-
-  @opaque
-  def equivalentPredicate[T](@induct list: List[T], p1: T => Boolean, p2: T => Boolean): Unit = {
-    require(forall((elem: T) => p1(elem) == p2(elem)) && list.forall(p1))
   }.ensuring(_ => list.forall(p2))
 
   @opaque
@@ -199,14 +187,12 @@ object ListSetUtils {
 
   @opaque
   def setIntersectionLemma[T](first: List[T], second: List[T]): Unit = {
-    require(ListOps.noDuplicate(first))
     first match {
       case Nil() => ()
       case Cons(h, t) if second.contains(h) =>
         tailSelfContained(first)
 
         setIntersectionLemma(t, second)
-        uniqueNotAvailable(h, t & second, t)
 
         val tailIntersection = t & second
         transitivityLemma(tailIntersection, t, first)
@@ -236,13 +222,7 @@ object ListSetUtils {
   }.ensuring(_ => list.tail.forall(list.contains))
 
   @opaque
-  def uniqueNotAvailable[T](elem: T, @induct first: List[T], second: List[T]): Unit = {
-    require(first.forall(second.contains) && !second.contains(elem))
-  }.ensuring(_ => !first.contains(elem))
-
-  @opaque
   def intersectionContainmentLemma[T](first: List[T], second: List[T]): Unit = {
-    require(ListOps.noDuplicate(first))
     setIntersectionLemma(first, second)
   }.ensuring { _ =>
     val intersection = first & second
@@ -258,7 +238,7 @@ object ListSetUtils {
 
   @opaque
   def setIntersectionContainmentLemma[T](original: List[T], first: List[T], second: List[T]): Unit = {
-    require(first.forall(second.contains) && ListOps.noDuplicate(original))
+    require(first.forall(second.contains))
     setIntersectionLemma(original, first)
     setIntersectionLemma(original, second)
     intersectionWithSubSetsContainmentLemma(original, first, second)
@@ -282,16 +262,6 @@ object ListSetUtils {
   }.ensuring(_ => (second -- first.tail).contains(first.head))
 
   @opaque
-  def doesNotHaveHeadContainedInTail[T](@induct first: List[T], second: List[T]): Unit = {
-    require(second.nonEmpty && !first.contains(second.head) && first.forall(second.contains))
-  }.ensuring(_ => first.forall(second.tail.contains))
-
-  @opaque
-  def removingContainment[T](elem: T, @induct first: List[T], second: List[T]): Unit = {
-    require(first.forall(second.contains))
-  }.ensuring(_ => (first - elem).forall((second - elem).contains))
-
-  @opaque
   def interestingEquality[T](elem: T, first: List[T], @induct second: List[T]): Unit = {
     require(!second.contains(elem))
   }.ensuring(_ => second -- first == second -- (first - elem))
@@ -301,14 +271,9 @@ object ListSetUtils {
     require(list.nonEmpty && ListOps.noDuplicate(list))
     list match {
       case Cons(h, t) =>
-        removingNonContained(t, h)
+        ListUtils.removingNonContained(t, h)
     }
   }.ensuring(_ => list.tail == (list - list.head))
-
-  @opaque
-  def removingNonContained[T](@induct list: List[T], elem: T): Unit = {
-    require(!list.contains(elem))
-  }.ensuring(_ => list == list - elem)
 
   @opaque
   def removingFromASetResultsInASet[T](elem: T, @induct list: List[T]): Unit = {
