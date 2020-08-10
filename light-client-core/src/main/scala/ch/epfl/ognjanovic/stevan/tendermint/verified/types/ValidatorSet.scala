@@ -56,7 +56,7 @@ object ValidatorSet {
         ListOps.noDuplicate(first) &&
         ListOps.noDuplicate(second)
     )
-    transitivityLemma(first, second, validatorSet.powerAssignments.toList.map(_._1))
+    ListUtils.transitivityLemma(first, second, validatorSet.powerAssignments.toList.map(_._1))
     val firstFiltered = validatorSet.powerAssignments.toList.filter(node => first.contains(node._1))
     uniquenessTransitivity(validatorSet.powerAssignments.toList)
     filteringPreservesPredicate(first, validatorSet.powerAssignments.toList)
@@ -89,13 +89,13 @@ object ValidatorSet {
       case Cons(h, t) if first.contains(h) =>
         val removed = first - h
         removeOne(h, first)
-        interestingEquality(h, first, t)
+        ListUtils.nonContainedElementDoesNotInfluenceDifference(h, first, t)
         listSetRemoveHeadSameAsSubtraction(second)
-        removingContainment(h, first, second)
+        ListUtils.removingContainment(h, first, second)
         sumWithDifferenceIsEqual(removed, t)
 
       case Cons(_, t) =>
-        doesNotHaveHeadContainedInTail(first, second)
+        ListUtils.doesNotHaveHeadContainedInTail(first, second)
         sumWithDifferenceIsEqual(first, t)
     }
   }.ensuring(_ => sumVotingPower(first) + sumVotingPower(second -- first) == sumVotingPower(second))
@@ -106,7 +106,7 @@ object ValidatorSet {
     require(ListOps.noDuplicate(list) && list.contains(elem) && list.nonEmpty)
     list match {
       case Cons(_, Nil()) => ()
-      case Cons(_, tail) if !tail.contains(elem) => removingNonContained(tail, elem)
+      case Cons(_, tail) if !tail.contains(elem) => ListUtils.removingNonContained(tail, elem)
       case Cons(_, tail) => removeOne(elem, tail)
     }
   }.ensuring(_ =>

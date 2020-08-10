@@ -2,7 +2,10 @@ package utils
 
 import stainless.annotation._
 import stainless.collection._
+import stainless.lang._
+import stainless.lang.StaticChecks.{assert, require}
 import stainless.proof._
+import utils.ListSetUtils.instantiateForAll
 
 /**
  * Copied as is from {@link https://github.com/epfl-lara/verifythis2020/blob/f10e38d864838f70e0bf880d48e40de8e815fbec/src/main/scala/pgp/ListUtils.scala}.
@@ -164,6 +167,11 @@ object ListUtils {
   }.ensuring(_ => l1.forall(l2.contains))
 
   @opaque
+  def doesNotHaveHeadContainedInTail[T](@induct first: List[T], second: List[T]): Unit = {
+    require(second.nonEmpty && !first.contains(second.head) && first.forall(second.contains))
+  }.ensuring(_ => first.forall(second.tail.contains))
+
+  @opaque
   def subsetRefl[T](l: List[T]): Unit = {
     if (!l.isEmpty) {
       subsetRefl(l.tail)
@@ -179,5 +187,181 @@ object ListUtils {
       assert(l1.tail.content.subsetOf(l2.content))
     }
   }.ensuring(_ => l1.content.subsetOf(l2.content))
+
+  @opaque
+  def removingNonContained[T](@induct list: List[T], elem: T): Unit = {
+    require(!list.contains(elem))
+  }.ensuring(_ => list == list - elem)
+
+  @opaque
+  def removingContainment[T](elem: T, @induct first: List[T], second: List[T]): Unit = {
+    require(first.forall(second.contains))
+  }.ensuring(_ => (first - elem).forall((second - elem).contains))
+
+  @opaque
+  def selfContainment[T](list: List[T]): Unit = {
+    list match {
+      case Nil() => ()
+      case Cons(h, t) =>
+        selfContainment(t)
+        expandPredicate(t, t.contains, list.contains)
+        prependMaintainsCondition(h, t, list.contains)
+    }
+  }.ensuring(_ => list.forall(list.contains))
+
+  @opaque
+  def expandPredicate[T](@induct list: List[T], p1: T => Boolean, p2: T => Boolean): Unit = {
+    require(forall((elem: T) => p1(elem) ==> p2(elem)) && list.forall(p1))
+  }.ensuring(_ => list.forall(p2))
+
+  @opaque
+  def prependMaintainsCondition[T](elem: T, @induct list: List[T], p: T => Boolean): Unit = {
+    require(list.forall(p) && p(elem))
+  }.ensuring(_ => (elem :: list).forall(p))
+
+  @opaque
+  def nonContainedElementDoesNotInfluenceDifference[T](elem: T, first: List[T], @induct second: List[T]): Unit = {
+    require(!second.contains(elem))
+  }.ensuring(_ => second -- first == second -- (first - elem))
+
+  @opaque
+  def prependSubset[T](elem: T, @induct list: List[T]): Unit = {}.ensuring { _ ⇒
+    ListUtils.selfContainment(list)
+    val appended = elem :: list
+    ListUtils.expandPredicate(list, list.contains, appended.contains)
+    list.forall((elem :: list).contains)
+  }
+
+  @opaque
+  def restOfSetIsSubset[T](first: List[T], second: List[T]): Unit = {
+    val diff = first -- second
+    first match {
+      case Nil() => assert(diff.isEmpty)
+      case Cons(h, t) if second.contains(h) =>
+        restOfSetIsSubset(t, second)
+        ListUtils.expandPredicate(diff, t.contains, first.contains)
+      case Cons(h, t) =>
+        restOfSetIsSubset(t, second)
+        ListUtils.expandPredicate(t -- second, t.contains, first.contains)
+        ListUtils.prependMaintainsCondition(h, t -- second, first.contains)
+    }
+  }.ensuring(_ => (first -- second).forall(first.contains))
+
+  @pure
+  def listDifference[T](@induct first: List[T], second: List[T]): List[T] = {
+    restOfSetIsSubset(first, second)
+    first -- second
+  }.ensuring(res => (res & second).isEmpty && res.forall(first.contains))
+
+  @opaque
+  def filteringWithoutHead[T](original: List[T], @induct filter: List[T]): Unit = {
+    require(original.nonEmpty && !filter.contains(original.head))
+  }.ensuring(_ =>
+    ListUtils.listDifference(original, filter) == original.head :: ListUtils.listDifference(original.tail, filter))
+
+  @opaque
+  def nonContainedInSuperSetNotContainedInSubset[T](elem: T, @induct first: List[T], second: List[T]): Unit = {
+    require(first.forall(second.contains) && !second.contains(elem))
+  }.ensuring(_ => !first.contains(elem))
+
+  @opaque
+  def removingSubsetInvertsTheRelationship[T](original: List[T], first: List[T], second: List[T]): Unit = {
+    require(first.forall(second.contains))
+    decreases(original.size)
+    original match {
+      case Nil() => ()
+      case Cons(h, t) if first.contains(h) && second.contains(h) =>
+        removingSubsetInvertsTheRelationship(t, first, second)
+
+      case Cons(h, t) if second.contains(h) && !first.contains(h) =>
+        val removedFirst = listDifference(original, first)
+        val removedSecond = listDifference(original, second)
+        removingSubsetInvertsTheRelationship(t, first, second)
+        containedTail(removedSecond, removedFirst)
+
+      case Cons(h, t) =>
+        val removedFirst = listDifference(original, first)
+        val removeTailSecond = listDifference(t, second)
+        removingSubsetInvertsTheRelationship(t, first, second)
+
+        nonContainedInSuperSetNotContainedInSubset(h, first, second)
+        filteringWithoutHead(original, first)
+        filteringWithoutHead(original, second)
+
+        containedTail(removeTailSecond, removedFirst)
+        ListUtils.prependMaintainsCondition(h, removeTailSecond, removedFirst.contains)
+    }
+  }.ensuring(_ => listDifference(original, second).forall(listDifference(original, first).contains))
+
+  @opaque
+  def transitivityLemma[T](first: List[T], second: List[T], third: List[T]): Unit = {
+    require(first.forall(second.contains) && second.forall(third.contains))
+    if (first.nonEmpty) {
+      instantiateForAll(first.head, first, second.contains)
+      instantiateForAll(first.head, second, third.contains)
+      transitivityLemma(first.tail, second, third)
+    }
+  }.ensuring(_ => first.forall(third.contains))
+
+  @opaque
+  def tailSelfContained[T](list: List[T]): Unit = {
+    require(list.nonEmpty)
+    list.tail match {
+      case Nil() => ()
+      case _: Cons[T] =>
+        ListUtils.selfContainment(list.tail)
+        ListUtils.containedTail(list.tail, list)
+    }
+  }.ensuring(_ => list.tail.forall(list.contains))
+
+  @opaque
+  def listIntersectionLemma[T](first: List[T], second: List[T]): Unit = {
+    first match {
+      case Nil() => ()
+      case Cons(h, t) if second.contains(h) =>
+        tailSelfContained(first)
+
+        listIntersectionLemma(t, second)
+
+        val tailIntersection = t & second
+        transitivityLemma(tailIntersection, t, first)
+        ListUtils.prependMaintainsCondition(h, tailIntersection, first.contains)
+
+      case Cons(_, t) =>
+        tailSelfContained(first)
+
+        listIntersectionLemma(t, second)
+
+        transitivityLemma(t & second, t, first)
+    }
+  }.ensuring { _ =>
+    val intersection = first & second
+    intersection.forall(first.contains) &&
+    intersection.forall(second.contains) &&
+    forall((elem: T) => intersection.contains(elem) == (first.contains(elem) && second.contains(elem)))
+  }
+
+  @opaque
+  def listSubsetContainmentLemma[T](original: List[T], @induct first: List[T], second: List[T]): Unit = {
+    require(first.forall(second.contains))
+  }.ensuring(_ =>
+    forall((elem: T) =>
+      (original.contains(elem) && first.contains(elem)) ==> (original.contains(elem) && second.contains(elem))))
+
+  @opaque
+  def listSubsetIntersectionLemma[T](original: List[T], first: List[T], second: List[T]): Unit = {
+    require(first.forall(second.contains))
+  }.ensuring { _ =>
+    ListUtils.listIntersectionLemma(original, first)
+    ListUtils.listIntersectionLemma(original, second)
+    listSubsetContainmentLemma(original, first, second)
+
+    val firstIntersection = original & first
+    val secondIntersection = original & second
+
+    ListUtils.selfContainment(firstIntersection)
+    ListUtils.expandPredicate(firstIntersection, firstIntersection.contains, secondIntersection.contains)
+    firstIntersection.forall(secondIntersection.contains)
+  }
 
 }

@@ -1,19 +1,20 @@
 package utils
 
-import stainless.annotation.opaque
+import stainless.annotation.{library, opaque}
 import stainless.collection.{ListOps, _}
 import stainless.lang._
-import utils.ListSetUtils.subsetRemovingLemma
+import stainless.lang.StaticChecks.require
 
+@library
 case class ListSet[T](toList: List[T]) {
   require(ListOps.noDuplicate(toList))
 
   def +(elem: T): ListSet[T] = {
     if (toList.contains(elem)) {
-      ListSetUtils.selfContainment(toList)
+      ListUtils.selfContainment(toList)
       this
     } else {
-      ListSetUtils.prependSubset(elem, toList)
+      ListUtils.prependSubset(elem, toList)
       ListSet(elem :: toList)
     }
   }.ensuring(res ⇒ res.contains(elem) && this.subsetOf(res))
@@ -30,7 +31,7 @@ case class ListSet[T](toList: List[T]) {
 
   def --(other: ListSet[T]): ListSet[T] = {
     ListSetUtils.listSetDiff(toList, other.toList)
-    ListSetUtils.restOfSetIsSubset(toList, other.toList)
+    ListUtils.restOfSetIsSubset(toList, other.toList)
     ListSet(toList -- other.toList)
   }.ensuring(res ⇒
     forall((elem: T) ⇒ (this.contains(elem) && !other.contains(elem)) == res.contains(elem)) &&
@@ -39,8 +40,7 @@ case class ListSet[T](toList: List[T]) {
 
   def &(other: ListSet[T]): ListSet[T] = {
     ListSetUtils.listSetIntersection(toList, other.toList)
-    ListSetUtils.setIntersectionLemma(toList, other.toList)
-    ListSetUtils.intersectionContainmentLemma(toList, other.toList)
+    ListUtils.listIntersectionLemma(toList, other.toList)
     ListSet(toList & other.toList)
   }.ensuring(res ⇒
     forall((elem: T) ⇒ (this.contains(elem) && other.contains(elem)) == res.contains(elem)) &&
@@ -55,6 +55,7 @@ case class ListSet[T](toList: List[T]) {
   def subsetOf(other: ListSet[T]): Boolean = toList.forall(other.toList.contains)
 }
 
+@library
 object ListSet {
   def empty[T]: ListSet[T] = ListSet(List.empty[T])
 
@@ -63,7 +64,7 @@ object ListSet {
     @opaque
     def subsetRemovalLemma[T](original: ListSet[T], first: ListSet[T], second: ListSet[T]): Unit = {
       require(first.subsetOf(second))
-      subsetRemovingLemma(original.toList, first.toList, second.toList)
+      ListUtils.removingSubsetInvertsTheRelationship(original.toList, first.toList, second.toList)
     }.ensuring(_ => (original -- second).subsetOf(original -- first))
 
   }

@@ -5,8 +5,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.ValidatorSet.{correct
 import stainless.annotation.{ghost, opaque, pure}
 import stainless.lang._
 import stainless.proof.check
-import utils.ListSet
-import utils.ListSetUtils._
+import utils.{ListSet, ListUtils}
 
 case class FaultChecker() {
 
@@ -44,7 +43,7 @@ object FaultChecker {
     val nextDiff = keys -- next
 
     val difference_proof = {
-      subsetRemovingLemma(keys.toList, current.toList, next.toList)
+      ListUtils.removingSubsetInvertsTheRelationship(keys.toList, current.toList, next.toList)
       subsetPowerLemma(nextDiff.toList, currentDiff.toList, validatorSet)
       check(validatorSet.nodesPower(currentDiff.toList) >= validatorSet.nodesPower(nextDiff.toList))
     }
@@ -52,7 +51,7 @@ object FaultChecker {
     val nextIntersection = keys & next
     val currentIntersection = keys & current
     val intersection_proof = {
-      setIntersectionContainmentLemma(keys.toList, current.toList, next.toList)
+      ListUtils.listSubsetIntersectionLemma(keys.toList, current.toList, next.toList)
       subsetPowerLemma(currentIntersection.toList, nextIntersection.toList, validatorSet)
       check(validatorSet.nodesPower(currentIntersection.toList) <= validatorSet.nodesPower(nextIntersection.toList))
     }
