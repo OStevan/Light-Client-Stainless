@@ -41,49 +41,40 @@ object FaultChecker {
     current: ListSet[Address],
     validatorSet: ValidatorSet): Unit = {
     require(current.subsetOf(next))
-    val keys = validatorSet.powerAssignments.toList.map(_._1)
-    val nextList = listSetSubsetEquivalence(next)
-    val currentList = listSetSubsetEquivalence(current)
-    val currentDiff = removingFromSet(keys, currentList)
-    val nextDiff = removingFromSet(keys, nextList)
+    val keys = ListSet(validatorSet.powerAssignments.toList.map(_._1))
+    val currentDiff = keys -- current
+    val nextDiff = keys -- next
 
     val difference_proof = {
-      subsetRemovingLemma(keys, currentList, nextList)
-      subsetPowerLemma(nextDiff, currentDiff, validatorSet)
-      check(validatorSet.nodesPower(currentDiff) >= validatorSet.nodesPower(nextDiff))
+      subsetRemovingLemma(keys.toList, current.toList, next.toList)
+      subsetPowerLemma(nextDiff.toList, currentDiff.toList, validatorSet)
+      check(validatorSet.nodesPower(currentDiff.toList) >= validatorSet.nodesPower(nextDiff.toList))
     }
 
-    val nextIntersection = keys & nextList
-    val currentIntersection = keys & currentList
+    val nextIntersection = keys & next
+    val currentIntersection = keys & current
     val intersection_proof = {
-      setIntersectionLemma(keys, nextList)
-      setIntersectionLemma(keys, currentList)
-      intersectionContainmentLemma(keys, currentList)
-      intersectionContainmentLemma(keys, nextList)
-      selfContainment(nextIntersection)
-      selfContainment(currentIntersection)
-
-      setIntersectionContainmentLemma(keys, currentList, nextList)
-      subsetPowerLemma(currentIntersection, nextIntersection, validatorSet)
-      check(validatorSet.nodesPower(currentIntersection) <= validatorSet.nodesPower(nextIntersection))
+      setIntersectionContainmentLemma(keys.toList, current.toList, next.toList)
+      subsetPowerLemma(currentIntersection.toList, nextIntersection.toList, validatorSet)
+      check(validatorSet.nodesPower(currentIntersection.toList) <= validatorSet.nodesPower(nextIntersection.toList))
     }
 
     correctLemma(
-      validatorSet.nodesPower(currentDiff),
-      validatorSet.nodesPower(currentIntersection),
-      validatorSet.nodesPower(nextDiff),
-      validatorSet.nodesPower(nextIntersection)
+      validatorSet.nodesPower(currentDiff.toList),
+      validatorSet.nodesPower(currentIntersection.toList),
+      validatorSet.nodesPower(nextDiff.toList),
+      validatorSet.nodesPower(nextIntersection.toList)
     )
 
     assert(
-      !(validatorSet.nodesPower(currentDiff) > validatorSet.nodesPower(currentIntersection) * VotingPower(2)) ==>
-        !(validatorSet.nodesPower(nextDiff) > validatorSet.nodesPower(nextIntersection) * VotingPower(2)))
-    assert(
-      faultChecker.isCorrect(validatorSet, current) ==
-        validatorSet.nodesPower(currentDiff) > validatorSet.nodesPower(currentIntersection) * VotingPower(2))
+      !(validatorSet.nodesPower(currentDiff.toList) > validatorSet.nodesPower(currentIntersection.toList) * VotingPower(
+        2)) ==>
+        !(validatorSet.nodesPower(nextDiff.toList) > validatorSet.nodesPower(nextIntersection.toList) * VotingPower(2)))
+    assert(faultChecker.isCorrect(validatorSet, current) ==
+      validatorSet.nodesPower(currentDiff.toList) > validatorSet.nodesPower(currentIntersection.toList) * VotingPower(2))
     assert(
       faultChecker.isCorrect(validatorSet, next) ==
-        validatorSet.nodesPower(nextDiff) > validatorSet.nodesPower(nextIntersection) * VotingPower(2))
+        validatorSet.nodesPower(nextDiff.toList) > validatorSet.nodesPower(nextIntersection.toList) * VotingPower(2))
   }.ensuring(_ => !faultChecker.isCorrect(validatorSet, current) ==> !faultChecker.isCorrect(validatorSet, next))
 
 }
