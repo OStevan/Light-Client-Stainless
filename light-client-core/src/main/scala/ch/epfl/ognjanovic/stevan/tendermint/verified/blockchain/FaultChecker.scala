@@ -2,7 +2,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Address, ValidatorSet, VotingPower}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.ValidatorSet.{correctLemma, subsetPowerLemma}
-import stainless.annotation.{extern, ghost, opaque, pure}
+import stainless.annotation.{ghost, opaque, pure}
 import stainless.lang._
 import stainless.proof.check
 import utils.ListSet
@@ -34,8 +34,7 @@ object FaultChecker {
       !faultChecker.isCorrect(validator, current) ==> !faultChecker.isCorrect(validator, next)
     }))
 
-  // TODO if isCorrect is inlined this lemma can be proved but calls to isCorrect at other locations fail
-  @extern
+  @opaque
   def faultyExpansion(
     faultChecker: FaultChecker,
     next: ListSet[Address],
@@ -49,7 +48,6 @@ object FaultChecker {
     val nextDiff = removingFromSet(keys, nextList)
 
     val difference_proof = {
-      expandPredicate(currentList, currentList.contains, nextList.contains)
       subsetRemovingLemma(keys, currentList, nextList)
       subsetPowerLemma(nextDiff, currentDiff, validatorSet)
       check(validatorSet.nodesPower(currentDiff) >= validatorSet.nodesPower(nextDiff))
