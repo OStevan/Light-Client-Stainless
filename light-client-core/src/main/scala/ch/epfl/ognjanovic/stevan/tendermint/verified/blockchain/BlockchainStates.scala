@@ -108,8 +108,6 @@ object BlockchainStates {
         case Fault(faultyNode)
             if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
           val newFaulty = faulty + faultyNode
-          assert(newFaulty.subsetOf(allNodes))
-//          SetInvariants.setAdd(faulty, faultyNode, allNodes)
           val newChain = blockchain.setFaulty(newFaulty)
 
           if (newChain.faultAssumption())
@@ -183,8 +181,6 @@ object BlockchainStates {
         case Fault(faultyNode)
             if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
           val newFaulty = faulty + faultyNode
-          assert(newFaulty.subsetOf(allNodes))
-//            SetInvariants.setAdd(faulty, faultyNode, allNodes)
           Faulty(allNodes, newFaulty, maxVotingPower, blockchain.setFaulty(newFaulty))
 
         case _ => this

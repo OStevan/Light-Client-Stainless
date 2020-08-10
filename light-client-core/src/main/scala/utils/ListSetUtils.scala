@@ -178,14 +178,12 @@ object ListSetUtils {
 
   @pure
   def listDifference[T](@induct first: List[T], second: List[T]): List[T] = {
-//      require(ListOps.noDuplicate(first))
     restOfSetIsSubset(first, second)
     first -- second
   }.ensuring(res => (res & second).isEmpty && res.forall(first.contains))
 
   @opaque
   def restOfSetIsSubset[T](first: List[T], second: List[T]): Unit = {
-//    require(ListOps.noDuplicate(first))
     val diff = first -- second
     first match {
       case Nil() => assert(diff.isEmpty)
@@ -239,11 +237,7 @@ object ListSetUtils {
 
   @opaque
   def uniqueNotAvailable[T](elem: T, @induct first: List[T], second: List[T]): Unit = {
-    require(
-//      ListOps.noDuplicate(first) &&
-//        ListOps.noDuplicate(second) &&
-      first.forall(second.contains) &&
-        !second.contains(elem))
+    require(first.forall(second.contains) && !second.contains(elem))
   }.ensuring(_ => !first.contains(elem))
 
   @opaque
