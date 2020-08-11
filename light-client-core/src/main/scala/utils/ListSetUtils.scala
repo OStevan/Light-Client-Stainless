@@ -25,9 +25,20 @@ object ListSetUtils {
   }.ensuring(_ => !list.contains(elem))
 
   @opaque
-  def filteringPreservesPredicate[K, V](set: List[K], @induct list: List[(K, V)]): Unit = {
+  def filteringPreservesPredicate[T](@induct list: List[T], predicate: T ⇒ Boolean): Unit = {
     require(ListOps.noDuplicate(list))
-  }.ensuring(_ => ListOps.noDuplicate(list.filter(node => set.contains(node._1))))
+  }.ensuring(_ => ListOps.noDuplicate(list.filter(predicate)))
+
+  @opaque
+  def filteringMakesSubset[T](list: List[T], predicate: T ⇒ Boolean): Unit = {
+    list match {
+      case Cons(_, t) ⇒
+        filteringMakesSubset(t, predicate)
+        ListUtils.tailSelfContained(list)
+        ListUtils.transitivityLemma(t.filter(predicate), t, list)
+      case Nil() ⇒ ()
+    }
+  }.ensuring(_ => list.filter(predicate).forall(list.contains))
 
   @opaque
   def subsetFilteringCreatesSubsets[K, V](first: List[K], second: List[K], assignments: List[(K, V)]): Unit = {
@@ -38,7 +49,7 @@ object ListSetUtils {
         subsetFilteringCreatesSubsets(first, second, t)
         val secondTailFiltered = t.filter(node => second.contains(node._1))
         val secondFiltered = assignments.filter(node => second.contains(node._1))
-        reflexivity(secondFiltered)
+        ListUtils.reflexivity(secondFiltered)
         assert(secondTailFiltered.forall(secondFiltered.contains))
 
         val firstTailFiltered = t.filter(node => first.contains(node._1))
@@ -47,7 +58,9 @@ object ListSetUtils {
         if (!first.contains(h._1)) {
           ListUtils.transitivityLemma(firstTailFiltered, secondTailFiltered, secondFiltered)
         } else {
-          instantiateForAll(h._1, first, second.contains)
+          ListUtils.containmentRelationship(h._1, first, second)
+
+          ListUtils.transitivePredicate(h._1, first.contains, second.contains)
           ListUtils.transitivityLemma(firstTailFiltered, secondTailFiltered, secondFiltered)
         }
     }
@@ -56,27 +69,6 @@ object ListSetUtils {
     val firstFiltered = assignments.filter(node => first.contains(node._1))
     firstFiltered.forall(secondFiltered.contains)
   }
-
-  @opaque
-  def instantiateForAll[T](elem: T, list: List[T], p: T => Boolean): Unit = {
-    require(list.forall(p) && list.contains(elem))
-    list match {
-      case Nil() => ()
-      case Cons(_, t) =>
-        if (t.contains(elem))
-          instantiateForAll(elem, t, p)
-    }
-  }.ensuring(_ => p(elem))
-
-  @opaque
-  def reflexivity[T](list: List[T]): Unit = {
-    list match {
-      case Nil() => ()
-      case Cons(_, t) =>
-        reflexivity(t)
-        ListUtils.containedTail(t, list)
-    }
-  }.ensuring(_ => list.forall(list.contains))
 
   @pure
   def removingFromSet[T](@induct first: List[T], second: List[T]): List[T] = {

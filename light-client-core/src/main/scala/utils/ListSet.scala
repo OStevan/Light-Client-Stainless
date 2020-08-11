@@ -47,6 +47,12 @@ case class ListSet[T](toList: List[T]) {
       res.subsetOf(this) &&
       res.subsetOf(other))
 
+  def filter(predicate: T ⇒ Boolean): ListSet[T] = {
+    ListSetUtils.filteringPreservesPredicate(toList, predicate)
+    ListSetUtils.filteringMakesSubset(toList, predicate)
+    ListSet(toList.filter(predicate))
+  }.ensuring(res ⇒ res.subsetOf(this))
+
   def size: BigInt = toList.size
   def isEmpty: Boolean = toList.isEmpty
   def nonEmpty: Boolean = toList.nonEmpty
@@ -66,6 +72,12 @@ object ListSet {
       require(first.subsetOf(second))
       ListUtils.removingSubsetInvertsTheRelationship(original.toList, first.toList, second.toList)
     }.ensuring(_ => (original -- second).subsetOf(original -- first))
+
+    @opaque
+    def containmentTransitivity[T](first: ListSet[T], second: ListSet[T], third: ListSet[T]): Unit = {
+      require(first.subsetOf(second) && second.subsetOf(third))
+      ListUtils.transitivityLemma(first.toList, second.toList, third.toList)
+    }.ensuring(_ ⇒ first.subsetOf(third))
 
   }
 
