@@ -179,7 +179,8 @@ object BlockchainStates {
         case Fault(faultyNode)
             if allNodes.contains(faultyNode) && (allNodes != (faulty + faultyNode)) && !faulty.contains(faultyNode) =>
           val newFaulty = faulty + faultyNode
-          Faulty(allNodes, newFaulty, maxVotingPower, blockchain.setFaulty(newFaulty))
+          val newBlockchain = blockchain.setFaulty(newFaulty)
+          Faulty(allNodes, newFaulty, maxVotingPower, newBlockchain)
 
         case _ => this
       }
