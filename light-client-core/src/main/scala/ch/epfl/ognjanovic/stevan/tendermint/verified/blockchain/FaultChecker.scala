@@ -43,7 +43,7 @@ object FaultChecker {
     val nextDiff = keys -- next
 
     val difference_proof = {
-      ListUtils.removingSubsetInvertsTheRelationship(keys.toList, current.toList, next.toList)
+      ListSet.lemmas.subsetRemovalLemma(keys, current, next)
       subsetPowerLemma(nextDiff.toList, currentDiff.toList, validatorSet)
       check(validatorSet.nodesPower(currentDiff.toList) >= validatorSet.nodesPower(nextDiff.toList))
     }

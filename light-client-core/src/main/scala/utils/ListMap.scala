@@ -83,6 +83,7 @@ case class ListMap[A, B](toList: List[(A, B)]) {
 
 }
 
+@library
 object ListMap {
   def empty[A, B]: ListMap[A, B] = ListMap(List.empty[(A, B)])
 

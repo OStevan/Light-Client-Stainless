@@ -5,7 +5,6 @@ import stainless.collection._
 import stainless.lang._
 import stainless.lang.StaticChecks.{assert, require}
 import stainless.proof._
-import utils.ListSetUtils.instantiateForAll
 
 /**
  * Copied as is from {@link https://github.com/epfl-lara/verifythis2020/blob/f10e38d864838f70e0bf880d48e40de8e815fbec/src/main/scala/pgp/ListUtils.scala}.
@@ -28,12 +27,6 @@ object ListUtils {
     require(l.forall(a => p(f(a))))
 
   }.ensuring(_ => l.map(f).forall(p))
-
-  @opaque
-  def subsetContains[T](@induct l1: List[T], l2: List[T]): Unit = {
-    require(l1.content.subsetOf(l2.content))
-
-  }.ensuring(_ => l1.forall(l2.contains))
 
   @opaque
   def forallContained[T](l: List[T], p: T => Boolean, x: T): Unit = {
@@ -297,8 +290,8 @@ object ListUtils {
   def transitivityLemma[T](first: List[T], second: List[T], third: List[T]): Unit = {
     require(first.forall(second.contains) && second.forall(third.contains))
     if (first.nonEmpty) {
-      instantiateForAll(first.head, first, second.contains)
-      instantiateForAll(first.head, second, third.contains)
+      transitivePredicate(first.head, first.contains, second.contains)
+      transitivePredicate(first.head, second.contains, third.contains)
       transitivityLemma(first.tail, second, third)
     }
   }.ensuring(_ => first.forall(third.contains))
@@ -362,6 +355,54 @@ object ListUtils {
     ListUtils.selfContainment(firstIntersection)
     ListUtils.expandPredicate(firstIntersection, firstIntersection.contains, secondIntersection.contains)
     firstIntersection.forall(secondIntersection.contains)
+  }
+
+  @opaque
+  def containmentRelationship[T](elem: T, @induct first: List[T], second: List[T]): Unit = {
+    require(first.forall(second.contains))
+  }.ensuring(_ ⇒ first.contains(elem) ==> second.contains(elem))
+
+  @opaque
+  def transitivePredicate[T](elem: T, list: T ⇒ Boolean, p: T => Boolean): Unit = {
+    require(list(elem) ==> p(elem) && list(elem))
+  }.ensuring(_ => p(elem))
+
+  @opaque
+  def reflexivity[T](list: List[T]): Unit = {
+    list match {
+      case Nil() => ()
+      case Cons(_, t) =>
+        reflexivity(t)
+        ListUtils.containedTail(t, list)
+    }
+  }.ensuring(_ => list.forall(list.contains))
+
+  @opaque
+  def filteringWithExpandingPredicateCreatesSubsets[T](first: T ⇒ Boolean, second: T ⇒ Boolean, list: List[T]): Unit = {
+    require(forall((elem: T) ⇒ first(elem) ==> second(elem)))
+    list match {
+      case Nil() =>
+      case Cons(h, t) =>
+        filteringWithExpandingPredicateCreatesSubsets(first, second, t)
+        val secondTailFiltered = t.filter(node => second(node))
+        val secondFiltered = list.filter(node => second(node))
+        ListUtils.reflexivity(secondFiltered)
+        assert(secondTailFiltered.forall(secondFiltered.contains))
+
+        val firstTailFiltered = t.filter(node => first(node))
+        assert(firstTailFiltered.forall(secondTailFiltered.contains))
+
+        if (!first(h)) {
+          ListUtils.transitivityLemma(firstTailFiltered, secondTailFiltered, secondFiltered)
+        } else {
+          ListUtils.transitivePredicate(h, first, second)
+          ListUtils.transitivityLemma(firstTailFiltered, secondTailFiltered, secondFiltered)
+        }
+    }
+  }.ensuring { _ =>
+    val secondFiltered = list.filter(node => second(node))
+    val firstFiltered = list.filter(node => first(node))
+    firstFiltered.forall(secondFiltered.contains)
   }
 
 }

@@ -4,6 +4,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Validators.{InfoHasha
 import stainless.annotation._
 import stainless.collection._
 import stainless.lang._
+import stainless.lang.StaticChecks.require
 import utils._
 import utils.ListSetUtils._
 
@@ -59,10 +60,14 @@ object ValidatorSet {
     ListUtils.transitivityLemma(first, second, validatorSet.powerAssignments.toList.map(_._1))
     val firstFiltered = validatorSet.powerAssignments.toList.filter(node => first.contains(node._1))
     uniquenessTransitivity(validatorSet.powerAssignments.toList)
-    filteringPreservesPredicate(first, validatorSet.powerAssignments.toList)
+    filteringPreservesPredicate(
+      validatorSet.powerAssignments.toList,
+      (node: (Address, Validator)) => first.contains(node._1))
 
     val secondFiltered = validatorSet.powerAssignments.toList.filter(node => second.contains(node._1))
-    filteringPreservesPredicate(second, validatorSet.powerAssignments.toList)
+    filteringPreservesPredicate(
+      validatorSet.powerAssignments.toList,
+      (node: (Address, Validator)) => second.contains(node._1))
 
     subsetFilteringCreatesSubsets(first, second, validatorSet.powerAssignments.toList)
 
