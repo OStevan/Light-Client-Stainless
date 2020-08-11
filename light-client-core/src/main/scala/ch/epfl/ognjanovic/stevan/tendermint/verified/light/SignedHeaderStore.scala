@@ -2,8 +2,8 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.{opaque, pure}
+import stainless.collection.ListMap
 import stainless.lang._
-import utils.ListMap
 
 object SignedHeaderStore {
 

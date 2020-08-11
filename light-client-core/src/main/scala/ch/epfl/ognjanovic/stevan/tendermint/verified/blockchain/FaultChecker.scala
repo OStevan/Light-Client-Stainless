@@ -3,9 +3,9 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Address, ValidatorSet, VotingPower}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.ValidatorSet.{correctLemma, subsetPowerLemma}
 import stainless.annotation.{ghost, opaque, pure}
+import stainless.collection.{ListSet, ListSetSpec, ListSpecs}
 import stainless.lang._
 import stainless.proof.check
-import utils.{ListSet, ListUtils}
 
 case class FaultChecker() {
 
@@ -43,7 +43,7 @@ object FaultChecker {
     val nextDiff = keys -- next
 
     val difference_proof = {
-      ListSet.lemmas.subsetRemovalLemma(keys, current, next)
+      ListSetSpec.subsetRemovalLemma(keys, current, next)
       subsetPowerLemma(nextDiff.toList, currentDiff.toList, validatorSet)
       check(validatorSet.nodesPower(currentDiff.toList) >= validatorSet.nodesPower(nextDiff.toList))
     }
@@ -51,7 +51,7 @@ object FaultChecker {
     val nextIntersection = keys & next
     val currentIntersection = keys & current
     val intersection_proof = {
-      ListUtils.listSubsetIntersectionLemma(keys.toList, current.toList, next.toList)
+      ListSpecs.listSubsetIntersectionLemma(keys.toList, current.toList, next.toList)
       subsetPowerLemma(currentIntersection.toList, nextIntersection.toList, validatorSet)
       check(validatorSet.nodesPower(currentIntersection.toList) <= validatorSet.nodesPower(nextIntersection.toList))
     }

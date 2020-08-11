@@ -3,8 +3,8 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Chain ⇒ _, _}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain._
 import stainless.annotation.{extern, induct, opaque, pure}
+import stainless.collection.ListSet
 import stainless.lang._
-import utils.ListSet
 
 case class Blockchain(
   maxHeight: Height,

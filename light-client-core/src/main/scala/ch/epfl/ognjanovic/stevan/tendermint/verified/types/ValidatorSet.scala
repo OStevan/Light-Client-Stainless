@@ -5,8 +5,6 @@ import stainless.annotation._
 import stainless.collection._
 import stainless.lang._
 import stainless.lang.StaticChecks.require
-import utils._
-import utils.ListSetUtils._
 
 case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Address, Validator]) {
   require(
@@ -56,19 +54,19 @@ object ValidatorSet {
         ListOps.noDuplicate(first) &&
         ListOps.noDuplicate(second)
     )
-    ListUtils.transitivityLemma(first, second, validatorSet.powerAssignments.toList.map(_._1))
+    ListSpecs.transitivityLemma(first, second, validatorSet.powerAssignments.toList.map(_._1))
     val firstFiltered = validatorSet.powerAssignments.toList.filter(node => first.contains(node._1))
-    uniquenessTransitivity(validatorSet.powerAssignments.toList)
-    filteringPreservesPredicate(
+    ListSetSpec.uniquenessTransitivity(validatorSet.powerAssignments.toList)
+    ListSetSpec.filteringPreservesPredicate(
       validatorSet.powerAssignments.toList,
       (node: (Address, Validator)) => first.contains(node._1))
 
     val secondFiltered = validatorSet.powerAssignments.toList.filter(node => second.contains(node._1))
-    filteringPreservesPredicate(
+    ListSetSpec.filteringPreservesPredicate(
       validatorSet.powerAssignments.toList,
       (node: (Address, Validator)) => second.contains(node._1))
 
-    subsetFilteringCreatesSubsets(first, second, validatorSet.powerAssignments.toList)
+    ListSetSpec.subsetFilteringCreatesSubsets(first, second, validatorSet.powerAssignments.toList)
 
     subsetSumLessEq(firstFiltered, secondFiltered)
   }.ensuring(_ => validatorSet.nodesPower(first) <= validatorSet.nodesPower(second))
@@ -77,7 +75,7 @@ object ValidatorSet {
   @ghost
   def subsetSumLessEq(@induct first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
     require(first.forall(second.contains) && ListOps.noDuplicate(first) && ListOps.noDuplicate(second))
-    val difference = removingFromSet(second, first)
+    val difference = ListSetSpec.removingFromSet(second, first)
     sumWithDifferenceIsEqual(first, second)
     appendSameAsAddition(first, difference)
     appendIncreases(first, difference)
@@ -93,13 +91,13 @@ object ValidatorSet {
       case Cons(h, t) if first.contains(h) =>
         val removed = first - h
         removeOne(h, first)
-        ListUtils.nonContainedElementDoesNotInfluenceDifference(h, first, t)
-        listSetRemoveHeadSameAsSubtraction(second)
-        ListUtils.removingContainment(h, first, second)
+        ListSpecs.nonContainedElementDoesNotInfluenceDifference(h, first, t)
+        ListSetSpec.listSetRemoveHeadSameAsSubtraction(second)
+        ListSpecs.removingContainment(h, first, second)
         sumWithDifferenceIsEqual(removed, t)
 
       case Cons(_, t) =>
-        ListUtils.doesNotHaveHeadContainedInTail(first, second)
+        ListSpecs.doesNotHaveHeadContainedInTail(first, second)
         sumWithDifferenceIsEqual(first, t)
     }
   }.ensuring(_ => sumVotingPower(first) + sumVotingPower(second -- first) == sumVotingPower(second))
@@ -110,7 +108,7 @@ object ValidatorSet {
     require(ListOps.noDuplicate(list) && list.contains(elem) && list.nonEmpty)
     list match {
       case Cons(_, Nil()) => ()
-      case Cons(_, tail) if !tail.contains(elem) => ListUtils.removingNonContained(tail, elem)
+      case Cons(_, tail) if !tail.contains(elem) => ListSpecs.removingNonContained(tail, elem)
       case Cons(_, tail) => removeOne(elem, tail)
     }
   }.ensuring(_ =>

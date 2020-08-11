@@ -5,8 +5,9 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.Syst
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain.Genesis
 import stainless.annotation._
+import stainless.collection.ListSet
 import stainless.lang._
-import utils.ListSet
+import stainless.proof.check
 
 object BlockchainSystem {
 
