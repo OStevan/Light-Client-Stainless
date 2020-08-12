@@ -26,12 +26,7 @@ case class MultiStepVerifier(
     if (verifiedState.currentHeight() == untrustedTrace.targetLimit)
       Finished(Left(()), verifiedState, untrustedTrace)
     else {
-
       val nextHeight = untrustedTrace.targetLimit
-
-      assert(untrustedTrace.bottomHeight().map(nextHeight < _).getOrElse(true))
-      assert(verifiedState.currentHeight() < nextHeight)
-      assert(nextHeight <= untrustedTrace.targetLimit)
       verify(WaitingForHeader(nextHeight, verifiedState, untrustedTrace))
     }
   }
@@ -82,7 +77,6 @@ case class MultiStepVerifier(
     decreases(untrustedTrace.targetLimit.value - verifiedState.currentHeight().value)
 
     val lightBlock = lightBlockProvider.lightBlock(next)
-    assert(lightBlock.header.height == next)
 
     // without a caching light block provider this is extremely wasteful but the algorithm is simpler.
     verifier.verify(verifiedState, lightBlock) match {

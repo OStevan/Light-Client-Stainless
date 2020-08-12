@@ -132,8 +132,6 @@ object BlockchainStates {
             blockchain.faultChecker.isCorrect(nextValidatorSet, faulty)
           ) {
             val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
-            assert(newBlockchain.chain.head.validatorSet.keys.subsetOf(allNodes))
-            assert(globalStateInvariant(allNodes, faulty, newBlockchain))
 
             if (newBlockchain.finished)
               Finished(allNodes, faulty, newBlockchain)

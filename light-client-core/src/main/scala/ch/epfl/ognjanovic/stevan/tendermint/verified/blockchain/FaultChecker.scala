@@ -62,16 +62,6 @@ object FaultChecker {
       validatorSet.nodesPower(nextDiff.toList),
       validatorSet.nodesPower(nextIntersection.toList)
     )
-
-    assert(
-      !(validatorSet.nodesPower(currentDiff.toList) > validatorSet.nodesPower(currentIntersection.toList) * VotingPower(
-        2)) ==>
-        !(validatorSet.nodesPower(nextDiff.toList) > validatorSet.nodesPower(nextIntersection.toList) * VotingPower(2)))
-    assert(faultChecker.isCorrect(validatorSet, current) ==
-      validatorSet.nodesPower(currentDiff.toList) > validatorSet.nodesPower(currentIntersection.toList) * VotingPower(2))
-    assert(
-      faultChecker.isCorrect(validatorSet, next) ==
-        validatorSet.nodesPower(nextDiff.toList) > validatorSet.nodesPower(nextIntersection.toList) * VotingPower(2))
   }.ensuring(_ => !faultChecker.isCorrect(validatorSet, current) ==> !faultChecker.isCorrect(validatorSet, next))
 
 }
