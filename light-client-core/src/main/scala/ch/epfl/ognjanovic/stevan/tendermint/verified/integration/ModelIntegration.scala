@@ -38,7 +38,6 @@ object ModelIntegration {
     assert(heightToVerify <= untrustedTrace.targetLimit)
 
     val lightBlockVerifier = DefaultTrustVerifier()
-
     MultiStepVerifier(
       soundSignedHeaderProvider,
       Verifier(
@@ -71,7 +70,6 @@ object ModelIntegration {
 
     @pure
     override def currentHeight: Height = {
-      assert(blockchainState.currentHeight() >= Height(2)) // helps with verification
       Height(blockchainState.currentHeight().value - 1)
     }
 
