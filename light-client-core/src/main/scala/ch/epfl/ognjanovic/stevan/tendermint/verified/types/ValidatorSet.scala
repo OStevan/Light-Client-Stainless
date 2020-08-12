@@ -15,7 +15,6 @@ case class ValidatorSet(totalPower: VotingPower, powerAssignments: ListMap[Addre
       !powerAssignments.isEmpty)
 
   @pure
-  @extern
   def keys: ListSet[Address] = {
     ListSet(powerAssignments.toList.map(_._1))
   }.ensuring(res => res.nonEmpty)

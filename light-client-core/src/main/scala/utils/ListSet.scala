@@ -79,6 +79,11 @@ object ListSet {
       ListUtils.transitivityLemma(first.toList, second.toList, third.toList)
     }.ensuring(_ ⇒ first.subsetOf(third))
 
+    @opaque
+    def selfContained[T](listSet: ListSet[T]): Unit = {
+      ListUtils.reflexivity(listSet.toList)
+    }.ensuring(_ ⇒ listSet.subsetOf(listSet))
+
   }
 
 }

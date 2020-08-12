@@ -6,12 +6,11 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain.Genesis
 import stainless.annotation._
 import stainless.lang._
-import stainless.proof.check
 import utils.ListSet
 
 object BlockchainSystem {
 
-  @ghost @extern
+  @ghost
   def initialSystem(
     faultChecker: FaultChecker,
     validatorSet: ValidatorSet,
@@ -36,14 +35,12 @@ object BlockchainSystem {
     val startingBlockchain: Blockchain =
       Blockchain(maxHeight, minTrustedTime, Duration(100, 0), initialChain, ListSet.empty, faultChecker)
 
+    val allNodes = validatorSet.keys
+    ListSet.lemmas.selfContained(allNodes)
     if (maxHeight.value == BigInt(1)) {
-      val res = Finished(validatorSet.keys, noFaulty, startingBlockchain)
-      check(res.isInstanceOf[Finished])
-      res
+      Finished(allNodes, noFaulty, startingBlockchain)
     } else {
-      val res = Running(validatorSet.keys, noFaulty, maxPower, startingBlockchain)
-      check(res.isInstanceOf[Running])
-      res
+      Running(allNodes, noFaulty, maxPower, startingBlockchain)
     }
   }.ensuring(res => neverStuckFalse2(res))
 
@@ -59,7 +56,6 @@ object BlockchainSystem {
    * @return if the invariant holds
    */
   @ghost
-  @inlineOnce
   def neverStuckFalse2(blockchainState: BlockchainState): Boolean = {
     blockchainState.isInstanceOf[Faulty] ||
     blockchainState.isInstanceOf[Running] ||
