@@ -5,6 +5,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation._
 import stainless.lang._
+import stainless.lang.StaticChecks.assert
 import utils.ListSet
 
 object BlockchainStates {
@@ -131,8 +132,8 @@ object BlockchainStates {
             blockchain.faultChecker.isCorrect(nextValidatorSet, faulty)
           ) {
             val newBlockchain = blockchain.appendBlock(lastCommit, nextValidatorSet)
-//            assert(newBlockchain.chain.head.validatorSet.keys.subsetOf(allNodes))
-//            assert(globalStateInvariant(allNodes, faulty, newBlockchain))
+            assert(newBlockchain.chain.head.validatorSet.keys.subsetOf(allNodes))
+            assert(globalStateInvariant(allNodes, faulty, newBlockchain))
 
             if (newBlockchain.finished)
               Finished(allNodes, faulty, newBlockchain)

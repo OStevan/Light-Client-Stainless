@@ -33,9 +33,9 @@ object ModelIntegration {
     val verifiedState: VerifiedState =
       SimpleVerifiedState(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
     val untrustedTrace = InMemoryUntrustedTrace(heightToVerify, List.empty)
-//    assert(untrustedTrace.bottomHeight().forall(heightToVerify < _))
-//    assert(verifiedState.currentHeight() < heightToVerify)
-//    assert(heightToVerify <= untrustedTrace.targetLimit)
+    assert(untrustedTrace.bottomHeight().forall(heightToVerify < _))
+    assert(verifiedState.currentHeight() < heightToVerify)
+    assert(heightToVerify <= untrustedTrace.targetLimit)
 
     val lightBlockVerifier = DefaultTrustVerifier()
 
