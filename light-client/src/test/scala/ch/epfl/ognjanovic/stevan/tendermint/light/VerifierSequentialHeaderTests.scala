@@ -37,6 +37,20 @@ sealed class VerifierSequentialHeaderTests extends AnyFlatSpec with VerifierTest
     assert(result.isInstanceOf[Failure] && result.asInstanceOf[Failure].reason == InvalidCommitValue)
   }
 
+  "Non monotonic header height value" should "trow an exception" in {
+    val (verifier, verifiedState, provider) =
+      buildTest(
+        VerifierTests.testCase("/single-step/sequential/header/non_monotonic_header_height.json"),
+        votingPowerVerifier)
+
+    val requestHeight = Height(1)
+    val nonMonotonicHeader = provider.lightBlock(requestHeight)
+
+    assertThrows[IllegalArgumentException] {
+      verifier.verify(verifiedState, nonMonotonicHeader)
+    }
+  }
+
   "Wrong header timestamp" should "fail verification" in {
     val (verifier, verifiedState, provider) =
       buildTest(
