@@ -1,21 +1,24 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
+import java.util.concurrent.TimeUnit
+
 import ch.epfl.ognjanovic.stevan.tendermint.light.cases.{MultiStepTestCase, SingleStepTestCase}
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.PeerList
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFactories._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.DefaultMultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactories._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.{
   ParameterizedVotingPowerVerifier,
   VotingPowerVerifier
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height, LightBlock, PeerId}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 
+import scala.concurrent.duration.Duration
 import scala.io.Source
 
 trait VerifierTests {
@@ -30,7 +33,8 @@ trait VerifierTests {
     votingPowerVerifier: VotingPowerVerifier): (Verifier, VerifiedState, LightBlockProvider) = {
     val expirationCheckerConfig = TimeBasedExpirationCheckerConfig(
       () ⇒ singleStepTestCase.initial.now,
-      Duration(0, singleStepTestCase.initial.trusting_period))
+      Duration.fromNanos(singleStepTestCase.initial.trusting_period),
+      Duration.apply(1, TimeUnit.MICROSECONDS))
 
     val peerId = PeerId(singleStepTestCase.initial.next_validator_set.values.head.publicKey)
 
@@ -75,7 +79,10 @@ trait VerifierTests {
     (
       PeerList.fromScala(witnesses.updated(peerId, primary), peerId, witnesses.keys.toList, List.empty, List.empty),
       SimpleVerifiedState(primary.lightBlock(multiStepTestCase.trust_options.trustedHeight), trustVerifier),
-      TimeBasedExpirationCheckerConfig(() ⇒ multiStepTestCase.now, multiStepTestCase.trust_options.trustPeriod),
+      TimeBasedExpirationCheckerConfig(
+        () ⇒ multiStepTestCase.now,
+        Duration.fromNanos(multiStepTestCase.trust_options.trustPeriod.toNanoseconds.toLong),
+        Duration.apply(1, TimeUnit.MICROSECONDS)),
       Height(multiStepTestCase.height_to_verify)
     )
   }

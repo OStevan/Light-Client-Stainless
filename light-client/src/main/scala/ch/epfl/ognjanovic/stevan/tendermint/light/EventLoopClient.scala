@@ -7,11 +7,11 @@ import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor._
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStore
 import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.Trusted
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.{PeerList ⇒ GenericPeerList}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFactories.ExpirationCheckerConfiguration
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.MultiStepVerifierFactory
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactories.ExpirationCheckerConfiguration
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.UntrustedTrace
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 import stainless.lang

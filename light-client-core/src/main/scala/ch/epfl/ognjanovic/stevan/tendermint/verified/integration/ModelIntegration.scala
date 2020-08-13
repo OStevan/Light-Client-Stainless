@@ -54,8 +54,9 @@ object ModelIntegration {
     override def verifyCommitSignatures(lightBlock: LightBlock): Boolean = true
   }
 
-  private[integration] case class HeightBasedExpirationChecker(height: Height) extends ExpirationChecker {
+  private[integration] case class HeightBasedTimeValidator(height: Height) extends TimeValidator {
     override def isExpired(lightBlock: LightBlock): Boolean = height > lightBlock.header.height
+    override def fromFuture(lightBlock: LightBlock): Boolean = false
   }
 
   private[integration] case class BlockchainLightBlockProviders(blockchainState: BlockchainState)

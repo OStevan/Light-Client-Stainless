@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 import ch.epfl.ognjanovic.stevan.tendermint.hashing.Hashers.DefaultHasher
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFactories.{
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactories.{
   ExpirationCheckerConfiguration,
   ExpirationCheckerFactory
 }
