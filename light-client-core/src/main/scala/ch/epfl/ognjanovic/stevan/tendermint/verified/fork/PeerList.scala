@@ -33,14 +33,14 @@ case class PeerList[Id, Instance](
     val newFaultyIds = primaryId :: faultyNodeIds
     val newPrimary = witnessesIds.head
     val newWitnesses = witnessesIds - witnessesIds.head
-    ListSetSpec.listSetRemoveHeadSameAsSubtraction(witnessesIds)
+    ListSetSpecs.listSetRemoveHeadSameAsSubtraction(witnessesIds)
     PeerList.removalLemma(witnessesIds.head, mapping, witnessesIds)
 
     if (fullNodeIds.isEmpty)
       PeerList[Id, Instance](mapping, newPrimary, newWitnesses, fullNodeIds, newFaultyIds)
     else {
       val newFullNodes = fullNodeIds - fullNodeIds.head
-      ListSetSpec.listSetRemoveHeadSameAsSubtraction(fullNodeIds)
+      ListSetSpecs.listSetRemoveHeadSameAsSubtraction(fullNodeIds)
       PeerList.removalLemma(fullNodeIds.head, mapping, fullNodeIds)
 
       PeerList[Id, Instance](mapping, newPrimary, fullNodeIds.head :: newWitnesses, newFullNodes, newFaultyIds)
@@ -52,7 +52,7 @@ case class PeerList[Id, Instance](
 
     val newFaulty = peerId :: faultyNodeIds
     val newWitnessSet = witnessesIds - peerId
-    ListSetSpec.removingFromASetResultsInASet(peerId, witnessesIds)
+    ListSetSpecs.removingFromASetResultsInASet(peerId, witnessesIds)
     PeerList.removalLemma(peerId, mapping, witnessesIds)
     PeerList.mapContainmentTransitivity(mapping, witnessesIds)
     PeerList.elementSpillLemma(peerId, mapping, faultyNodeIds)
@@ -62,7 +62,7 @@ case class PeerList[Id, Instance](
     else {
       val fullWitnessSet = fullNodeIds.head :: newWitnessSet
       val newFullNodeIds = fullNodeIds - fullNodeIds.head
-      ListSetSpec.listSetRemoveHeadSameAsSubtraction(fullNodeIds)
+      ListSetSpecs.listSetRemoveHeadSameAsSubtraction(fullNodeIds)
       PeerList.removalLemma(fullNodeIds.head, mapping, fullNodeIds)
 
       PeerList[Id, Instance](mapping, primaryId, fullWitnessSet, newFullNodeIds, newFaulty)

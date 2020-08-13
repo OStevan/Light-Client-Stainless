@@ -5,9 +5,8 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.SystemSteps.Syst
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Chain.Genesis
 import stainless.annotation._
-import stainless.collection.ListSet
+import stainless.collection.{ListSet, ListSetSpecs}
 import stainless.lang._
-import stainless.proof.check
 
 object BlockchainSystem {
 
@@ -37,7 +36,7 @@ object BlockchainSystem {
       Blockchain(maxHeight, minTrustedTime, Duration(100, 0), initialChain, ListSet.empty, faultChecker)
 
     val allNodes = validatorSet.keys
-    ListSet.lemmas.selfContained(allNodes)
+    ListSetSpecs.subsetRefl(allNodes)
     if (maxHeight.value == BigInt(1)) {
       Finished(allNodes, noFaulty, startingBlockchain)
     } else {

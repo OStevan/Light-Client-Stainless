@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Address, ValidatorSet, VotingPower}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.ValidatorSet.{correctLemma, subsetPowerLemma}
 import stainless.annotation.{ghost, opaque, pure}
-import stainless.collection.{ListSet, ListSetSpec, ListSpecs}
+import stainless.collection.{ListSet, ListSetSpecs, ListSpecs}
 import stainless.lang._
 import stainless.proof.check
 
@@ -43,7 +43,7 @@ object FaultChecker {
     val nextDiff = keys -- next
 
     val difference_proof = {
-      ListSetSpec.subsetRemovalLemma(keys, current, next)
+      ListSetSpecs.subsetRemovalLemma(keys, current, next)
       subsetPowerLemma(nextDiff.toList, currentDiff.toList, validatorSet)
       check(validatorSet.nodesPower(currentDiff.toList) >= validatorSet.nodesPower(nextDiff.toList))
     }

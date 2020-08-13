@@ -56,17 +56,17 @@ object ValidatorSet {
     )
     ListSpecs.transitivityLemma(first, second, validatorSet.powerAssignments.toList.map(_._1))
     val firstFiltered = validatorSet.powerAssignments.toList.filter(node => first.contains(node._1))
-    ListSetSpec.uniquenessTransitivity(validatorSet.powerAssignments.toList)
-    ListSetSpec.filteringPreservesPredicate(
+    ListSetSpecs.uniquenessTransitivity(validatorSet.powerAssignments.toList)
+    ListSetSpecs.filteringPreservesPredicate(
       validatorSet.powerAssignments.toList,
       (node: (Address, Validator)) => first.contains(node._1))
 
     val secondFiltered = validatorSet.powerAssignments.toList.filter(node => second.contains(node._1))
-    ListSetSpec.filteringPreservesPredicate(
+    ListSetSpecs.filteringPreservesPredicate(
       validatorSet.powerAssignments.toList,
       (node: (Address, Validator)) => second.contains(node._1))
 
-    ListSetSpec.subsetFilteringCreatesSubsets(first, second, validatorSet.powerAssignments.toList)
+    ListSetSpecs.subsetFilteringCreatesSubsets(first, second, validatorSet.powerAssignments.toList)
 
     subsetSumLessEq(firstFiltered, secondFiltered)
   }.ensuring(_ => validatorSet.nodesPower(first) <= validatorSet.nodesPower(second))
@@ -75,7 +75,7 @@ object ValidatorSet {
   @ghost
   def subsetSumLessEq(@induct first: List[(Address, Validator)], second: List[(Address, Validator)]): Unit = {
     require(first.forall(second.contains) && ListOps.noDuplicate(first) && ListOps.noDuplicate(second))
-    val difference = ListSetSpec.removingFromSet(second, first)
+    val difference = ListSetSpecs.removingFromSet(second, first)
     sumWithDifferenceIsEqual(first, second)
     appendSameAsAddition(first, difference)
     appendIncreases(first, difference)
@@ -92,7 +92,7 @@ object ValidatorSet {
         val removed = first - h
         removeOne(h, first)
         ListSpecs.nonContainedElementDoesNotInfluenceDifference(h, first, t)
-        ListSetSpec.listSetRemoveHeadSameAsSubtraction(second)
+        ListSetSpecs.listSetRemoveHeadSameAsSubtraction(second)
         ListSpecs.removingContainment(h, first, second)
         sumWithDifferenceIsEqual(removed, t)
 

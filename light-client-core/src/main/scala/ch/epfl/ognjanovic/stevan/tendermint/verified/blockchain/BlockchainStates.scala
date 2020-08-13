@@ -6,7 +6,6 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation._
 import stainless.collection.ListSet
 import stainless.lang._
-import stainless.lang.StaticChecks.assert
 
 object BlockchainStates {
 
