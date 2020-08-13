@@ -52,7 +52,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       }
 
   "Receiving conflicting headers from witnesses" should "result in a failed synchronization" in {
-    val (peerList, verifiedState, expirationCheckerConfiguration, heightToVerify) =
+    val (peerList, verifiedState, timeValidatorConfig, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/conflicting_headers.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
@@ -63,7 +63,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       votingPowerVerifier,
       multiStepVerifierFactory,
       height ⇒ untrustedTraceFactory.emptyWithTarget(height),
-      expirationCheckerConfiguration,
+      timeValidatorConfig,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
@@ -78,7 +78,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
   }
 
   "Conflicting commit from one of the witnesses" should "result in a failed synchronization" in {
-    val (peerList, verifiedState, expirationCheckerConfiguration, heightToVerify) =
+    val (peerList, verifiedState, timeValidatorConfig, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/conflicting_valid_commits_from_one_of_the_witnesses.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
@@ -89,7 +89,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       votingPowerVerifier,
       multiStepVerifierFactory,
       height ⇒ untrustedTraceFactory.emptyWithTarget(height),
-      expirationCheckerConfiguration,
+      timeValidatorConfig,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
@@ -104,7 +104,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
   }
 
   "Conflicting commit from the only witnesses" should "result in a failed synchronization" in {
-    val (peerList, verifiedState, expirationCheckerConfiguration, heightToVerify) =
+    val (peerList, verifiedState, timeValidatorConfig, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/conflicting_valid_commits_from_the_only_witness.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
@@ -115,7 +115,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       votingPowerVerifier,
       multiStepVerifierFactory,
       height ⇒ untrustedTraceFactory.emptyWithTarget(height),
-      expirationCheckerConfiguration,
+      timeValidatorConfig,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
@@ -130,7 +130,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
   }
 
   "Malicious validator set" should "result in a failed synchronization" in {
-    val (peerList, verifiedState, expirationCheckerConfiguration, heightToVerify) =
+    val (peerList, verifiedState, timeValidatorConfig, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/malicious_validator_set.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
@@ -141,7 +141,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       votingPowerVerifier,
       multiStepVerifierFactory,
       height ⇒ untrustedTraceFactory.emptyWithTarget(height),
-      expirationCheckerConfiguration,
+      timeValidatorConfig,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),

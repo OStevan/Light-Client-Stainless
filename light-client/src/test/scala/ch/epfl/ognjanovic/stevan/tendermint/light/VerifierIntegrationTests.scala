@@ -6,25 +6,25 @@ import java.util.concurrent.TimeUnit
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.TendermintSingleNodeContainer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.TendermintSingleNodeContainer.Def
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.ExpirationCheckerFactories.{
-  DefaultExpirationCheckerFactory,
-  TimeBasedExpirationCheckerConfig
-}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviderFactories.{
   CachingLightBlockProviderFactory,
   DefaultLightBlockProviderFactory
 }
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.DefaultMultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleVerifiedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactories.{
+  DefaultTimeValidatorFactory,
+  InstantTimeValidatorConfig
+}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.InMemoryUntrustedTrace
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleVerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Duration, Height}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 import com.dimafeng.testcontainers.scalatest.TestContainerForAll
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.concurrent.duration.{Duration ⇒ ScalaDuration}
+import scala.concurrent.duration.Duration
 
 sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForAll {
 
@@ -35,13 +35,11 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
     Thread.sleep(500)
   }
 
-  private val lightBlockProviderFactory = new CachingLightBlockProviderFactory(
-    ScalaDuration.apply(1, TimeUnit.HOURS),
-    500,
-    new DefaultLightBlockProviderFactory())
+  private val lightBlockProviderFactory =
+    new CachingLightBlockProviderFactory(Duration.apply(1, TimeUnit.HOURS), 500, new DefaultLightBlockProviderFactory())
 
-  private val expirationCheckerFactory = DefaultExpirationCheckerFactory
-  private val verifierFactory = new DefaultVerifierFactory(expirationCheckerFactory)
+  private val timeValidatorFactory = DefaultTimeValidatorFactory
+  private val verifierFactory = new DefaultVerifierFactory(timeValidatorFactory)
   private val multiStepVerifierFactory = new DefaultMultiStepVerifierFactory(verifierFactory, BisectionHeightCalculator)
 
   "Verification of a newest light block with a trusted state at height 1 " should "succeed" in withContainers {
@@ -50,23 +48,22 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
         lightBlockProviderFactory.constructProvider(secure = false, myContainer.url, Some(myContainer.rpcPort))
       val votingPowerVerifier = VotingPowerVerifiers.defaultVotingPowerVerifier
       val trustedLightBlock = primary.lightBlock(Height(1))
-      val now = Instant.now()
-      val trustDuration =
-        Duration(
-          86400 +
-            ChronoUnit.SECONDS.between(
-              Instant.ofEpochSecond(
-                trustedLightBlock.header.time.seconds.toLong,
-                trustedLightBlock.header.time.nanos.toLong),
-              Instant.now()
-            ),
-          0
-        )
+//      val now = Instant.now()
+      val trustDuration = Duration.apply(
+        86400 +
+          ChronoUnit.SECONDS.between(
+            Instant.ofEpochSecond(
+              trustedLightBlock.header.time.seconds.toLong,
+              trustedLightBlock.header.time.nanos.toLong),
+            Instant.now()
+          ),
+        TimeUnit.SECONDS
+      )
 
       val multiStepVerifier = multiStepVerifierFactory.constructVerifier(
         primary,
         votingPowerVerifier,
-        TimeBasedExpirationCheckerConfig(() ⇒ now, trustDuration))
+        InstantTimeValidatorConfig(() ⇒ Instant.now(), trustDuration, Duration.apply(5, TimeUnit.MINUTES)))
       val verifiedState = SimpleVerifiedState(trustedLightBlock, votingPowerVerifier)
 
       while (primary.currentHeight == Height(1)) {
@@ -90,23 +87,22 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
         lightBlockProviderFactory.constructProvider(secure = false, myContainer.url, Some(myContainer.rpcPort))
       val votingPowerVerifier = VotingPowerVerifiers.defaultVotingPowerVerifier
       val trustedLightBlock = primary.lightBlock(Height(1))
-      val now = Instant.now()
-      val trustDuration =
-        Duration(
-          86400 +
-            ChronoUnit.SECONDS.between(
-              Instant.ofEpochSecond(
-                trustedLightBlock.header.time.seconds.toLong,
-                trustedLightBlock.header.time.nanos.toLong),
-              Instant.now()
-            ),
-          0
-        )
+//      val now = Instant.now()
+      val trustDuration = Duration.apply(
+        86400 +
+          ChronoUnit.SECONDS.between(
+            Instant.ofEpochSecond(
+              trustedLightBlock.header.time.seconds.toLong,
+              trustedLightBlock.header.time.nanos.toLong),
+            Instant.now()
+          ),
+        TimeUnit.SECONDS
+      )
 
       val multiStepVerifier = multiStepVerifierFactory.constructVerifier(
         primary,
         votingPowerVerifier,
-        TimeBasedExpirationCheckerConfig(() ⇒ now, trustDuration))
+        InstantTimeValidatorConfig(() ⇒ Instant.now(), trustDuration, Duration.apply(5, TimeUnit.MINUTES)))
       val verifiedState = SimpleVerifiedState(trustedLightBlock, votingPowerVerifier)
 
       while (primary.currentHeight == Height(1)) {

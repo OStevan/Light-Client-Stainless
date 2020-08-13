@@ -47,7 +47,7 @@ sealed class VerifierSequentialCommitTests extends AnyFlatSpec with VerifierTest
   "Byzantine consensus not obtained on commit" should "succeed for height 2" in {
     val (verifier, verifiedState, provider) =
       buildTest(
-        VerifierTests.testCase("/single-step/sequential/commit/one_third_vals_don't_sign.json"),
+        VerifierTests.testCase("/single-step/sequential/commit/one_third_vals_dont_sign.json"),
         votingPowerVerifier)
 
     val requestHeight = Height(2)

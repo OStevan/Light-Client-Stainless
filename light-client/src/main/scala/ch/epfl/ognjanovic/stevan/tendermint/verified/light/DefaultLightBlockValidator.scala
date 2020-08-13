@@ -8,7 +8,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
 import stainless.lang.{Either, Right}
 
 case class DefaultLightBlockValidator(
-  expirationChecker: ExpirationChecker,
+  timeValidator: TimeValidator,
   commitValidator: CommitValidator,
   headerHasher: Hasher)
     extends LightBlockValidator {
@@ -16,8 +16,10 @@ case class DefaultLightBlockValidator(
   override def validateUntrustedBlock(
     trustedLightBlock: LightBlock,
     untrustedLightBlock: LightBlock): Either[Unit, VerificationErrors.VerificationError] = {
-    if (expirationChecker.isExpired(trustedLightBlock))
+    if (timeValidator.isExpired(trustedLightBlock))
       Right(ExpiredVerifiedState)
+    else if (timeValidator.fromFuture(untrustedLightBlock))
+      Right(HeaderFromFuture)
     else if (trustedLightBlock.header.chainId != untrustedLightBlock.header.chainId)
       Right(InvalidHeader)
     else if (untrustedLightBlock.header.validators != headerHasher.hashValidatorSet(untrustedLightBlock.validatorSet))

@@ -24,4 +24,6 @@ object VerificationErrors {
 
   case object ExpiredVerifiedState extends VerificationError
 
+  case object HeaderFromFuture extends VerificationError
+
 }

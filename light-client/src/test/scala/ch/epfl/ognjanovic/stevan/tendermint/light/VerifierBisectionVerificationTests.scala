@@ -84,6 +84,17 @@ sealed class VerifierBisectionVerificationTests extends AnyFlatSpec with Verifie
     assert(result.asInstanceOf[Failure].reason == InsufficientCommitPower)
   }
 
+  "Header from a future should" should "fail" in {
+    val (verifier, verifiedState, provider) =
+      buildTest(VerifierTests.testCase("/single-step/skipping/header/header_from_future.json"), votingPowerVerifier)
+
+    val requestHeight = Height(3)
+    val result = verifier.verify(verifiedState, provider.lightBlock(requestHeight))
+
+    assert(result.isInstanceOf[Failure])
+    assert(result.asInstanceOf[Failure].reason == HeaderFromFuture)
+  }
+
   "Verification with an expired trusted header" should "fail with expired trusted state" in {
     val (verifier, verifiedState, provider) =
       buildTest(VerifierTests.testCase("/single-step/skipping/header/out_of_trusting_period.json"), votingPowerVerifier)
