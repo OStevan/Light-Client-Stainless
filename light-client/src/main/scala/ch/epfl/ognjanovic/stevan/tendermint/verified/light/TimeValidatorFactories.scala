@@ -6,20 +6,20 @@ import scala.concurrent.duration.Duration
 
 object TimeValidatorFactories {
 
-  trait ExpirationCheckerConfiguration
+  trait TimeValidatorConfig
 
-  case class TimeBasedExpirationCheckerConfig(timeSupplier: () ⇒ Instant, duration: Duration, clock_drift: Duration)
-      extends ExpirationCheckerConfiguration
+  case class InstantTimeValidatorConfig(timeSupplier: () ⇒ Instant, duration: Duration, clock_drift: Duration)
+      extends TimeValidatorConfig
 
-  trait ExpirationCheckerFactory {
-    def constructChecker(expirationCheckerConfiguration: ExpirationCheckerConfiguration): TimeValidator
+  trait TimeValidatorFactory {
+    def constructChecker(timeValidatorConfig: TimeValidatorConfig): TimeValidator
   }
 
-  object DefaultExpirationCheckerFactory extends ExpirationCheckerFactory {
+  object DefaultTimeValidatorFactory extends TimeValidatorFactory {
 
-    override def constructChecker(checkerConfiguration: ExpirationCheckerConfiguration): TimeValidator =
-      checkerConfiguration match {
-        case TimeBasedExpirationCheckerConfig(timeSupplier, duration, clock_drift) ⇒
+    override def constructChecker(timeValidatorConfig: TimeValidatorConfig): TimeValidator =
+      timeValidatorConfig match {
+        case InstantTimeValidatorConfig(timeSupplier, duration, clock_drift) ⇒
           new InstantTimeValidator(timeSupplier, duration, clock_drift)
         case _ ⇒ ???
       }

@@ -22,16 +22,16 @@ import scala.concurrent.duration.Duration
 import scala.io.Source
 
 trait VerifierTests {
-  def verifierFactory: VerifierFactory = new DefaultVerifierFactory(DefaultExpirationCheckerFactory)
+  def verifierFactory: VerifierFactory = new DefaultVerifierFactory(DefaultTimeValidatorFactory)
 
   def multiStepVerifierFactory = new DefaultMultiStepVerifierFactory(
-    new DefaultVerifierFactory(DefaultExpirationCheckerFactory),
+    new DefaultVerifierFactory(DefaultTimeValidatorFactory),
     BisectionHeightCalculator)
 
   def buildTest(
     singleStepTestCase: SingleStepTestCase,
     votingPowerVerifier: VotingPowerVerifier): (Verifier, VerifiedState, LightBlockProvider) = {
-    val expirationCheckerConfig = TimeBasedExpirationCheckerConfig(
+    val timeValidatorConfig = InstantTimeValidatorConfig(
       () ⇒ singleStepTestCase.initial.now,
       Duration.fromNanos(singleStepTestCase.initial.trusting_period),
       Duration.apply(1, TimeUnit.MICROSECONDS))
@@ -50,7 +50,7 @@ trait VerifierTests {
     )
 
     (
-      verifierFactory.constructInstance(votingPowerVerifier, expirationCheckerConfig),
+      verifierFactory.constructInstance(votingPowerVerifier, timeValidatorConfig),
       verifiedState,
       InMemoryProvider.fromInput(
         singleStepTestCase.initial.signed_header.header.chainId,
@@ -60,7 +60,7 @@ trait VerifierTests {
   }
 
   def buildTest(multiStepTestCase: MultiStepTestCase)
-    : (PeerList[PeerId, LightBlockProvider], SimpleVerifiedState, ExpirationCheckerConfiguration, Height) = {
+    : (PeerList[PeerId, LightBlockProvider], SimpleVerifiedState, TimeValidatorConfig, Height) = {
     val trustVerifier = ParameterizedVotingPowerVerifier(multiStepTestCase.trust_options.trustLevel)
 
     val peerId = PeerId(multiStepTestCase.primary.lite_blocks(0).validator_set.values.head.publicKey)
@@ -79,7 +79,7 @@ trait VerifierTests {
     (
       PeerList.fromScala(witnesses.updated(peerId, primary), peerId, witnesses.keys.toList, List.empty, List.empty),
       SimpleVerifiedState(primary.lightBlock(multiStepTestCase.trust_options.trustedHeight), trustVerifier),
-      TimeBasedExpirationCheckerConfig(
+      InstantTimeValidatorConfig(
         () ⇒ multiStepTestCase.now,
         Duration.fromNanos(multiStepTestCase.trust_options.trustPeriod.toNanoseconds.toLong),
         Duration.apply(1, TimeUnit.MICROSECONDS)),

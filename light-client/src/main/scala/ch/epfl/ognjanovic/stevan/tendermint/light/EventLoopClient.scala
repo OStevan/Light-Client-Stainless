@@ -9,7 +9,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.Trusted
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.{PeerList ⇒ GenericPeerList}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.MultiStepVerifierFactory
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactories.ExpirationCheckerConfiguration
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactories.TimeValidatorConfig
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.UntrustedTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
@@ -29,7 +29,7 @@ object EventLoopClient {
     private val votingPowerVerifier: VotingPowerVerifier,
     private val verifierBuilder: MultiStepVerifierFactory,
     private val untrustedTraceSupplier: Height ⇒ UntrustedTrace,
-    private val expirationCheckerConfiguration: ExpirationCheckerConfiguration,
+    private val timeValidatorConfig: TimeValidatorConfig,
     private val lightStore: LightStore,
     private val forkDetector: ForkDetector,
     private val primaryStateSupplier: (LightBlock, VotingPowerVerifier) ⇒ (() ⇒ Iterable[LightBlock], VerifiedState),
@@ -58,7 +58,7 @@ object EventLoopClient {
       height: Option[Height],
       peerList: PeerList): (PeerList, Either[LightBlock, Supervisor.Error]) = {
       val primaryVerifier =
-        verifierBuilder.constructVerifier(peerList.primary, votingPowerVerifier, expirationCheckerConfiguration)
+        verifierBuilder.constructVerifier(peerList.primary, votingPowerVerifier, timeValidatorConfig)
 
       val trustedLightBlock = lightStore.latest(Trusted)
 
@@ -82,7 +82,7 @@ object EventLoopClient {
             witnessVerifiedStateSupplier(trustedLightBlock.get, votingPowerVerifier),
             primaryResult.verifiedState.verified,
             peerList.witnesses
-              .map(verifierBuilder.constructVerifier(_, votingPowerVerifier, expirationCheckerConfiguration))
+              .map(verifierBuilder.constructVerifier(_, votingPowerVerifier, timeValidatorConfig))
               .toScala
           )
 

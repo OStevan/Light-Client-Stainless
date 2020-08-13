@@ -13,8 +13,8 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviderFac
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.DefaultMultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactories.{
-  DefaultExpirationCheckerFactory,
-  TimeBasedExpirationCheckerConfig
+  DefaultTimeValidatorFactory,
+  InstantTimeValidatorConfig
 }
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.InMemoryUntrustedTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleVerifiedState
@@ -38,8 +38,8 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
   private val lightBlockProviderFactory =
     new CachingLightBlockProviderFactory(Duration.apply(1, TimeUnit.HOURS), 500, new DefaultLightBlockProviderFactory())
 
-  private val expirationCheckerFactory = DefaultExpirationCheckerFactory
-  private val verifierFactory = new DefaultVerifierFactory(expirationCheckerFactory)
+  private val timeValidatorFactory = DefaultTimeValidatorFactory
+  private val verifierFactory = new DefaultVerifierFactory(timeValidatorFactory)
   private val multiStepVerifierFactory = new DefaultMultiStepVerifierFactory(verifierFactory, BisectionHeightCalculator)
 
   "Verification of a newest light block with a trusted state at height 1 " should "succeed" in withContainers {
@@ -63,7 +63,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
       val multiStepVerifier = multiStepVerifierFactory.constructVerifier(
         primary,
         votingPowerVerifier,
-        TimeBasedExpirationCheckerConfig(() ⇒ Instant.now(), trustDuration, Duration.apply(5, TimeUnit.MINUTES)))
+        InstantTimeValidatorConfig(() ⇒ Instant.now(), trustDuration, Duration.apply(5, TimeUnit.MINUTES)))
       val verifiedState = SimpleVerifiedState(trustedLightBlock, votingPowerVerifier)
 
       while (primary.currentHeight == Height(1)) {
@@ -102,7 +102,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
       val multiStepVerifier = multiStepVerifierFactory.constructVerifier(
         primary,
         votingPowerVerifier,
-        TimeBasedExpirationCheckerConfig(() ⇒ Instant.now(), trustDuration, Duration.apply(5, TimeUnit.MINUTES)))
+        InstantTimeValidatorConfig(() ⇒ Instant.now(), trustDuration, Duration.apply(5, TimeUnit.MINUTES)))
       val verifiedState = SimpleVerifiedState(trustedLightBlock, votingPowerVerifier)
 
       while (primary.currentHeight == Height(1)) {
@@ -128,7 +128,6 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
         result.verifiedState,
         InMemoryUntrustedTrace(heightToVerify, stainless.collection.List.empty))
 
-      println(result.outcome)
       assert(result.outcome.isLeft)
       assert(result.verifiedState.currentHeight() == heightToVerify)
       assert(result.untrustedTrace.bottomHeight().isEmpty)

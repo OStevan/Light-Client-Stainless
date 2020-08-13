@@ -51,6 +51,20 @@ sealed class VerifierSequentialHeaderTests extends AnyFlatSpec with VerifierTest
     }
   }
 
+  "Non monotonic header time" should "fail verification" in {
+    val (verifier, verifiedState, provider) =
+      buildTest(
+        VerifierTests.testCase("/single-step/sequential/header/non_monotonic_bft_time.json"),
+        votingPowerVerifier)
+
+    val requestHeight = Height(2)
+    val nonMonotonicHeader = provider.lightBlock(requestHeight)
+
+    val result = verifier.verify(verifiedState, nonMonotonicHeader)
+    assert(result.isInstanceOf[Failure])
+    assert(result.asInstanceOf[Failure].reason == NonMonotonicBftTime)
+  }
+
   "Wrong header timestamp" should "fail verification" in {
     val (verifier, verifiedState, provider) =
       buildTest(
