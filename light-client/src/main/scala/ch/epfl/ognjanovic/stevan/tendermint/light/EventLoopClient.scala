@@ -36,6 +36,10 @@ object EventLoopClient {
     private val witnessVerifiedStateSupplier: (LightBlock, VotingPowerVerifier) ⇒ PeerId ⇒ VerifiedState)
       extends Supervisor {
 
+    // force sharing between constructed handles, when there is a need for multiple threads to use the same supervisor
+    //  recommended approach is to wrap the Handle to prevent unwanted closing
+    private lazy val executorService = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
+
     override def verifyToHeight(height: Height): Either[LightBlock, Supervisor.Error] = {
       val (newPeerList, result) = verifyToTarget(Some(height), peerList)
       peerList = newPeerList
@@ -49,8 +53,7 @@ object EventLoopClient {
     }
 
     override def handle: Handle = {
-      val executorContext = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
-      new EventLoopHandle(this, executorContext)
+      new EventLoopHandle(this, executorService)
     }
 
     @tailrec
