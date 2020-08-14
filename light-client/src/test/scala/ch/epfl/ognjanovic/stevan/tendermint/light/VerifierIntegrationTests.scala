@@ -16,6 +16,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactorie
   DefaultTimeValidatorFactory,
   InstantTimeValidatorConfig
 }
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.InMemoryUntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleVerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
