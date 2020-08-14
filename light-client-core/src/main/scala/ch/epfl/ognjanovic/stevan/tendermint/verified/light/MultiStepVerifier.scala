@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.UntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.FetchedStack
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClientLemmas._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
@@ -17,10 +17,10 @@ case class MultiStepVerifier(
   verifier: Verifier,
   heightCalculator: NextHeightCalculator) {
 
-  def verifyUntrusted(verifiedState: VerifiedState, untrustedState: UntrustedState): Finished = {
+  def verifyUntrusted(verifiedState: VerifiedState, untrustedState: FetchedStack): Finished = {
     require(
       verifiedState.currentHeight() <= untrustedState.targetLimit &&
-        untrustedState.bottomHeight().isEmpty &&
+        untrustedState.peek().isEmpty &&
         untrustedState.targetLimit <= lightBlockProvider.currentHeight)
 
     if (verifiedState.currentHeight() == untrustedState.targetLimit)
@@ -66,11 +66,11 @@ case class MultiStepVerifier(
   private def stepByStepVerification(
     lightBlock: LightBlock,
     verifiedState: VerifiedState,
-    untrustedState: UntrustedState): VerifierState = {
+    untrustedState: FetchedStack): VerifierState = {
     require(
       lightBlock.header.height <= untrustedState.targetLimit &&
         verifiedState.currentHeight() < lightBlock.header.height &&
-        untrustedState.bottomHeight().map(lightBlock.header.height < _).getOrElse(true))
+        untrustedState.peek().map(lightBlock.header.height < _.header.height).getOrElse(true))
     decreases(untrustedState.targetLimit.value - verifiedState.currentHeight().value)
 
     verifier.verify(verifiedState, lightBlock) match {
@@ -79,7 +79,7 @@ case class MultiStepVerifier(
         if (newVerifiedState.currentHeight() == untrustedState.targetLimit) {
           val result = Left[Unit, VerificationError](())
           Finished(result, newVerifiedState, untrustedState)
-        } else if (untrustedState.hasNextHeader(newVerifiedState.currentHeight(), untrustedState.targetLimit)) {
+        } else if (untrustedState.peek().isDefined) {
           val (nextLightBlock, nextUntrustedState) = untrustedState.pop()
           stepByStepVerification(nextLightBlock, newVerifiedState, nextUntrustedState)
         } else if (newVerifiedState.currentHeight() + 1 == untrustedState.targetLimit)
@@ -87,7 +87,7 @@ case class MultiStepVerifier(
         else {
           val newTargetHeight = heightCalculator.nextHeight(
             newVerifiedState.currentHeight(),
-            untrustedState.bottomHeight().getOrElse(untrustedState.targetLimit))
+            untrustedState.peek().map(_.header.height).getOrElse(untrustedState.targetLimit))
           WaitingForHeader(newTargetHeight, newVerifiedState, untrustedState)
         }
 

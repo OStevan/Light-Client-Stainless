@@ -16,86 +16,67 @@ object FetchedStacks {
     }
   }
 
-  abstract class UntrustedState {
+  abstract class FetchedStack {
 
     def targetLimit: Height = {
       ??? : Height
     }
 
     @pure
-    def hasNextHeader(bottom: Height, target: Height): Boolean = {
-      require(bottom < target && bottomHeight().map(bottom < _).getOrElse(true) && target <= targetLimit)
-      ??? : Boolean
-    }.ensuring(res =>
-      (res && bottomHeight().isDefined && bottom < bottomHeight().get && bottomHeight().get <= target) ||
-        (!res && bottomHeight().map(target < _).getOrElse(true) && (target == targetLimit) ==> bottomHeight().isEmpty))
-
-    @pure
-    def pop(): (LightBlock, UntrustedState) = {
-      require(bottomHeight().isDefined)
-      ??? : (LightBlock, UntrustedState)
+    def pop(): (LightBlock, FetchedStack) = {
+      require(peek().isDefined)
+      ??? : (LightBlock, FetchedStack)
     }.ensuring(res =>
       res._2.targetLimit == targetLimit &&
-        res._1.header.height == bottomHeight().get &&
-        res._2.bottomHeight().map(bottomHeight().get < _).getOrElse(true))
+        res._1 == peek().get &&
+        res._2.peek().map(peek().get.header.height < _.header.height).getOrElse(true))
 
     @pure
-    def push(lightBlock: LightBlock): UntrustedState = {
+    def push(lightBlock: LightBlock): FetchedStack = {
       require(
-        bottomHeight().map(lightBlock.header.height < _).getOrElse(true) &&
+        peek().map(lightBlock.header.height < _.header.height).getOrElse(true) &&
           lightBlock.header.height <= targetLimit)
-      ??? : UntrustedState
+      ??? : FetchedStack
     }.ensuring(res =>
       res.targetLimit == targetLimit &&
-        res.bottomHeight().isDefined &&
-        bottomHeight().isDefined ==> res.bottomHeight().get < bottomHeight().get &&
-        res.bottomHeight().get == lightBlock.header.height)
+        res.peek().isDefined &&
+        peek().isDefined ==> res.peek().get.header.height < peek().get.header.height &&
+        res.peek().get == lightBlock)
 
     @pure
-    def bottomHeight(): Option[Height] = {
-      ??? : Option[Height]
-    }.ensuring(res => res.map(_ <= targetLimit).getOrElse(true))
+    def peek(): Option[LightBlock] = {
+      ??? : Option[LightBlock]
+    }.ensuring(res => res.map(_.header.height <= targetLimit).getOrElse(true))
 
   }
 
-  case class InMemoryUntrustedState(override val targetLimit: Height, pending: List[LightBlock])
-      extends UntrustedState {
+  case class InMemoryFetchedStack(override val targetLimit: Height, pending: List[LightBlock]) extends FetchedStack {
     require(pendingInvariant(pending) && pending.forall(_.header.height <= targetLimit))
 
     @pure
-    override def hasNextHeader(bottom: Height, top: Height): Boolean = {
-      require(bottom < top && bottomHeight().map(bottom < _).getOrElse(true) && top <= targetLimit)
-      if (bottomHeight().isEmpty)
-        false
-      else {
-        bottom < bottomHeight().get && bottomHeight().get <= top
-      }
+    override def pop(): (LightBlock, FetchedStack) = {
+      require(peek().isDefined)
+      (pending.head, InMemoryFetchedStack(targetLimit, pending.tail))
     }
 
     @pure
-    override def pop(): (LightBlock, UntrustedState) = {
-      require(bottomHeight().isDefined)
-      (pending.head, InMemoryUntrustedState(targetLimit, pending.tail))
-    }
-
-    @pure
-    override def push(lightBlock: LightBlock): UntrustedState = {
+    override def push(lightBlock: LightBlock): FetchedStack = {
       require(
-        bottomHeight().map(lightBlock.header.height < _).getOrElse(true)
+        peek().map(lightBlock.header.height < _.header.height).getOrElse(true)
           && lightBlock.header.height <= targetLimit)
-      InMemoryUntrustedState(targetLimit, lightBlock :: pending)
+      InMemoryFetchedStack(targetLimit, lightBlock :: pending)
     }.ensuring(res =>
       res.targetLimit == targetLimit &&
-        res.bottomHeight().isDefined &&
-        bottomHeight().isDefined ==> res.bottomHeight().get < bottomHeight().get &&
-        res.bottomHeight().get == lightBlock.header.height)
+        res.peek().isDefined &&
+        peek().isDefined ==> res.peek().get.header.height < peek().get.header.height &&
+        res.peek().get == lightBlock)
 
     @pure
-    override def bottomHeight(): Option[Height] = {
+    override def peek(): Option[LightBlock] = {
       if (pending.nonEmpty)
-        Some(pending.head.header.height)
+        Some(pending.head)
       else
-        None[Height]()
+        None[LightBlock]()
     }
 
   }

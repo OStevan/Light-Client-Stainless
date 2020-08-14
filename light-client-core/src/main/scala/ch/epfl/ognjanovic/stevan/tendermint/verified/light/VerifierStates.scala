@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.UntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.FetchedStack
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
@@ -16,7 +16,7 @@ object VerifierStates {
   case class Finished(
     outcome: Either[Unit, VerificationError],
     verifiedState: VerifiedState,
-    untrustedState: UntrustedState)
+    untrustedState: FetchedStack)
       extends VerifierState {
     require(
       (outcome.isLeft && verifiedState.currentHeight() == untrustedState.targetLimit) ||
@@ -24,10 +24,10 @@ object VerifierStates {
   }
 
   @inlineInvariant
-  case class WaitingForHeader(requestHeight: Height, verifiedState: VerifiedState, untrustedState: UntrustedState)
+  case class WaitingForHeader(requestHeight: Height, verifiedState: VerifiedState, untrustedState: FetchedStack)
       extends VerifierState {
     require(
-      untrustedState.bottomHeight().map(requestHeight < _).getOrElse(true) &&
+      untrustedState.peek().map(requestHeight < _.header.height).getOrElse(true) &&
         verifiedState.currentHeight() < requestHeight &&
         requestHeight <= untrustedState.targetLimit)
   }

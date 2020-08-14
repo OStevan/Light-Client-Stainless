@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.integration
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates.BlockchainState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.InMemoryUntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.InMemoryFetchedStack
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockValidators.DummyLightBlockValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
@@ -32,8 +32,8 @@ object ModelIntegration {
 
     val verifiedState: VerifiedState =
       SimpleVerifiedState(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
-    val untrustedState = InMemoryUntrustedState(heightToVerify, List.empty)
-    assert(untrustedState.bottomHeight().forall(heightToVerify < _))
+    val untrustedState = InMemoryFetchedStack(heightToVerify, List.empty)
+    assert(untrustedState.peek().forall(heightToVerify < _.header.height))
     assert(verifiedState.currentHeight() < heightToVerify)
     assert(heightToVerify <= untrustedState.targetLimit)
 

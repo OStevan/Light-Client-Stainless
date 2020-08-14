@@ -1,18 +1,18 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.{InMemoryUntrustedState, UntrustedState}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.{FetchedStack, InMemoryFetchedStack}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 
 object UntrustedStateFactories {
 
   trait UntrustedStateFactory {
-    def emptyWithTarget(target: Height): UntrustedState
+    def emptyWithTarget(target: Height): FetchedStack
   }
 
   sealed class InMemoryUntrustedStateFactory extends UntrustedStateFactory {
 
-    override def emptyWithTarget(target: Height): UntrustedState =
-      InMemoryUntrustedState(target, stainless.collection.List.empty)
+    override def emptyWithTarget(target: Height): FetchedStack =
+      InMemoryFetchedStack(target, stainless.collection.List.empty)
 
   }
 

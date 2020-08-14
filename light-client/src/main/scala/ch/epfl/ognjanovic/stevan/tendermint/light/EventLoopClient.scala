@@ -7,7 +7,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor._
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStore
 import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.Trusted
 import ch.epfl.ognjanovic.stevan.tendermint.verified.fork.{PeerList ⇒ GenericPeerList}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.UntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.FetchedStack
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.MultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactories.TimeValidatorConfig
@@ -28,7 +28,7 @@ object EventLoopClient {
     @volatile private var peerList: PeerList,
     private val votingPowerVerifier: VotingPowerVerifier,
     private val verifierBuilder: MultiStepVerifierFactory,
-    private val untrustedStateSupplier: Height ⇒ UntrustedState,
+    private val untrustedStateSupplier: Height ⇒ FetchedStack,
     private val timeValidatorConfig: TimeValidatorConfig,
     private val lightStore: LightStore,
     private val forkDetector: ForkDetector,
