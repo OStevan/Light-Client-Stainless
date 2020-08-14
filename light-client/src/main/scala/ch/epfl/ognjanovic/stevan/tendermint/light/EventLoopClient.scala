@@ -37,7 +37,7 @@ object EventLoopClient {
       extends Supervisor {
 
     // force sharing between constructed handles, when there is a need for multiple threads to use the same supervisor
-    //  recommended approach is to wrap the Handle to prevent unwanted closing
+    // recommended approach is to wrap the Handle to prevent unwanted closing
     private lazy val executorService = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
 
     override def verifyToHeight(height: Height): Either[LightBlock, Supervisor.Error] = {
