@@ -9,7 +9,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.Verifi
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 import stainless.lang
 
-sealed class DefaultForkDetector(private val hasher: Hasher, private val untrustedStateSupplier: Height ⇒ FetchedStack)
+sealed class DefaultForkDetector(private val hasher: Hasher, private val fetchedStackSupplier: Height ⇒ FetchedStack)
     extends ForkDetector {
 
   override def detectForks(
@@ -28,7 +28,7 @@ sealed class DefaultForkDetector(private val hasher: Hasher, private val untrust
       else {
         val witnessVerificationResult = witness.verifyUntrusted(
           verifiedStateSupplier(witnessBlock.peerId),
-          untrustedStateSupplier(targetLightBlock.header.height)
+          fetchedStackSupplier(targetLightBlock.header.height)
         )
 
         witnessVerificationResult.outcome match {

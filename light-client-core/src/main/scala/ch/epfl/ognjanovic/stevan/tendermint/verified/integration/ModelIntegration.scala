@@ -32,10 +32,10 @@ object ModelIntegration {
 
     val verifiedState: VerifiedState =
       SimpleVerifiedState(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
-    val untrustedState = InMemoryFetchedStack(heightToVerify, List.empty)
-    assert(untrustedState.peek().forall(heightToVerify < _.header.height))
+    val fetchedStack = InMemoryFetchedStack(heightToVerify, List.empty)
+    assert(fetchedStack.peek().forall(heightToVerify < _.header.height))
     assert(verifiedState.currentHeight() < heightToVerify)
-    assert(heightToVerify <= untrustedState.targetLimit)
+    assert(heightToVerify <= fetchedStack.targetLimit)
 
     val lightBlockVerifier = DefaultTrustVerifier()
     MultiStepVerifier(
@@ -46,7 +46,7 @@ object ModelIntegration {
         DefaultCommitValidator(VotingPowerVerifiers.defaultVotingPowerVerifier, DummyCommitSignatureVerifier())),
       nextHeightCalculator
     )
-      .verifyUntrusted(verifiedState, untrustedState)
+      .verifyUntrusted(verifiedState, fetchedStack)
       .outcome
   }
 

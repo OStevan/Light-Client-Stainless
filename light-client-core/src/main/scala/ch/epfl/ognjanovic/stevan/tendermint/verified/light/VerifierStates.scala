@@ -13,23 +13,20 @@ object VerifierStates {
   sealed abstract class VerifierState
 
   @inlineInvariant
-  case class Finished(
-    outcome: Either[Unit, VerificationError],
-    verifiedState: VerifiedState,
-    untrustedState: FetchedStack)
+  case class Finished(outcome: Either[Unit, VerificationError], verifiedState: VerifiedState, fetchedStack: FetchedStack)
       extends VerifierState {
     require(
-      (outcome.isLeft && verifiedState.currentHeight() == untrustedState.targetLimit) ||
-        (outcome.isRight && verifiedState.currentHeight() < untrustedState.targetLimit))
+      (outcome.isLeft && verifiedState.currentHeight() == fetchedStack.targetLimit) ||
+        (outcome.isRight && verifiedState.currentHeight() < fetchedStack.targetLimit))
   }
 
   @inlineInvariant
-  case class WaitingForHeader(requestHeight: Height, verifiedState: VerifiedState, untrustedState: FetchedStack)
+  case class WaitingForHeader(requestHeight: Height, verifiedState: VerifiedState, fetchedStack: FetchedStack)
       extends VerifierState {
     require(
-      untrustedState.peek().map(requestHeight < _.header.height).getOrElse(true) &&
+      fetchedStack.peek().map(requestHeight < _.header.height).getOrElse(true) &&
         verifiedState.currentHeight() < requestHeight &&
-        requestHeight <= untrustedState.targetLimit)
+        requestHeight <= fetchedStack.targetLimit)
   }
 
 }

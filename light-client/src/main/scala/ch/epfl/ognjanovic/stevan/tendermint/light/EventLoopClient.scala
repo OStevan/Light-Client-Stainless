@@ -28,7 +28,7 @@ object EventLoopClient {
     @volatile private var peerList: PeerList,
     private val votingPowerVerifier: VotingPowerVerifier,
     private val verifierBuilder: MultiStepVerifierFactory,
-    private val untrustedStateSupplier: Height ⇒ FetchedStack,
+    private val fetchedStackSupplier: Height ⇒ FetchedStack,
     private val timeValidatorConfig: TimeValidatorConfig,
     private val lightStore: LightStore,
     private val forkDetector: ForkDetector,
@@ -74,7 +74,7 @@ object EventLoopClient {
       val primaryResult =
         primaryVerifier.verifyUntrusted(
           primaryVerifiedState,
-          untrustedStateSupplier(height.getOrElse(peerList.primary.currentHeight)))
+          fetchedStackSupplier(height.getOrElse(peerList.primary.currentHeight)))
 
       primaryResult.outcome match {
         case lang.Left(_) ⇒
