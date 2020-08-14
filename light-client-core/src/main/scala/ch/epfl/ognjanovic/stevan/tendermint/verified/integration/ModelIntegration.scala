@@ -3,11 +3,11 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.integration
 import ch.epfl.ognjanovic.stevan.tendermint.verified.blockchain.BlockchainStates.BlockchainState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.CommitValidators.DefaultCommitValidator
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.InMemoryFetchedStack
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockValidators.DummyLightBlockValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.InMemoryUntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.{SimpleVerifiedState, VerifiedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
@@ -32,10 +32,10 @@ object ModelIntegration {
 
     val verifiedState: VerifiedState =
       SimpleVerifiedState(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
-    val untrustedState = InMemoryUntrustedState(heightToVerify, List.empty)
-    assert(untrustedState.bottomHeight().forall(heightToVerify < _))
+    val fetchedStack = InMemoryFetchedStack(heightToVerify, List.empty)
+    assert(fetchedStack.peek().forall(heightToVerify < _.header.height))
     assert(verifiedState.currentHeight() < heightToVerify)
-    assert(heightToVerify <= untrustedState.targetLimit)
+    assert(heightToVerify <= fetchedStack.targetLimit)
 
     val lightBlockVerifier = DefaultTrustVerifier()
     MultiStepVerifier(
@@ -46,7 +46,7 @@ object ModelIntegration {
         DefaultCommitValidator(VotingPowerVerifiers.defaultVotingPowerVerifier, DummyCommitSignatureVerifier())),
       nextHeightCalculator
     )
-      .verifyUntrusted(verifiedState, untrustedState)
+      .verifyUntrusted(verifiedState, fetchedStack)
       .outcome
   }
 

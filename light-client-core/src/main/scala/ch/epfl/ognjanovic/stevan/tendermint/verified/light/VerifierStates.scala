@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.FetchedStack
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
@@ -13,23 +13,20 @@ object VerifierStates {
   sealed abstract class VerifierState
 
   @inlineInvariant
-  case class Finished(
-    outcome: Either[Unit, VerificationError],
-    verifiedState: VerifiedState,
-    untrustedState: UntrustedState)
+  case class Finished(outcome: Either[Unit, VerificationError], verifiedState: VerifiedState, fetchedStack: FetchedStack)
       extends VerifierState {
     require(
-      (outcome.isLeft && verifiedState.currentHeight() == untrustedState.targetLimit) ||
-        (outcome.isRight && verifiedState.currentHeight() < untrustedState.targetLimit))
+      (outcome.isLeft && verifiedState.currentHeight() == fetchedStack.targetLimit) ||
+        (outcome.isRight && verifiedState.currentHeight() < fetchedStack.targetLimit))
   }
 
   @inlineInvariant
-  case class WaitingForHeader(requestHeight: Height, verifiedState: VerifiedState, untrustedState: UntrustedState)
+  case class WaitingForHeader(requestHeight: Height, verifiedState: VerifiedState, fetchedStack: FetchedStack)
       extends VerifierState {
     require(
-      untrustedState.bottomHeight().map(requestHeight < _).getOrElse(true) &&
+      fetchedStack.peek().map(requestHeight < _.header.height).getOrElse(true) &&
         verifiedState.currentHeight() < requestHeight &&
-        requestHeight <= untrustedState.targetLimit)
+        requestHeight <= fetchedStack.targetLimit)
   }
 
 }
