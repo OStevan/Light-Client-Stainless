@@ -17,7 +17,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactorie
   DefaultTimeValidatorFactory,
   InstantTimeValidatorConfig
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleVerifiedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.SimpleVerificationTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
@@ -64,7 +64,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
         primary,
         votingPowerVerifier,
         InstantTimeValidatorConfig(() ⇒ Instant.now(), trustDuration, Duration.apply(5, TimeUnit.MINUTES)))
-      val verifiedState = SimpleVerifiedState(trustedLightBlock, votingPowerVerifier)
+      val verificationTrace = SimpleVerificationTrace(trustedLightBlock, votingPowerVerifier)
 
       while (primary.currentHeight == Height(1)) {
         Thread.sleep(1000)
@@ -73,11 +73,11 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
       val heightToVerify = primary.currentHeight
 
       val result = multiStepVerifier.verifyUntrusted(
-        verifiedState,
+        verificationTrace,
         InMemoryFetchedStack(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
-      assert(result.verifiedState.currentHeight() == heightToVerify)
+      assert(result.verificationTrace.currentHeight() == heightToVerify)
       assert(result.fetchedStack.peek().isEmpty)
   }
 
@@ -103,7 +103,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
         primary,
         votingPowerVerifier,
         InstantTimeValidatorConfig(() ⇒ Instant.now(), trustDuration, Duration.apply(5, TimeUnit.MINUTES)))
-      val verifiedState = SimpleVerifiedState(trustedLightBlock, votingPowerVerifier)
+      val verificationTrace = SimpleVerificationTrace(trustedLightBlock, votingPowerVerifier)
 
       while (primary.currentHeight == Height(1)) {
         Thread.sleep(1000)
@@ -111,25 +111,25 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
       var heightToVerify = primary.currentHeight
 
       var result = multiStepVerifier.verifyUntrusted(
-        verifiedState,
+        verificationTrace,
         InMemoryFetchedStack(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
-      assert(result.verifiedState.currentHeight() == heightToVerify)
+      assert(result.verificationTrace.currentHeight() == heightToVerify)
       assert(result.fetchedStack.peek().isEmpty)
 
-      while (primary.currentHeight == result.verifiedState.currentHeight()) {
+      while (primary.currentHeight == result.verificationTrace.currentHeight()) {
         Thread.sleep(1000)
       }
 
       heightToVerify = primary.currentHeight
 
       result = multiStepVerifier.verifyUntrusted(
-        result.verifiedState,
+        result.verificationTrace,
         InMemoryFetchedStack(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
-      assert(result.verifiedState.currentHeight() == heightToVerify)
+      assert(result.verificationTrace.currentHeight() == heightToVerify)
       assert(result.fetchedStack.peek().isEmpty)
   }
 }

@@ -4,9 +4,9 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.pure
 
-object VerifiedStates {
+object VerificationTraces {
 
-  abstract class VerifiedState {
+  abstract class VerificationTrace {
 
     @pure
     def isTrusted(lightBlock: LightBlock): Boolean = {
@@ -24,9 +24,9 @@ object VerifiedStates {
      * @return new verified state
      */
     @pure
-    def increaseTrust(lightBlock: LightBlock): VerifiedState = {
+    def increaseTrust(lightBlock: LightBlock): VerificationTrace = {
       require(lightBlock.header.height > currentHeight() && isTrusted(lightBlock))
-      ??? : VerifiedState
+      ??? : VerificationTrace
     }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
 
     /**
@@ -47,15 +47,15 @@ object VerifiedStates {
 
   }
 
-  case class SimpleVerifiedState(verified: LightBlock, trustVerifier: VotingPowerVerifier) extends VerifiedState {
+  case class SimpleVerificationTrace(verified: LightBlock, trustVerifier: VotingPowerVerifier) extends VerificationTrace {
 
     @pure
     override def currentHeight(): Height = verified.header.height
 
     @pure
-    override def increaseTrust(lightBlock: LightBlock): VerifiedState = {
+    override def increaseTrust(lightBlock: LightBlock): VerificationTrace = {
       require(lightBlock.header.height > this.verified.header.height && isTrusted(lightBlock))
-      SimpleVerifiedState(lightBlock, trustVerifier)
+      SimpleVerificationTrace(lightBlock, trustVerifier)
     }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
 
     @pure

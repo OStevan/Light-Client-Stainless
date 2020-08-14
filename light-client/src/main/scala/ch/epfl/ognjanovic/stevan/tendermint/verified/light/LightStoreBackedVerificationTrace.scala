@@ -2,12 +2,14 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.{Trusted, Verified}
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStore
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.VerificationTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
 
-class LightStoreBackedVerifiedState(private val lightStore: LightStore, private val trustVerifier: VotingPowerVerifier)
-    extends VerifiedState {
+class LightStoreBackedVerificationTrace(
+  private val lightStore: LightStore,
+  private val trustVerifier: VotingPowerVerifier)
+    extends VerificationTrace {
 
   override def isTrusted(lightBlock: LightBlock): Boolean = {
     if (!(lightBlock.header.height > currentHeight()))
@@ -32,11 +34,11 @@ class LightStoreBackedVerifiedState(private val lightStore: LightStore, private 
     }
   }
 
-  override def increaseTrust(lightBlock: LightBlock): VerifiedState = {
+  override def increaseTrust(lightBlock: LightBlock): VerificationTrace = {
     if (!(lightBlock.header.height > currentHeight() && isTrusted(lightBlock)))
       throw new IllegalArgumentException("Illegal light block:" + lightBlock)
     lightStore.update(lightBlock, Verified)
-    new LightStoreBackedVerifiedState(lightStore, trustVerifier)
+    new LightStoreBackedVerificationTrace(lightStore, trustVerifier)
   }
 
 }
