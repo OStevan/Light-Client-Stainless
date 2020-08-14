@@ -10,7 +10,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.{
-  SimpleVerificationTrace,
+  StartingVerificationTrace,
   VerificationTrace
 }
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
@@ -34,7 +34,7 @@ object ModelIntegration {
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
 
     val verificationTrace: VerificationTrace =
-      SimpleVerificationTrace(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
+      StartingVerificationTrace(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
     val fetchedStack = InMemoryFetchedStack(heightToVerify, List.empty)
     assert(fetchedStack.peek().forall(heightToVerify < _.header.height))
     assert(verificationTrace.currentHeight() < heightToVerify)

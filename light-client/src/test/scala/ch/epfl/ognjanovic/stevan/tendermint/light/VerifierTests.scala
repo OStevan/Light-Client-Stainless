@@ -38,7 +38,7 @@ trait VerifierTests {
 
     val peerId = PeerId(singleStepTestCase.initial.next_validator_set.values.head.publicKey)
 
-    val verificationTrace = SimpleVerificationTrace(
+    val verificationTrace = StartingVerificationTrace(
       LightBlock(
         singleStepTestCase.initial.signed_header.header,
         singleStepTestCase.initial.signed_header.commit,
@@ -60,7 +60,7 @@ trait VerifierTests {
   }
 
   def buildTest(multiStepTestCase: MultiStepTestCase)
-    : (PeerList[PeerId, LightBlockProvider], SimpleVerificationTrace, TimeValidatorConfig, Height) = {
+    : (PeerList[PeerId, LightBlockProvider], StartingVerificationTrace, TimeValidatorConfig, Height) = {
     val trustVerifier = ParameterizedVotingPowerVerifier(multiStepTestCase.trust_options.trustLevel)
 
     val peerId = PeerId(multiStepTestCase.primary.lite_blocks(0).validator_set.values.head.publicKey)
@@ -78,7 +78,7 @@ trait VerifierTests {
 
     (
       PeerList.fromScala(witnesses.updated(peerId, primary), peerId, witnesses.keys.toList, List.empty, List.empty),
-      SimpleVerificationTrace(primary.lightBlock(multiStepTestCase.trust_options.trustedHeight), trustVerifier),
+      StartingVerificationTrace(primary.lightBlock(multiStepTestCase.trust_options.trustedHeight), trustVerifier),
       InstantTimeValidatorConfig(
         () ⇒ multiStepTestCase.now,
         Duration.fromNanos(multiStepTestCase.trust_options.trustPeriod.toNanoseconds.toLong),

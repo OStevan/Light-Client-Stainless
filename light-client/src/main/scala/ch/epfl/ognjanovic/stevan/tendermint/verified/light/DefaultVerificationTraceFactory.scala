@@ -3,7 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStoreFactory
 import ch.epfl.ognjanovic.stevan.tendermint.light.LightBlockStatuses.Trusted
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.{
-  SimpleVerificationTrace,
+  StartingVerificationTrace,
   VerificationTrace
 }
 
@@ -25,7 +25,7 @@ class DefaultVerificationTraceFactory(private val lightStoreFactory: LightStoreF
         new LightStoreBackedVerificationTrace(store, votingPowerVerifier)
 
       case VerificationTraceFactory.SimpleVerifiedStateConfiguration(trustedLightBlock, votingPowerVerifier) ⇒
-        SimpleVerificationTrace(trustedLightBlock, votingPowerVerifier)
+        StartingVerificationTrace(trustedLightBlock, votingPowerVerifier)
 
       case _ ⇒ ???
     }

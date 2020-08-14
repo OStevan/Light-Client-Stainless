@@ -17,7 +17,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactorie
   DefaultTimeValidatorFactory,
   InstantTimeValidatorConfig
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.SimpleVerificationTrace
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.StartingVerificationTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
@@ -64,7 +64,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
         primary,
         votingPowerVerifier,
         InstantTimeValidatorConfig(() ⇒ Instant.now(), trustDuration, Duration.apply(5, TimeUnit.MINUTES)))
-      val verificationTrace = SimpleVerificationTrace(trustedLightBlock, votingPowerVerifier)
+      val verificationTrace = StartingVerificationTrace(trustedLightBlock, votingPowerVerifier)
 
       while (primary.currentHeight == Height(1)) {
         Thread.sleep(1000)
@@ -103,7 +103,7 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
         primary,
         votingPowerVerifier,
         InstantTimeValidatorConfig(() ⇒ Instant.now(), trustDuration, Duration.apply(5, TimeUnit.MINUTES)))
-      val verificationTrace = SimpleVerificationTrace(trustedLightBlock, votingPowerVerifier)
+      val verificationTrace = StartingVerificationTrace(trustedLightBlock, votingPowerVerifier)
 
       while (primary.currentHeight == Height(1)) {
         Thread.sleep(1000)
