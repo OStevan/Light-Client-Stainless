@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
-import java.util.concurrent.Executors
+import java.util.concurrent.{Executors, TimeUnit}
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection.{ForkDetector, Forked}
 import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor._
@@ -141,8 +141,24 @@ object EventLoopClient {
     }
 
     override def terminate(): Unit = {
-      // TODO this should be improved as soon as possible
+      // reject incoming tasks
       executorExecutionService.shutdown()
+      try {
+        // await termination of currently submitted tests
+        if (!executorExecutionService.awaitTermination(60, TimeUnit.SECONDS)) {
+          // force cancellation of currently submitted tasks
+          executorExecutionService.shutdownNow()
+          // wait a while for canceled tasks to finish
+          if (!executorExecutionService.awaitTermination(60, TimeUnit.SECONDS)) {
+            System.err.println("Supervisor did not terminate")
+          }
+        }
+      } catch {
+        // can happen on await that current thread is also interrupted so force shutdown and keep the signal
+        case _: InterruptedException ⇒
+          executorExecutionService.shutdownNow()
+          Thread.currentThread().interrupt()
+      }
     }
 
   }

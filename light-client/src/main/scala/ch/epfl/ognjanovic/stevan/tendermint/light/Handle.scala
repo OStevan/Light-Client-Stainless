@@ -23,7 +23,7 @@ trait Handle {
   def verifyToHeight(height: Height): Future[Either[LightBlock, Supervisor.Error]]
 
   /**
-   * Closes this handle. // TODO this should probably be named differently
+   * Closes this handle along with closing of all resources associated with it, like thread pools, etc.
    */
   def terminate()
 }
