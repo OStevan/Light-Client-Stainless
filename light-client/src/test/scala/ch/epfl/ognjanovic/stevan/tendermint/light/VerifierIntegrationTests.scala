@@ -16,7 +16,6 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactorie
   DefaultTimeValidatorFactory,
   InstantTimeValidatorConfig
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.InMemoryUntrustedTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleVerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers
@@ -74,11 +73,11 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
 
       val result = multiStepVerifier.verifyUntrusted(
         verifiedState,
-        InMemoryUntrustedTrace(heightToVerify, stainless.collection.List.empty))
+        InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
       assert(result.verifiedState.currentHeight() == heightToVerify)
-      assert(result.untrustedTrace.bottomHeight().isEmpty)
+      assert(result.untrustedState.bottomHeight().isEmpty)
   }
 
   "Verifying one highest block with the state after verifying previous highest one" should "succeed" in withContainers {
@@ -112,11 +111,11 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
 
       var result = multiStepVerifier.verifyUntrusted(
         verifiedState,
-        InMemoryUntrustedTrace(heightToVerify, stainless.collection.List.empty))
+        InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
       assert(result.verifiedState.currentHeight() == heightToVerify)
-      assert(result.untrustedTrace.bottomHeight().isEmpty)
+      assert(result.untrustedState.bottomHeight().isEmpty)
 
       while (primary.currentHeight == result.verifiedState.currentHeight()) {
         Thread.sleep(1000)
@@ -126,10 +125,10 @@ sealed class VerifierIntegrationTests extends AnyFlatSpec with TestContainerForA
 
       result = multiStepVerifier.verifyUntrusted(
         result.verifiedState,
-        InMemoryUntrustedTrace(heightToVerify, stainless.collection.List.empty))
+        InMemoryUntrustedState(heightToVerify, stainless.collection.List.empty))
 
       assert(result.outcome.isLeft)
       assert(result.verifiedState.currentHeight() == heightToVerify)
-      assert(result.untrustedTrace.bottomHeight().isEmpty)
+      assert(result.untrustedState.bottomHeight().isEmpty)
   }
 }

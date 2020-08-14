@@ -7,7 +7,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.L
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockValidators.DummyLightBlockValidator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraces.InMemoryUntrustedTrace
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.InMemoryUntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.{SimpleVerifiedState, VerifiedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
@@ -32,10 +32,10 @@ object ModelIntegration {
 
     val verifiedState: VerifiedState =
       SimpleVerifiedState(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
-    val untrustedTrace = InMemoryUntrustedTrace(heightToVerify, List.empty)
-    assert(untrustedTrace.bottomHeight().forall(heightToVerify < _))
+    val untrustedState = InMemoryUntrustedState(heightToVerify, List.empty)
+    assert(untrustedState.bottomHeight().forall(heightToVerify < _))
     assert(verifiedState.currentHeight() < heightToVerify)
-    assert(heightToVerify <= untrustedTrace.targetLimit)
+    assert(heightToVerify <= untrustedState.targetLimit)
 
     val lightBlockVerifier = DefaultTrustVerifier()
     MultiStepVerifier(
@@ -46,7 +46,7 @@ object ModelIntegration {
         DefaultCommitValidator(VotingPowerVerifiers.defaultVotingPowerVerifier, DummyCommitSignatureVerifier())),
       nextHeightCalculator
     )
-      .verifyUntrusted(verifiedState, untrustedTrace)
+      .verifyUntrusted(verifiedState, untrustedState)
       .outcome
   }
 

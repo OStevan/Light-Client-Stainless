@@ -15,6 +15,7 @@ object LightBlockProviders {
 
     def latestLightBlock: LightBlock
 
+    @pure
     def currentHeight: Height
 
     @pure

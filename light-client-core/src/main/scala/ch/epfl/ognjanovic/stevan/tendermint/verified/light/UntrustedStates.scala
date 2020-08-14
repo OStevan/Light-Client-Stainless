@@ -1,22 +1,22 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
+import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.pure
 import stainless.collection.{Cons, List}
 import stainless.lang._
 
-object UntrustedTraces {
+object UntrustedStates {
 
   @scala.annotation.tailrec
-  private def pendingInvariant(pending: List[Height]): Boolean = {
+  private def pendingInvariant(pending: List[LightBlock]): Boolean = {
     pending match {
-      case Cons(first, tail) if tail.isInstanceOf[Cons[Height]] =>
-        first < tail.head && pendingInvariant(tail)
+      case Cons(first, tail) if tail.isInstanceOf[Cons[LightBlock]] =>
+        first.header.height < tail.head.header.height && pendingInvariant(tail)
       case _ => true
     }
   }
 
-  abstract class UntrustedTrace {
+  abstract class UntrustedState {
 
     def targetLimit: Height = {
       ??? : Height
@@ -31,25 +31,25 @@ object UntrustedTraces {
         (!res && bottomHeight().map(target < _).getOrElse(true) && (target == targetLimit) ==> bottomHeight().isEmpty))
 
     @pure
-    def removeBottom(): (Height, UntrustedTrace) = {
+    def removeBottom(): (LightBlock, UntrustedState) = {
       require(bottomHeight().isDefined)
-      ??? : (Height, UntrustedTrace)
+      ??? : (LightBlock, UntrustedState)
     }.ensuring(res =>
       res._2.targetLimit == targetLimit &&
-        res._1 == bottomHeight().get &&
+        res._1.header.height == bottomHeight().get &&
         res._2.bottomHeight().map(bottomHeight().get < _).getOrElse(true))
 
     @pure
-    def insertLightBlock(height: Height): UntrustedTrace = {
+    def insertLightBlock(lightBlock: LightBlock): UntrustedState = {
       require(
-        bottomHeight().map(height < _).getOrElse(true) &&
-          height <= targetLimit)
-      ??? : UntrustedTrace
+        bottomHeight().map(lightBlock.header.height < _).getOrElse(true) &&
+          lightBlock.header.height <= targetLimit)
+      ??? : UntrustedState
     }.ensuring(res =>
       res.targetLimit == targetLimit &&
         res.bottomHeight().isDefined &&
         bottomHeight().isDefined ==> res.bottomHeight().get < bottomHeight().get &&
-        res.bottomHeight().get == height)
+        res.bottomHeight().get == lightBlock.header.height)
 
     @pure
     def bottomHeight(): Option[Height] = {
@@ -58,8 +58,9 @@ object UntrustedTraces {
 
   }
 
-  case class InMemoryUntrustedTrace(override val targetLimit: Height, pending: List[Height]) extends UntrustedTrace {
-    require(pendingInvariant(pending) && pending.forall(_ <= targetLimit))
+  case class InMemoryUntrustedState(override val targetLimit: Height, pending: List[LightBlock])
+      extends UntrustedState {
+    require(pendingInvariant(pending) && pending.forall(_.header.height <= targetLimit))
 
     @pure
     override def hasNextHeader(bottom: Height, top: Height): Boolean = {
@@ -72,27 +73,27 @@ object UntrustedTraces {
     }
 
     @pure
-    override def removeBottom(): (Height, UntrustedTrace) = {
+    override def removeBottom(): (LightBlock, UntrustedState) = {
       require(bottomHeight().isDefined)
-      (pending.head, InMemoryUntrustedTrace(targetLimit, pending.tail))
+      (pending.head, InMemoryUntrustedState(targetLimit, pending.tail))
     }
 
     @pure
-    override def insertLightBlock(height: Height): UntrustedTrace = {
+    override def insertLightBlock(lightBlock: LightBlock): UntrustedState = {
       require(
-        bottomHeight().map(height < _).getOrElse(true)
-          && height <= targetLimit)
-      InMemoryUntrustedTrace(targetLimit, height :: pending)
+        bottomHeight().map(lightBlock.header.height < _).getOrElse(true)
+          && lightBlock.header.height <= targetLimit)
+      InMemoryUntrustedState(targetLimit, lightBlock :: pending)
     }.ensuring(res =>
       res.targetLimit == targetLimit &&
         res.bottomHeight().isDefined &&
         bottomHeight().isDefined ==> res.bottomHeight().get < bottomHeight().get &&
-        res.bottomHeight().get == height)
+        res.bottomHeight().get == lightBlock.header.height)
 
     @pure
     override def bottomHeight(): Option[Height] = {
       if (pending.nonEmpty)
-        Some(pending.head)
+        Some(pending.head.header.height)
       else
         None[Height]()
     }

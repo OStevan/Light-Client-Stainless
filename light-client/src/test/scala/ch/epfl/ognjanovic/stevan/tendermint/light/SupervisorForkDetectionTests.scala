@@ -11,7 +11,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{DefaultVerifiedStateFactory, VotingPowerVerifiers}
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedTraceFactories.InMemoryUntrustedTraceFactory
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStateFactories.InMemoryUntrustedStateFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStateFactory.{
   LightStoreBackedVerifiedStateConfiguration,
   SimpleVerifiedStateConfiguration
@@ -25,7 +25,7 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
 
   private val lightStoreFactory = new DefaultLightStoreFactory()
 
-  private val untrustedTraceFactory = new InMemoryUntrustedTraceFactory()
+  private val untrustedStateFactory = new InMemoryUntrustedStateFactory()
 
   implicit private val testCaseDeserializer: Deserializer[MultiStepTestCase] =
     new CirceDeserializer(MultiStepTestCase.decoder)
@@ -62,12 +62,12 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       peerList,
       votingPowerVerifier,
       multiStepVerifierFactory,
-      height ⇒ untrustedTraceFactory.emptyWithTarget(height),
+      height ⇒ untrustedStateFactory.emptyWithTarget(height),
       timeValidatorConfig,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
-        height ⇒ untrustedTraceFactory.emptyWithTarget(height)),
+        height ⇒ untrustedStateFactory.emptyWithTarget(height)),
       primaryVerifiedStateBuilder,
       witnessVerifiedStateBuilder
     )
@@ -88,12 +88,12 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       peerList,
       votingPowerVerifier,
       multiStepVerifierFactory,
-      height ⇒ untrustedTraceFactory.emptyWithTarget(height),
+      height ⇒ untrustedStateFactory.emptyWithTarget(height),
       timeValidatorConfig,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
-        height ⇒ untrustedTraceFactory.emptyWithTarget(height)),
+        height ⇒ untrustedStateFactory.emptyWithTarget(height)),
       primaryVerifiedStateBuilder,
       witnessVerifiedStateBuilder
     )
@@ -114,12 +114,12 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       peerList,
       votingPowerVerifier,
       multiStepVerifierFactory,
-      height ⇒ untrustedTraceFactory.emptyWithTarget(height),
+      height ⇒ untrustedStateFactory.emptyWithTarget(height),
       timeValidatorConfig,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
-        height ⇒ untrustedTraceFactory.emptyWithTarget(height)),
+        height ⇒ untrustedStateFactory.emptyWithTarget(height)),
       primaryVerifiedStateBuilder,
       witnessVerifiedStateBuilder
     )
@@ -140,12 +140,12 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
       peerList,
       votingPowerVerifier,
       multiStepVerifierFactory,
-      height ⇒ untrustedTraceFactory.emptyWithTarget(height),
+      height ⇒ untrustedStateFactory.emptyWithTarget(height),
       timeValidatorConfig,
       lightStore,
       new DefaultForkDetector(
         new DefaultHasher(MerkleRoot.default()),
-        height ⇒ untrustedTraceFactory.emptyWithTarget(height)),
+        height ⇒ untrustedStateFactory.emptyWithTarget(height)),
       primaryVerifiedStateBuilder,
       witnessVerifiedStateBuilder
     )
