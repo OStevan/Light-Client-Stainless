@@ -1,9 +1,9 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.UntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClientLemmas._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
@@ -80,7 +80,7 @@ case class MultiStepVerifier(
           val result = Left[Unit, VerificationError](())
           Finished(result, newVerifiedState, untrustedState)
         } else if (untrustedState.hasNextHeader(newVerifiedState.currentHeight(), untrustedState.targetLimit)) {
-          val (nextLightBlock, nextUntrustedState) = untrustedState.removeBottom()
+          val (nextLightBlock, nextUntrustedState) = untrustedState.pop()
           stepByStepVerification(nextLightBlock, newVerifiedState, nextUntrustedState)
         } else if (newVerifiedState.currentHeight() + 1 == untrustedState.targetLimit)
           WaitingForHeader(untrustedState.targetLimit, newVerifiedState, untrustedState)
@@ -93,12 +93,12 @@ case class MultiStepVerifier(
 
       case VerificationOutcomes.InsufficientTrust =>
         val nextHeight = heightCalculator.nextHeight(verifiedState.currentHeight(), lightBlock.header.height)
-        val nextUntrustedState = untrustedState.insertLightBlock(lightBlock)
+        val nextUntrustedState = untrustedState.push(lightBlock)
         WaitingForHeader(nextHeight, verifiedState, nextUntrustedState)
 
       case Failure(reason) =>
         val error = Right[Unit, VerificationError](reason)
-        val newUntrustedState = untrustedState.insertLightBlock(lightBlock)
+        val newUntrustedState = untrustedState.push(lightBlock)
 
         Finished(error, verifiedState, newUntrustedState)
     }

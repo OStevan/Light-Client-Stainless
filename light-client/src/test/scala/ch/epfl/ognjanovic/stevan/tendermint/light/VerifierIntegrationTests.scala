@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.TendermintSingleNodeContainer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.TendermintSingleNodeContainer.Def
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.InMemoryUntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviderFactories.{
   CachingLightBlockProviderFactory,
   DefaultLightBlockProviderFactory
@@ -16,7 +17,6 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactorie
   DefaultTimeValidatorFactory,
   InstantTimeValidatorConfig
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.InMemoryUntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.SimpleVerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories.DefaultVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers

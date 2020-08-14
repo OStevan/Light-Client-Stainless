@@ -5,7 +5,7 @@ import stainless.annotation.pure
 import stainless.collection.{Cons, List}
 import stainless.lang._
 
-object UntrustedStates {
+object FetchedStacks {
 
   @scala.annotation.tailrec
   private def pendingInvariant(pending: List[LightBlock]): Boolean = {
@@ -31,7 +31,7 @@ object UntrustedStates {
         (!res && bottomHeight().map(target < _).getOrElse(true) && (target == targetLimit) ==> bottomHeight().isEmpty))
 
     @pure
-    def removeBottom(): (LightBlock, UntrustedState) = {
+    def pop(): (LightBlock, UntrustedState) = {
       require(bottomHeight().isDefined)
       ??? : (LightBlock, UntrustedState)
     }.ensuring(res =>
@@ -40,7 +40,7 @@ object UntrustedStates {
         res._2.bottomHeight().map(bottomHeight().get < _).getOrElse(true))
 
     @pure
-    def insertLightBlock(lightBlock: LightBlock): UntrustedState = {
+    def push(lightBlock: LightBlock): UntrustedState = {
       require(
         bottomHeight().map(lightBlock.header.height < _).getOrElse(true) &&
           lightBlock.header.height <= targetLimit)
@@ -73,13 +73,13 @@ object UntrustedStates {
     }
 
     @pure
-    override def removeBottom(): (LightBlock, UntrustedState) = {
+    override def pop(): (LightBlock, UntrustedState) = {
       require(bottomHeight().isDefined)
       (pending.head, InMemoryUntrustedState(targetLimit, pending.tail))
     }
 
     @pure
-    override def insertLightBlock(lightBlock: LightBlock): UntrustedState = {
+    override def push(lightBlock: LightBlock): UntrustedState = {
       require(
         bottomHeight().map(lightBlock.header.height < _).getOrElse(true)
           && lightBlock.header.height <= targetLimit)

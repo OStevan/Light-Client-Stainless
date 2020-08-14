@@ -1,6 +1,6 @@
 package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.{InMemoryUntrustedState, UntrustedState}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.{InMemoryUntrustedState, UntrustedState}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.Height
 
 object UntrustedStateFactories {
