@@ -3,6 +3,7 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClientLemmas._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.UntrustedStates.UntrustedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
@@ -26,7 +27,7 @@ case class MultiStepVerifier(
       Finished(Left(()), verifiedState, untrustedState)
     else {
       val nextHeight = untrustedState.targetLimit
-      verify(WaitingForHeader(nextHeight, verifiedState, untrustedTrace))
+      verify(WaitingForHeader(nextHeight, verifiedState, untrustedState))
     }
   }
 
