@@ -6,9 +6,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.Ve
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
 
-class LightStoreBackedVerificationTrace(
-  private val lightStore: LightStore,
-  private val trustVerifier: VotingPowerVerifier)
+class LightStoreBackedVerificationTrace(private val lightStore: LightStore, val trustVerifier: VotingPowerVerifier)
     extends VerificationTrace {
 
   override def isTrusted(lightBlock: LightBlock): Boolean = {
