@@ -5,7 +5,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.light.ForkDetection._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.FetchedStack
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.ExpiredVerifiedState
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.VerificationTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 import stainless.lang
 
@@ -13,7 +13,7 @@ sealed class DefaultForkDetector(private val hasher: Hasher, private val fetched
     extends ForkDetector {
 
   override def detectForks(
-    verifiedStateSupplier: PeerId ⇒ VerifiedState,
+    verificationTraceSupplier: PeerId ⇒ VerificationTrace,
     targetLightBlock: LightBlock,
     witnesses: List[MultiStepVerifier]): ForkDetection.ForkDetectionResult = {
     val expectedHash = hasher.hashHeader(targetLightBlock.header)
@@ -27,7 +27,7 @@ sealed class DefaultForkDetector(private val hasher: Hasher, private val fetched
         Option.empty[Fork]
       else {
         val witnessVerificationResult = witness.verifyUntrusted(
-          verifiedStateSupplier(witnessBlock.peerId),
+          verificationTraceSupplier(witnessBlock.peerId),
           fetchedStackSupplier(targetLightBlock.header.height)
         )
 

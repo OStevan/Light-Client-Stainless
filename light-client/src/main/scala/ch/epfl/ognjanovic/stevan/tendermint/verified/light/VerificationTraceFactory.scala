@@ -2,16 +2,16 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStore
 import ch.epfl.ognjanovic.stevan.tendermint.light.store.LightStoreFactory.LightStoreConfiguration
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStateFactory.VerifiedStateConfiguration
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraceFactory.VerifiedStateConfiguration
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.VerificationTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
 
-trait VerifiedStateFactory {
-  def verifiedState(configuration: VerifiedStateConfiguration): VerifiedState
+trait VerificationTraceFactory {
+  def verificationTrace(configuration: VerifiedStateConfiguration): VerificationTrace
 }
 
-object VerifiedStateFactory {
+object VerificationTraceFactory {
 
   trait VerifiedStateConfiguration {
     def votingPowerVerifier: VotingPowerVerifier

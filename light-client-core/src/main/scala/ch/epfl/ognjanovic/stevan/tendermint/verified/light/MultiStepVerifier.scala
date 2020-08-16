@@ -6,7 +6,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightClientLemmas._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationOutcomes._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.VerificationTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierStates._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.LightBlock
 import stainless.lang._
@@ -17,17 +17,17 @@ case class MultiStepVerifier(
   verifier: Verifier,
   heightCalculator: NextHeightCalculator) {
 
-  def verifyUntrusted(verifiedState: VerifiedState, fetchedStack: FetchedStack): Finished = {
+  def verifyUntrusted(verificationTrace: VerificationTrace, fetchedStack: FetchedStack): Finished = {
     require(
-      verifiedState.currentHeight() <= fetchedStack.targetLimit &&
+      verificationTrace.currentHeight() <= fetchedStack.targetLimit &&
         fetchedStack.peek().isEmpty &&
         fetchedStack.targetLimit <= lightBlockProvider.currentHeight)
 
-    if (verifiedState.currentHeight() == fetchedStack.targetLimit)
-      Finished(Left(()), verifiedState, fetchedStack)
+    if (verificationTrace.currentHeight() == fetchedStack.targetLimit)
+      Finished(Left(()), verificationTrace, fetchedStack)
     else {
       val nextHeight = fetchedStack.targetLimit
-      verify(WaitingForHeader(nextHeight, verifiedState, fetchedStack))
+      verify(WaitingForHeader(nextHeight, verificationTrace, fetchedStack))
     }
   }
 
@@ -45,10 +45,10 @@ case class MultiStepVerifier(
   private def processHeader(waitingForHeader: WaitingForHeader, lightBlock: LightBlock): VerifierState = {
     require(lightBlock.header.height == waitingForHeader.requestHeight)
 
-    stepByStepVerification(lightBlock, waitingForHeader.verifiedState, waitingForHeader.fetchedStack)
+    stepByStepVerification(lightBlock, waitingForHeader.verificationTrace, waitingForHeader.fetchedStack)
   }.ensuring {
     case state: WaitingForHeader =>
-      if (waitingForHeader.verifiedState.currentHeight() == state.verifiedState.currentHeight())
+      if (waitingForHeader.verificationTrace.currentHeight() == state.verificationTrace.currentHeight())
         sameVerifiedStateTerminationMeasure(waitingForHeader, state)
       else
         improvedVerifiedStateLemma(waitingForHeader, state)
@@ -65,48 +65,48 @@ case class MultiStepVerifier(
 
   private def stepByStepVerification(
     lightBlock: LightBlock,
-    verifiedState: VerifiedState,
+    verificationTrace: VerificationTrace,
     fetchedStack: FetchedStack): VerifierState = {
     require(
       lightBlock.header.height <= fetchedStack.targetLimit &&
-        verifiedState.currentHeight() < lightBlock.header.height &&
+        verificationTrace.currentHeight() < lightBlock.header.height &&
         fetchedStack.peek().map(lightBlock.header.height < _.header.height).getOrElse(true))
-    decreases(fetchedStack.targetLimit.value - verifiedState.currentHeight().value)
+    decreases(fetchedStack.targetLimit.value - verificationTrace.currentHeight().value)
 
-    verifier.verify(verifiedState, lightBlock) match {
+    verifier.verify(verificationTrace, lightBlock) match {
       case VerificationOutcomes.Success =>
-        val newVerifiedState = verifiedState.increaseTrust(lightBlock)
-        if (newVerifiedState.currentHeight() == fetchedStack.targetLimit) {
+        val newVerificationTrace = verificationTrace.increaseTrust(lightBlock)
+        if (newVerificationTrace.currentHeight() == fetchedStack.targetLimit) {
           val result = Left[Unit, VerificationError](())
-          Finished(result, newVerifiedState, fetchedStack)
+          Finished(result, newVerificationTrace, fetchedStack)
         } else if (fetchedStack.peek().isDefined) {
           val (nextLightBlock, nextFetchedStack) = fetchedStack.pop()
-          stepByStepVerification(nextLightBlock, newVerifiedState, nextFetchedStack)
-        } else if (newVerifiedState.currentHeight() + 1 == fetchedStack.targetLimit)
-          WaitingForHeader(fetchedStack.targetLimit, newVerifiedState, fetchedStack)
+          stepByStepVerification(nextLightBlock, newVerificationTrace, nextFetchedStack)
+        } else if (newVerificationTrace.currentHeight() + 1 == fetchedStack.targetLimit)
+          WaitingForHeader(fetchedStack.targetLimit, newVerificationTrace, fetchedStack)
         else {
           val newTargetHeight = heightCalculator.nextHeight(
-            newVerifiedState.currentHeight(),
+            newVerificationTrace.currentHeight(),
             fetchedStack.peek().map(_.header.height).getOrElse(fetchedStack.targetLimit))
-          WaitingForHeader(newTargetHeight, newVerifiedState, fetchedStack)
+          WaitingForHeader(newTargetHeight, newVerificationTrace, fetchedStack)
         }
 
       case VerificationOutcomes.InsufficientTrust =>
-        val nextHeight = heightCalculator.nextHeight(verifiedState.currentHeight(), lightBlock.header.height)
+        val nextHeight = heightCalculator.nextHeight(verificationTrace.currentHeight(), lightBlock.header.height)
         val nextFetchedStack = fetchedStack.push(lightBlock)
-        WaitingForHeader(nextHeight, verifiedState, nextFetchedStack)
+        WaitingForHeader(nextHeight, verificationTrace, nextFetchedStack)
 
       case Failure(reason) =>
         val error = Right[Unit, VerificationError](reason)
         val newFetchedStack = fetchedStack.push(lightBlock)
 
-        Finished(error, verifiedState, newFetchedStack)
+        Finished(error, verificationTrace, newFetchedStack)
     }
   }.ensuring {
     case waitingForHeader: WaitingForHeader =>
       waitingForHeader.fetchedStack.targetLimit == fetchedStack.targetLimit &&
-        waitingForHeader.verifiedState.currentHeight() >= verifiedState.currentHeight() &&
-        (waitingForHeader.verifiedState.currentHeight() > verifiedState.currentHeight() ||
+        waitingForHeader.verificationTrace.currentHeight() >= verificationTrace.currentHeight() &&
+        (waitingForHeader.verificationTrace.currentHeight() > verificationTrace.currentHeight() ||
           waitingForHeader.requestHeight < lightBlock.header.height)
     case _ => true
   }

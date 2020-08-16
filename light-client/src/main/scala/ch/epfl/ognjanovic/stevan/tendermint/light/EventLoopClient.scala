@@ -11,7 +11,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStacks.Fetched
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.LightBlockProvider
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.MultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactories.TimeValidatorConfig
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.VerificationTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock, PeerId}
 import stainless.lang
@@ -32,8 +32,8 @@ object EventLoopClient {
     private val timeValidatorConfig: TimeValidatorConfig,
     private val lightStore: LightStore,
     private val forkDetector: ForkDetector,
-    private val primaryStateSupplier: (LightBlock, VotingPowerVerifier) ⇒ (() ⇒ Iterable[LightBlock], VerifiedState),
-    private val witnessVerifiedStateSupplier: (LightBlock, VotingPowerVerifier) ⇒ PeerId ⇒ VerifiedState)
+    private val primaryStateSupplier: (LightBlock, VotingPowerVerifier) ⇒ (() ⇒ Iterable[LightBlock], VerificationTrace),
+    private val witnessVerifiedStateSupplier: (LightBlock, VotingPowerVerifier) ⇒ PeerId ⇒ VerificationTrace)
       extends Supervisor {
 
     // force sharing between constructed handles, when there is a need for multiple threads to use the same supervisor
@@ -83,7 +83,7 @@ object EventLoopClient {
 
           val forkDetectionResult = forkDetector.detectForks(
             witnessVerifiedStateSupplier(trustedLightBlock.get, votingPowerVerifier),
-            primaryResult.verifiedState.verified,
+            primaryResult.verificationTrace.verified,
             peerList.witnesses
               .map(verifierBuilder.constructVerifier(_, votingPowerVerifier, timeValidatorConfig))
               .toScala
@@ -100,7 +100,7 @@ object EventLoopClient {
 
             case ForkDetection.NoForks ⇒
               verificationCollector().foreach(lightStore.update(_, Trusted))
-              (peerList, Left(primaryResult.verifiedState.verified))
+              (peerList, Left(primaryResult.verificationTrace.verified))
           }
         case lang.Right(_) ⇒
           if (peerList.witnessesIds.isEmpty)

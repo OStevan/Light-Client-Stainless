@@ -10,8 +10,8 @@ object LightClientLemmas {
   @pure
   def terminationMeasure(waitingForHeader: WaitingForHeader): (BigInt, BigInt) = {
     val res: (BigInt, BigInt) = (
-      waitingForHeader.fetchedStack.targetLimit.value - waitingForHeader.verifiedState.currentHeight().value,
-      waitingForHeader.requestHeight.value - waitingForHeader.verifiedState.currentHeight().value
+      waitingForHeader.fetchedStack.targetLimit.value - waitingForHeader.verificationTrace.currentHeight().value,
+      waitingForHeader.requestHeight.value - waitingForHeader.verificationTrace.currentHeight().value
     )
     res
   }.ensuring(res => res._1 >= BigInt(0) && res._2 >= BigInt(0))
@@ -20,7 +20,7 @@ object LightClientLemmas {
   def sameVerifiedStateTerminationMeasure(previous: WaitingForHeader, current: WaitingForHeader): Unit = {
     require(
       previous.fetchedStack.targetLimit == current.fetchedStack.targetLimit &&
-        previous.verifiedState.currentHeight() == current.verifiedState.currentHeight() &&
+        previous.verificationTrace.currentHeight() == current.verificationTrace.currentHeight() &&
         previous.requestHeight > current.requestHeight)
   }.ensuring { _ =>
     val previousTerminationMeasure = terminationMeasure(previous)
@@ -34,7 +34,7 @@ object LightClientLemmas {
   def improvedVerifiedStateLemma(previous: WaitingForHeader, current: WaitingForHeader): Unit = {
     require(
       previous.fetchedStack.targetLimit == current.fetchedStack.targetLimit &&
-        previous.verifiedState.currentHeight() < current.verifiedState.currentHeight())
+        previous.verificationTrace.currentHeight() < current.verificationTrace.currentHeight())
   }.ensuring { _ =>
     val previousTerminationMeasure = terminationMeasure(previous)
     val currentTerminationMeasure = terminationMeasure(current)

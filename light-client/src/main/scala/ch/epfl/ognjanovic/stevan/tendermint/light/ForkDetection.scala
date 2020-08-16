@@ -1,8 +1,8 @@
 package ch.epfl.ognjanovic.stevan.tendermint.light
 
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifier
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.VerificationTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{LightBlock, PeerId}
 
 object ForkDetection {
@@ -11,13 +11,13 @@ object ForkDetection {
 
     /**
      * Tries to detect chain forks using several witnesses
-     * @param verifiedStateSupplier constructs a verified state for the given PeerId
+     * @param verificationTraceSupplier constructs a verified state for the given PeerId
      * @param targetLightBlock for which we want to check if there are forks
      * @param witnesses list of peers which are used to detect forks
      * @return result of fork detection
      */
     def detectForks(
-      verifiedStateSupplier: PeerId ⇒ VerifiedState,
+      verificationTraceSupplier: PeerId ⇒ VerificationTrace,
       targetLightBlock: LightBlock,
       witnesses: List[MultiStepVerifier]): ForkDetectionResult
 

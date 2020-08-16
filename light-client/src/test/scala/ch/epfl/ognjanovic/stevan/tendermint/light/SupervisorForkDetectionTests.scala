@@ -10,13 +10,13 @@ import ch.epfl.ognjanovic.stevan.tendermint.light.Supervisor.ForkDetected
 import ch.epfl.ognjanovic.stevan.tendermint.merkle.MerkleRoot
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.Deserializer
 import ch.epfl.ognjanovic.stevan.tendermint.rpc.circe.CirceDeserializer
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{DefaultVerifiedStateFactory, VotingPowerVerifiers}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.{DefaultVerificationTraceFactory, VotingPowerVerifiers}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.FetchedStackFactories.InMemoryFetchedStackFactory
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStateFactory.{
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraceFactory.{
   LightStoreBackedVerifiedStateConfiguration,
   SimpleVerifiedStateConfiguration
 }
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.VerifiedState
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.VerificationTrace
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{LightBlock, PeerId}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -32,31 +32,32 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
 
   private val votingPowerVerifier = VotingPowerVerifiers.defaultVotingPowerVerifier
 
-  private val verifiedStateFactory = new DefaultVerifiedStateFactory(lightStoreFactory)
+  private val verificationTraceFactory = new DefaultVerificationTraceFactory(lightStoreFactory)
 
-  private val primaryVerifiedStateBuilder: (LightBlock, VotingPowerVerifier) ⇒ (() ⇒ Iterable[LightBlock], VerifiedState) =
+  private val primaryVerifiedStateBuilder
+    : (LightBlock, VotingPowerVerifier) ⇒ (() ⇒ Iterable[LightBlock], VerificationTrace) =
     (lightBlock, verifier) ⇒ {
       val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
       lightStore.update(lightBlock, Trusted)
 
-      val verifiedState = verifiedStateFactory.verifiedState(
+      val verificationTrace = verificationTraceFactory.verificationTrace(
         LightStoreBackedVerifiedStateConfiguration(lightBlock, verifier, Right(lightStore)))
 
-      (() ⇒ lightStore.all(Verified), verifiedState)
+      (() ⇒ lightStore.all(Verified), verificationTrace)
     }
 
   private val witnessVerifiedStateBuilder =
     (lightBlock: LightBlock, votingPowerVerifier: VotingPowerVerifier) ⇒
       (_: PeerId) ⇒ {
-        verifiedStateFactory.verifiedState(SimpleVerifiedStateConfiguration(lightBlock, votingPowerVerifier))
+        verificationTraceFactory.verificationTrace(SimpleVerifiedStateConfiguration(lightBlock, votingPowerVerifier))
       }
 
   "Receiving conflicting headers from witnesses" should "result in a failed synchronization" in {
-    val (peerList, verifiedState, timeValidatorConfig, heightToVerify) =
+    val (peerList, verificationTrace, timeValidatorConfig, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/conflicting_headers.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
-    lightStore.update(verifiedState.verified, Trusted)
+    lightStore.update(verificationTrace.verified, Trusted)
 
     val supervisor = new EventLoopSupervisor(
       peerList,
@@ -78,11 +79,11 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
   }
 
   "Conflicting commit from one of the witnesses" should "result in a failed synchronization" in {
-    val (peerList, verifiedState, timeValidatorConfig, heightToVerify) =
+    val (peerList, verificationTrace, timeValidatorConfig, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/conflicting_valid_commits_from_one_of_the_witnesses.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
-    lightStore.update(verifiedState.verified, Trusted)
+    lightStore.update(verificationTrace.verified, Trusted)
 
     val supervisor = new EventLoopSupervisor(
       peerList,
@@ -104,11 +105,11 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
   }
 
   "Conflicting commit from the only witnesses" should "result in a failed synchronization" in {
-    val (peerList, verifiedState, timeValidatorConfig, heightToVerify) =
+    val (peerList, verificationTrace, timeValidatorConfig, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/conflicting_valid_commits_from_the_only_witness.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
-    lightStore.update(verifiedState.verified, Trusted)
+    lightStore.update(verificationTrace.verified, Trusted)
 
     val supervisor = new EventLoopSupervisor(
       peerList,
@@ -130,11 +131,11 @@ sealed class SupervisorForkDetectionTests extends AnyFlatSpec with VerifierTests
   }
 
   "Malicious validator set" should "result in a failed synchronization" in {
-    val (peerList, verifiedState, timeValidatorConfig, heightToVerify) =
+    val (peerList, verificationTrace, timeValidatorConfig, heightToVerify) =
       buildTest(VerifierTests.testCase("/bisection/multi-peer/malicious_validator_set.json"))
 
     val lightStore = lightStoreFactory.lightStore(InMemoryLightStoreConfiguration)
-    lightStore.update(verifiedState.verified, Trusted)
+    lightStore.update(verificationTrace.verified, Trusted)
 
     val supervisor = new EventLoopSupervisor(
       peerList,

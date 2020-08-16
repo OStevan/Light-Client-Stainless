@@ -9,7 +9,10 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockValidators.
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.NextHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TrustVerifiers.DefaultTrustVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationErrors.VerificationError
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates.{SimpleVerifiedState, VerifiedState}
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces.{
+  StartingVerificationTrace,
+  VerificationTrace
+}
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types._
 import stainless.annotation.{extern, pure}
 import stainless.collection._
@@ -30,11 +33,11 @@ object ModelIntegration {
     val soundSignedHeaderProvider = BlockchainLightBlockProviders(blockchainState)
     val trustedSignedHeader = soundSignedHeaderProvider.lightBlock(trustedHeight)
 
-    val verifiedState: VerifiedState =
-      SimpleVerifiedState(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
+    val verificationTrace: VerificationTrace =
+      StartingVerificationTrace(trustedSignedHeader, VotingPowerVerifiers.defaultVotingPowerVerifier)
     val fetchedStack = InMemoryFetchedStack(heightToVerify, List.empty)
     assert(fetchedStack.peek().forall(heightToVerify < _.header.height))
-    assert(verifiedState.currentHeight() < heightToVerify)
+    assert(verificationTrace.currentHeight() < heightToVerify)
     assert(heightToVerify <= fetchedStack.targetLimit)
 
     val lightBlockVerifier = DefaultTrustVerifier()
@@ -46,7 +49,7 @@ object ModelIntegration {
         DefaultCommitValidator(VotingPowerVerifiers.defaultVotingPowerVerifier, DummyCommitSignatureVerifier())),
       nextHeightCalculator
     )
-      .verifyUntrusted(verifiedState, fetchedStack)
+      .verifyUntrusted(verificationTrace, fetchedStack)
       .outcome
   }
 

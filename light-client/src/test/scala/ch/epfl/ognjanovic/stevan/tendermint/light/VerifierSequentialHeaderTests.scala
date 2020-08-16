@@ -17,28 +17,28 @@ sealed class VerifierSequentialHeaderTests extends AnyFlatSpec with VerifierTest
   private val votingPowerVerifier = VotingPowerVerifiers.defaultVotingPowerVerifier
 
   "Wrong chain id" should "fail verification" in {
-    val (verifier, verifiedState, provider) =
+    val (verifier, verificationTrace, provider) =
       buildTest(VerifierTests.testCase("/single-step/sequential/header/wrong_chain_id.json"), votingPowerVerifier)
 
     val requestHeight = Height(2)
-    val result = verifier.verify(verifiedState, provider.lightBlock(requestHeight))
+    val result = verifier.verify(verificationTrace, provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[Failure] && result.asInstanceOf[Failure].reason == InvalidHeader)
   }
 
   "Wrong header/commit height pair" should "fail verification" in {
-    val (verifier, verifiedState, provider) =
+    val (verifier, verificationTrace, provider) =
       buildTest(VerifierTests.testCase("/single-step/sequential/header/wrong_header_height.json"), votingPowerVerifier)
 
     val requestHeight = Height(3)
-    val result = verifier.verify(verifiedState, provider.lightBlock(requestHeight))
+    val result = verifier.verify(verificationTrace, provider.lightBlock(requestHeight))
 
     // fails with invalid commit value as does the rust implementation because of hashes instead of height
     assert(result.isInstanceOf[Failure] && result.asInstanceOf[Failure].reason == InvalidCommitValue)
   }
 
   "Non monotonic header height value" should "trow an exception" in {
-    val (verifier, verifiedState, provider) =
+    val (verifier, verificationTrace, provider) =
       buildTest(
         VerifierTests.testCase("/single-step/sequential/header/non_monotonic_header_height.json"),
         votingPowerVerifier)
@@ -47,12 +47,12 @@ sealed class VerifierSequentialHeaderTests extends AnyFlatSpec with VerifierTest
     val nonMonotonicHeader = provider.lightBlock(requestHeight)
 
     assertThrows[IllegalArgumentException] {
-      verifier.verify(verifiedState, nonMonotonicHeader)
+      verifier.verify(verificationTrace, nonMonotonicHeader)
     }
   }
 
   "Non monotonic header time" should "fail verification" in {
-    val (verifier, verifiedState, provider) =
+    val (verifier, verificationTrace, provider) =
       buildTest(
         VerifierTests.testCase("/single-step/sequential/header/non_monotonic_bft_time.json"),
         votingPowerVerifier)
@@ -60,64 +60,64 @@ sealed class VerifierSequentialHeaderTests extends AnyFlatSpec with VerifierTest
     val requestHeight = Height(2)
     val nonMonotonicHeader = provider.lightBlock(requestHeight)
 
-    val result = verifier.verify(verifiedState, nonMonotonicHeader)
+    val result = verifier.verify(verificationTrace, nonMonotonicHeader)
     assert(result.isInstanceOf[Failure])
     assert(result.asInstanceOf[Failure].reason == NonMonotonicBftTime)
   }
 
   "Wrong header timestamp" should "fail verification" in {
-    val (verifier, verifiedState, provider) =
+    val (verifier, verificationTrace, provider) =
       buildTest(
         VerifierTests.testCase("/single-step/sequential/header/wrong_header_timestamp.json"),
         votingPowerVerifier)
 
     val requestHeight = Height(2)
-    val result = verifier.verify(verifiedState, provider.lightBlock(requestHeight))
+    val result = verifier.verify(verificationTrace, provider.lightBlock(requestHeight))
 
     // fails with invalid commit value as does the rust implementation because of hashes instead of timestamp
     assert(result.isInstanceOf[Failure] && result.asInstanceOf[Failure].reason == InvalidCommitValue)
   }
 
   "Wrong last block id" should "fail verification" in {
-    val (verifier, verifiedState, provider) =
+    val (verifier, verificationTrace, provider) =
       buildTest(VerifierTests.testCase("/single-step/sequential/header/wrong_last_block_id.json"), votingPowerVerifier)
 
     val requestHeight = Height(2)
-    val result = verifier.verify(verifiedState, provider.lightBlock(requestHeight))
+    val result = verifier.verify(verificationTrace, provider.lightBlock(requestHeight))
 
     // fails with invalid commit value as does the rust implementation because of hashes instead of last block id
     assert(result.isInstanceOf[Failure] && result.asInstanceOf[Failure].reason == InvalidCommitValue)
   }
   "Wrong last commit hash" should "fail verification" in {
-    val (verifier, verifiedState, provider) =
+    val (verifier, verificationTrace, provider) =
       buildTest(
         VerifierTests.testCase("/single-step/sequential/header/wrong_last_commit_hash.json"),
         votingPowerVerifier)
 
     val requestHeight = Height(2)
-    val result = verifier.verify(verifiedState, provider.lightBlock(requestHeight))
+    val result = verifier.verify(verificationTrace, provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[Failure] && result.asInstanceOf[Failure].reason == InvalidCommitValue)
   }
 
   "Wrong next validator set hash" should "fail verification" in {
-    val (verifier, verifiedState, provider) =
+    val (verifier, verificationTrace, provider) =
       buildTest(
         VerifierTests.testCase("/single-step/sequential/header/wrong_next_valset_hash.json"),
         votingPowerVerifier)
 
     val requestHeight = Height(2)
-    val result = verifier.verify(verifiedState, provider.lightBlock(requestHeight))
+    val result = verifier.verify(verificationTrace, provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[Failure] && result.asInstanceOf[Failure].reason == InvalidNextValidatorSetHash)
   }
 
   "Wrong validator set hash" should "fail verification" in {
-    val (verifier, verifiedState, provider) =
+    val (verifier, verificationTrace, provider) =
       buildTest(VerifierTests.testCase("/single-step/sequential/header/wrong_valset_hash.json"), votingPowerVerifier)
 
     val requestHeight = Height(2)
-    val result = verifier.verify(verifiedState, provider.lightBlock(requestHeight))
+    val result = verifier.verify(verificationTrace, provider.lightBlock(requestHeight))
 
     assert(result.isInstanceOf[Failure] && result.asInstanceOf[Failure].reason == InvalidValidatorSetHash)
   }

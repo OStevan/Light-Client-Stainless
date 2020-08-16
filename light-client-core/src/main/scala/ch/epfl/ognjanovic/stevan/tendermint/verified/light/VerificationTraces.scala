@@ -3,10 +3,11 @@ package ch.epfl.ognjanovic.stevan.tendermint.verified.light
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.VotingPowerVerifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.types.{Height, LightBlock}
 import stainless.annotation.pure
+import stainless.lang.StaticChecks._
 
-object VerifiedStates {
+object VerificationTraces {
 
-  abstract class VerifiedState {
+  abstract class VerificationTrace {
 
     @pure
     def isTrusted(lightBlock: LightBlock): Boolean = {
@@ -24,9 +25,9 @@ object VerifiedStates {
      * @return new verified state
      */
     @pure
-    def increaseTrust(lightBlock: LightBlock): VerifiedState = {
+    def increaseTrust(lightBlock: LightBlock): VerificationTrace = {
       require(lightBlock.header.height > currentHeight() && isTrusted(lightBlock))
-      ??? : VerifiedState
+      ??? : VerificationTrace
     }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
 
     /**
@@ -45,39 +46,57 @@ object VerifiedStates {
       (res && currentHeight() + 1 == lightBlock.header.height) ||
         (!res && currentHeight() + 1 < lightBlock.header.height))
 
+    @pure
+    def trustVerifier: VotingPowerVerifier
+
   }
 
-  case class SimpleVerifiedState(verified: LightBlock, trustVerifier: VotingPowerVerifier) extends VerifiedState {
+  case class StartingVerificationTrace(verified: LightBlock, trustVerifier: VotingPowerVerifier)
+      extends VerificationTrace {
 
     @pure
     override def currentHeight(): Height = verified.header.height
 
     @pure
-    override def increaseTrust(lightBlock: LightBlock): VerifiedState = {
+    override def increaseTrust(lightBlock: LightBlock): VerificationTrace = {
       require(lightBlock.header.height > this.verified.header.height && isTrusted(lightBlock))
-      SimpleVerifiedState(lightBlock, trustVerifier)
+      VerificationTraceLink(lightBlock, trustVerifier, this)
     }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
 
     @pure
     override def isTrusted(lightBlock: LightBlock): Boolean = {
       require(lightBlock.header.height > currentHeight())
       if (isAdjacent(lightBlock))
-        internalAdjacentHeaderTrust(lightBlock)
+        verified.nextValidatorSet.toInfoHashable == lightBlock.validatorSet.toInfoHashable
       else
-        internalNonAdjacentHeaderTrust(lightBlock)
+        trustVerifier.trustedCommit(verified.nextValidatorSet, lightBlock.commit)
     }
 
-    @pure
-    private def internalAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
-      require(currentHeight() < lightBlock.header.height && isAdjacent(lightBlock))
-      verified.nextValidatorSet.toInfoHashable == lightBlock.validatorSet.toInfoHashable
-    }
+  }
+
+  case class VerificationTraceLink(verified: LightBlock, trustVerifier: VotingPowerVerifier, history: VerificationTrace)
+      extends VerificationTrace {
+    require(
+      trustVerifier == history.trustVerifier &&
+        verified.header.height > history.currentHeight() &&
+        history.isTrusted(verified))
 
     @pure
-    private def internalNonAdjacentHeaderTrust(lightBlock: LightBlock): Boolean = {
-      require(currentHeight() < lightBlock.header.height && !isAdjacent(lightBlock))
+    override def currentHeight(): Height = verified.header.height
 
-      trustVerifier.trustedCommit(verified.nextValidatorSet, lightBlock.commit)
+    @pure
+    override def increaseTrust(lightBlock: LightBlock): VerificationTrace = {
+      require(lightBlock.header.height > this.verified.header.height && isTrusted(lightBlock))
+      VerificationTraceLink(lightBlock, trustVerifier, this)
+    }.ensuring(res => res.currentHeight() > currentHeight() && res.currentHeight() == lightBlock.header.height)
+
+    @pure
+    override def isTrusted(lightBlock: LightBlock): Boolean = {
+      require(lightBlock.header.height > currentHeight())
+      if (isAdjacent(lightBlock))
+        verified.nextValidatorSet.toInfoHashable == lightBlock.validatorSet.toInfoHashable
+      else
+        trustVerifier.trustedCommit(verified.nextValidatorSet, lightBlock.commit)
     }
 
   }

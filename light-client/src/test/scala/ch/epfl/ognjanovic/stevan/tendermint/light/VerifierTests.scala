@@ -9,7 +9,7 @@ import ch.epfl.ognjanovic.stevan.tendermint.verified.light.LightBlockProviders.L
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.MultiStepVerifierFactories.DefaultMultiStepVerifierFactory
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.NextHeightCalculators.BisectionHeightCalculator
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.TimeValidatorFactories._
-import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifiedStates._
+import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerificationTraces._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.Verifier
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VerifierFactories._
 import ch.epfl.ognjanovic.stevan.tendermint.verified.light.VotingPowerVerifiers.{
@@ -30,7 +30,7 @@ trait VerifierTests {
 
   def buildTest(
     singleStepTestCase: SingleStepTestCase,
-    votingPowerVerifier: VotingPowerVerifier): (Verifier, VerifiedState, LightBlockProvider) = {
+    votingPowerVerifier: VotingPowerVerifier): (Verifier, VerificationTrace, LightBlockProvider) = {
     val timeValidatorConfig = InstantTimeValidatorConfig(
       () ⇒ singleStepTestCase.initial.now,
       Duration.fromNanos(singleStepTestCase.initial.trusting_period),
@@ -38,7 +38,7 @@ trait VerifierTests {
 
     val peerId = PeerId(singleStepTestCase.initial.next_validator_set.values.head.publicKey)
 
-    val verifiedState = SimpleVerifiedState(
+    val verificationTrace = StartingVerificationTrace(
       LightBlock(
         singleStepTestCase.initial.signed_header.header,
         singleStepTestCase.initial.signed_header.commit,
@@ -51,7 +51,7 @@ trait VerifierTests {
 
     (
       verifierFactory.constructInstance(votingPowerVerifier, timeValidatorConfig),
-      verifiedState,
+      verificationTrace,
       InMemoryProvider.fromInput(
         singleStepTestCase.initial.signed_header.header.chainId,
         peerId,
@@ -60,7 +60,7 @@ trait VerifierTests {
   }
 
   def buildTest(multiStepTestCase: MultiStepTestCase)
-    : (PeerList[PeerId, LightBlockProvider], SimpleVerifiedState, TimeValidatorConfig, Height) = {
+    : (PeerList[PeerId, LightBlockProvider], StartingVerificationTrace, TimeValidatorConfig, Height) = {
     val trustVerifier = ParameterizedVotingPowerVerifier(multiStepTestCase.trust_options.trustLevel)
 
     val peerId = PeerId(multiStepTestCase.primary.lite_blocks(0).validator_set.values.head.publicKey)
@@ -78,7 +78,7 @@ trait VerifierTests {
 
     (
       PeerList.fromScala(witnesses.updated(peerId, primary), peerId, witnesses.keys.toList, List.empty, List.empty),
-      SimpleVerifiedState(primary.lightBlock(multiStepTestCase.trust_options.trustedHeight), trustVerifier),
+      StartingVerificationTrace(primary.lightBlock(multiStepTestCase.trust_options.trustedHeight), trustVerifier),
       InstantTimeValidatorConfig(
         () ⇒ multiStepTestCase.now,
         Duration.fromNanos(multiStepTestCase.trust_options.trustPeriod.toNanoseconds.toLong),
