@@ -65,6 +65,7 @@ case class ListSet[T](toList: List[T]) {
 object ListSet {
   def empty[T]: ListSet[T] = ListSet(List.empty[T])
 
+  @library
   object lemmas {
 
     @opaque
