@@ -1,6 +1,6 @@
 #!/bin/bash
 
-stainless-scalac  "$@" --batched --watch --solvers=smt-z3 \
+stainless-scalac  "$@" --watch \
   light-client-core/src/main/scala/ch/epfl/ognjanovic/stevan/tendermint/verified/integration/ModelIntegration.scala \
   light-client-core/src/main/scala/ch/epfl/ognjanovic/stevan/tendermint/verified/types/*.scala \
   light-client-core/src/main/scala/ch/epfl/ognjanovic/stevan/tendermint/verified/light/*.scala \

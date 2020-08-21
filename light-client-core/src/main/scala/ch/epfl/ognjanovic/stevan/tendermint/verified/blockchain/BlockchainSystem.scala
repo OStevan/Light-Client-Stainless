@@ -23,7 +23,8 @@ object BlockchainSystem {
       validatorSet.values.forall(_.votingPower.value == 1) &&
         maxPower.isPositive &&
         nextValidatorSet.keys.subsetOf(validatorSet.keys) &&
-        faultChecker.isCorrect(nextValidatorSet, ListSet.empty) && initialCommit.forBlock.isEmpty)
+        faultChecker.isCorrect(nextValidatorSet, ListSet.empty) &&
+        initialCommit.forBlock.isEmpty)
 
     val noFaulty = ListSet.empty[Address]
 

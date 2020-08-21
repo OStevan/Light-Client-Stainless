@@ -87,6 +87,7 @@ case class ListMap[A, B](toList: List[(A, B)]) {
 object ListMap {
   def empty[A, B]: ListMap[A, B] = ListMap(List.empty[(A, B)])
 
+  @library
   object lemmas {
 
     @opaque

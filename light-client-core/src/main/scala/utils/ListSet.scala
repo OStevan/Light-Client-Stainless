@@ -34,8 +34,7 @@ case class ListSet[T](toList: List[T]) {
     ListUtils.restOfSetIsSubset(toList, other.toList)
     ListSet(toList -- other.toList)
   }.ensuring(res ⇒
-    forall((elem: T) ⇒ (this.contains(elem) && !other.contains(elem)) == res.contains(elem)) &&
-      (res & other).isEmpty &&
+    (res & other).isEmpty &&
       res.subsetOf(this))
 
   def &(other: ListSet[T]): ListSet[T] = {
@@ -43,15 +42,15 @@ case class ListSet[T](toList: List[T]) {
     ListUtils.listIntersectionLemma(toList, other.toList)
     ListSet(toList & other.toList)
   }.ensuring(res ⇒
-    forall((elem: T) ⇒ (this.contains(elem) && other.contains(elem)) == res.contains(elem)) &&
-      res.subsetOf(this) &&
+    res.subsetOf(this) &&
       res.subsetOf(other))
 
+  @opaque
   def filter(predicate: T ⇒ Boolean): ListSet[T] = {
     ListSetUtils.filteringPreservesPredicate(toList, predicate)
     ListSetUtils.filteringMakesSubset(toList, predicate)
     ListSet(toList.filter(predicate))
-  }.ensuring(res ⇒ res.subsetOf(this))
+  }.ensuring(res ⇒ res.subsetOf(this) && res.toList.forall(predicate))
 
   def size: BigInt = toList.size
   def isEmpty: Boolean = toList.isEmpty
@@ -65,6 +64,7 @@ case class ListSet[T](toList: List[T]) {
 object ListSet {
   def empty[T]: ListSet[T] = ListSet(List.empty[T])
 
+  @library
   object lemmas {
 
     @opaque

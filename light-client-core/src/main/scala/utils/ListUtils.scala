@@ -330,8 +330,7 @@ object ListUtils {
   }.ensuring { _ =>
     val intersection = first & second
     intersection.forall(first.contains) &&
-    intersection.forall(second.contains) &&
-    forall((elem: T) => intersection.contains(elem) == (first.contains(elem) && second.contains(elem)))
+    intersection.forall(second.contains)
   }
 
   @opaque
